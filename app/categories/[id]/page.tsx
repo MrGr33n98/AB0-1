@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Star, MapPin, Filter, Grid, List, Search } from 'lucide-react';
 // Make sure you're importing useCategory correctly
-import { useCategory } from '@/hooks/useCategories';
+import { useCategories } from '@/hooks/useCategories';
 import { useCompanies } from '@/hooks/useCompanies';
 import { useProducts } from '@/hooks/useProducts';
 import CompanyCard from '@/components/CompanyCard';
@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { useCategory } from '@/hooks/useCategory';
 
 export default function CategoryDetailPage() {
   const params = useParams();
@@ -268,7 +269,7 @@ export default function CategoryDetailPage() {
                     transition={{ duration: 0.3, delay: index * 0.05 }}
                     layout
                   >
-                    <CompanyCard company={company} />
+                    <CompanyCard category={category} {...company} />
                   </motion.div>
                 ))}
               </motion.div>

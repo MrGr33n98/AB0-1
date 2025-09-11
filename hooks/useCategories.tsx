@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Category } from '@/types'; // Make sure you have this type defined
+interface Category {
+  id: number;
+  name: string;
+  // Add other category properties as needed
+}
 
 // ... existing code ...
 
