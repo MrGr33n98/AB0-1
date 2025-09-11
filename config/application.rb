@@ -1,3 +1,6 @@
+# Add this line near the top with other requires
+require 'csv'
+
 require_relative "boot"
 
 require "rails/all"

@@ -1,21 +1,31 @@
 ActiveAdmin.register User do
-  permit_params :name, :email # Ensure name and email are permitted parameters
-
-  filter :name_cont, label: 'Name' # Add a filter for the name attribute
-  filter :email_cont, label: 'Email' # Add a filter for the email attribute
-
+  # Remove any reference to Post model
+  permit_params :email, :password, :password_confirmation, :name
+  
+  # Define explicit filters without Post references
+  filter :email
+  filter :name
+  filter :created_at
+  filter :updated_at
+  
+  # Remove any filter that might be causing the issue
+  remove_filter :posts
+  
   index do
     selectable_column
     id_column
-    column :name
     column :email
+    column :name
+    column :created_at
     actions
   end
-
+  
   form do |f|
     f.inputs do
-      f.input :name
       f.input :email
+      f.input :name
+      f.input :password
+      f.input :password_confirmation
     end
     f.actions
   end

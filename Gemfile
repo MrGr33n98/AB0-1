@@ -78,3 +78,8 @@ end
 gem "noticed", "= 2.2"
 gem 'activeadmin', '~> 3.2.0'
 gem 'sassc'
+gem "pg_search", "~> 2.3"
+gem "faker", "~> 3.5"
+gem "dotenv-rails", "~> 3.1"
+gem "jwt", "~> 3.1"
+gem "active_model_serializers", "~> 0.10.15"

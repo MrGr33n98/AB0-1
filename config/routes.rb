@@ -10,11 +10,7 @@ Rails.application.routes.draw do
 
   get 'u/:id', to: 'users#profile', as: 'user'
 
-  # /post/1/comments/4
-  resources :posts do
-    resources :comments
-  end
-
+  # Routes for pages
   get 'home', to: 'pages#home'
   get 'about', to: 'pages#about'
 
