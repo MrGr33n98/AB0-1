@@ -78,21 +78,25 @@ export default function SearchBar({
     <div ref={searchRef} className={`relative ${className}`}>
       <form onSubmit={handleSearch} className="relative">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          {/* Lupa maior e alinhada */}
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-500" />
+          
+          {/* Input ajustado */}
           <Input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
-            className="pl-10 pr-10 h-12 text-base rounded-xl border-2 border-gray-200 focus:border-orange-400 focus:ring-orange-400"
+            className="pl-14 pr-12 h-16 text-lg w-full max-w-3xl mx-auto rounded-2xl border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500 shadow-sm"
           />
+
           {query && (
             <button
               type="button"
               onClick={clearSearch}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:text-gray-600"
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-gray-600"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </button>
           )}
         </div>
@@ -105,7 +109,7 @@ export default function SearchBar({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-h-96 overflow-y-auto"
+            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-3xl border border-gray-200 z-50 max-h-96 overflow-y-auto"
           >
             {loading ? (
               <div className="p-4 text-center text-gray-500">
