@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Star, MapPin, Filter, Grid, List, Search } from 'lucide-react';
+// Make sure you're importing useCategory correctly
 import { useCategory } from '@/hooks/useCategories';
 import { useCompanies } from '@/hooks/useCompanies';
 import { useProducts } from '@/hooks/useProducts';

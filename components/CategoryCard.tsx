@@ -14,13 +14,9 @@ interface CategoryCardProps {
 export default function CategoryCard({ category, className = "" }: CategoryCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  // Mock data for demo
-  const mockData = {
-    productCount: Math.floor(Math.random() * 150) + 20,
-    companyCount: Math.floor(Math.random() * 50) + 10,
-    image: `https://images.pexels.com/photos/9875456/pexels-photo-9875456.jpeg?auto=compress&cs=tinysrgb&w=400&h=200&fit=crop`,
-    gradient: 'from-orange-400 to-yellow-400',
-  };
+  // Valores mock usados só como fallback
+  const fallbackProductCount = Math.floor(Math.random() * 150) + 20;
+  const fallbackCompanyCount = Math.floor(Math.random() * 50) + 10;
 
   return (
     <motion.div
@@ -33,21 +29,20 @@ export default function CategoryCard({ category, className = "" }: CategoryCardP
       transition={{ duration: 0.3 }}
     >
       <Link href={`/categories/${category.id}`}>
-        {/* Background Image/Gradient */}
+        {/* Background */}
         <div className="relative h-32 bg-gradient-to-br from-orange-400 to-yellow-400 overflow-hidden">
-          {/* Pattern Overlay */}
           <div className="absolute inset-0 bg-white/10 backdrop-blur-sm">
             <div className="absolute inset-0 bg-grid-pattern opacity-20"></div>
           </div>
-          
-          {/* Icon */}
+
+          {/* Ícone */}
           <div className="absolute top-4 left-4">
             <div className="p-3 bg-white/20 backdrop-blur-sm rounded-lg">
               <Zap className="h-6 w-6 text-white" />
             </div>
           </div>
 
-          {/* Featured Badge */}
+          {/* Badge de destaque */}
           {category.featured && (
             <div className="absolute top-4 right-4">
               <div className="px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs text-white font-medium">
@@ -57,25 +52,29 @@ export default function CategoryCard({ category, className = "" }: CategoryCardP
           )}
         </div>
 
-        {/* Content */}
+        {/* Conteúdo */}
         <div className="p-6 bg-white">
           <h3 className="text-lg font-bold text-gray-900 mb-2">
             {category.name}
           </h3>
-          
+
           {category.short_description && (
             <p className="text-gray-600 text-sm mb-3 line-clamp-2">
               {category.short_description}
             </p>
           )}
 
-          {/* Stats */}
+          {/* Estatísticas - troca para dados reais quando o backend mandar */}
           <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-            <span>{mockData.productCount} produtos</span>
-            <span>{mockData.companyCount} empresas</span>
+            <span>
+              {(category as any).product_count ?? fallbackProductCount} produtos
+            </span>
+            <span>
+              {(category as any).company_count ?? fallbackCompanyCount} empresas
+            </span>
           </div>
 
-          {/* Action */}
+          {/* Botão de ação */}
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-orange-600">
               Explorar categoria
@@ -89,7 +88,7 @@ export default function CategoryCard({ category, className = "" }: CategoryCardP
           </div>
         </div>
 
-        {/* Hover Effect Overlay */}
+        {/* Hover Effect */}
         <motion.div
           className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-yellow-500/5 pointer-events-none"
           initial={{ opacity: 0 }}

@@ -198,21 +198,22 @@ export const reviewsApi = {
 
 // Categories API
 export const categoriesApi = {
-  getAll: (): Promise<Category[]> => fetchApi('/categories'),
-  getById: (id: number): Promise<Category> => fetchApi(`/categories/${id}`),
+  getAll: (): Promise<Category[]> => fetchApi('/categorys'), // backend está no plural com Y
+  getById: (id: number): Promise<Category> => fetchApi(`/categorys/${id}`),
   create: (category: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<Category> =>
-    fetchApi('/categories', {
+    fetchApi('/categorys', {
       method: 'POST',
       body: JSON.stringify({ category }),
     }),
   update: (id: number, category: Partial<Category>): Promise<Category> =>
-    fetchApi(`/categories/${id}`, {
+    fetchApi(`/categorys/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ category }),
     }),
   delete: (id: number): Promise<void> =>
-    fetchApi(`/categories/${id}`, { method: 'DELETE' }),
+    fetchApi(`/categorys/${id}`, { method: 'DELETE' }),
 };
+
 
 // Plans API
 export const plansApi = {
