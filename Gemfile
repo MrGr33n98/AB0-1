@@ -83,3 +83,6 @@ gem "faker", "~> 3.5"
 gem "dotenv-rails", "~> 3.1"
 gem "jwt", "~> 3.1"
 gem "active_model_serializers", "~> 0.10.15"
+
+# Add this line to your Gemfile
+gem 'rack-cors'
