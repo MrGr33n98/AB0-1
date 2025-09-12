@@ -1,30 +1,28 @@
 ActiveAdmin.register Category do
-  permit_params :name, :description, :banner, :seo_url, :seo_title, :short_description, :parent_id, :kind, :status, :featured
-
-  filter :name_cont, label: 'Name'
-  filter :description_cont, label: 'Description'
-  filter :short_description_cont, label: 'Short Description'
-  filter :seo_title_cont, label: 'SEO Title'
-  filter :seo_url_cont, label: 'SEO URL'
-  filter :kind, as: :select
-  filter :status, as: :select
-  filter :featured, as: :boolean
+  # Permit params for categories
+  permit_params :name, :description, :featured, :banner_url, :seo_url, :seo_title, :short_description, :parent_id, :kind, :status, company_ids: []
+  
+  # Define filters
+  filter :name
+  filter :description
+  filter :featured
+  filter :status
   filter :created_at
-  filter :updated_at
   
   form do |f|
     f.inputs do
       f.input :name
       f.input :description
       f.input :short_description
-      f.input :seo_title
       f.input :seo_url
-      f.input :parent_id, as: :select, collection: Category.all.map { |c| [c.name, c.id] }
-      f.input :kind
-      f.input :status
+      f.input :seo_title
       f.input :featured
-      f.input :banner, as: :file, hint: f.object.banner.attached? ? 
-        image_tag(f.object.banner.variant(resize_to_limit: [300, 200])) : "Nenhum banner anexado"
+      f.input :status, as: :select, collection: ['active', 'inactive']
+      f.input :kind, as: :select, collection: ['main', 'sub']
+      f.input :parent_id, as: :select, collection: Category.where.not(id: f.object.id).map { |c| [c.name, c.id] }, include_blank: 'None'
+      
+      # Add companies association
+      f.input :companies, as: :check_boxes
     end
     f.actions
   end
@@ -34,19 +32,39 @@ ActiveAdmin.register Category do
       row :name
       row :description
       row :short_description
-      row :seo_title
       row :seo_url
-      row :parent
-      row :kind
-      row :status
+      row :seo_title
       row :featured
-      row :banner do |category|
-        if category.banner.attached?
-          image_tag category.banner.variant(resize_to_limit: [600, 400])
-        end
-      end
+      row :status
+      row :kind
+      row :parent_id
       row :created_at
       row :updated_at
+      
+      # Display associated companies
+      row :companies do |category|
+        category.companies.map do |company|
+          link_to company.name, admin_company_path(company)
+        end.join(', ').html_safe
+      end
     end
+  end
+  
+  index do
+    selectable_column
+    id_column
+    column :name
+    column :description
+    column :featured
+    column :status
+    column :kind
+    column :created_at
+    
+    # Show company count in the index
+    column "Companies" do |category|
+      link_to "#{category.companies.count} companies", admin_category_path(category)
+    end
+    
+    actions
   end
 end

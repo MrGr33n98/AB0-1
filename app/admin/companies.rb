@@ -1,28 +1,24 @@
 ActiveAdmin.register Company do
-  # Update the permitted parameters to match your actual model attributes
+  # Your existing permit_params
   permit_params :name, :description, :website, :phone, :address, category_ids: []
   
-  # Configuração de filtros personalizados
+  # Explicitly define filters to avoid the error
   filter :name
   filter :description
   filter :website
   filter :phone
   filter :address
   filter :created_at
-  
-  # Filtro personalizado para categorias
-  filter :categories, label: 'Categories'
+  # Remove the automatic categories filter that's causing the error
+  remove_filter :categories
   
   form do |f|
     f.inputs do
-      # Only include fields that exist in your Company model
       f.input :name
-      # Remove email since it doesn't exist
       f.input :description
       f.input :website
       f.input :phone
       f.input :address
-      # Remove city, state, zip, country if they don't exist
       
       # Add categories checkbox
       f.input :categories, as: :check_boxes
