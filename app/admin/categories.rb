@@ -1,6 +1,6 @@
 ActiveAdmin.register Category do
   # Permit params for categories
-  permit_params :name, :description, :featured, :banner_url, :seo_url, :seo_title, :short_description, :parent_id, :kind, :status, company_ids: []
+  permit_params :name, :description, :featured, :banner, :seo_url, :seo_title, :short_description, :parent_id, :kind, :status, company_ids: []
   
   # Define filters
   filter :name
@@ -21,6 +21,9 @@ ActiveAdmin.register Category do
       f.input :kind, as: :select, collection: ['main', 'sub']
       f.input :parent_id, as: :select, collection: Category.where.not(id: f.object.id).map { |c| [c.name, c.id] }, include_blank: 'None'
       
+      # Add banner image upload
+      f.input :banner, as: :file, hint: f.object.banner.attached? ? image_tag(url_for(f.object.banner), style: 'max-width: 300px') : content_tag(:span, "No banner uploaded yet")
+      
       # Add companies association
       f.input :companies, as: :check_boxes
     end
@@ -40,6 +43,15 @@ ActiveAdmin.register Category do
       row :parent_id
       row :created_at
       row :updated_at
+      
+      # Display banner image
+      row :banner do |category|
+        if category.banner.attached?
+          image_tag url_for(category.banner), style: 'max-width: 300px'
+        else
+          "No banner uploaded"
+        end
+      end
       
       # Display associated companies
       row :companies do |category|

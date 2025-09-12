@@ -4,18 +4,10 @@ class Category < ApplicationRecord
   has_one_attached :banner
 
   def banner_url
-    return nil unless banner.attached?
-    begin
-      # Verificar se as configurações de host estão definidas
-      if Rails.application.routes.default_url_options[:host].present?
-        Rails.application.routes.url_helpers.url_for(banner)
-      else
-        # Se não houver host configurado, registrar erro e retornar nil
-        Rails.logger.error("Host not configured for URL generation")
-        nil
-      end
-    rescue => e
-      Rails.logger.error("Error generating banner URL: #{e.message}")
+    if banner.attached?
+      # Use url_for instead of rails_blob_url to ensure we get a proper URL
+      Rails.application.routes.url_helpers.url_for(banner)
+    else
       nil
     end
   end
