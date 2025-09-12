@@ -90,4 +90,10 @@ Rails.application.configure do
 
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
+  
+  # Configure host for URL generation (needed for Active Storage URLs)
+  Rails.application.routes.default_url_options = {
+    host: ENV['APP_HOST'] || 'example.com',
+    protocol: 'https'
+  }
 end

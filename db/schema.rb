@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_09_11_072250) do
+ActiveRecord::Schema[7.0].define(version: 2025_09_11_200000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -140,6 +140,13 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_11_072250) do
     t.boolean "featured"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "categories_companies", id: false, force: :cascade do |t|
+    t.integer "company_id", null: false
+    t.integer "category_id", null: false
+    t.index ["category_id", "company_id"], name: "index_categories_companies_on_category_id_and_company_id"
+    t.index ["company_id", "category_id"], name: "index_categories_companies_on_company_id_and_category_id"
   end
 
   create_table "categories_products", id: false, force: :cascade do |t|

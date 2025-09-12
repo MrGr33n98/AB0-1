@@ -67,4 +67,11 @@ Rails.application.configure do
 
   # Uncomment if you wish to allow Action Cable access from any origin.
   # config.action_cable.disable_request_forgery_protection = true
+  
+  # Configure host for URL generation (needed for Active Storage URLs)
+  config.hosts << "localhost"
+  Rails.application.routes.default_url_options = {
+    host: 'localhost',
+    port: 3001
+  }
 end

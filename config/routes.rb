@@ -20,22 +20,31 @@ Rails.application.routes.draw do
   root 'pages#home'
   get 'home', to: 'pages#home'
   get 'about', to: 'pages#about'
+  
+  # =============================================
+  # Blog Posts
+  # =============================================
+  resources :posts
 
   # =============================================
   # API Routes
   # =============================================
-  # In your routes.rb file, make sure you have:
   namespace :api do
     namespace :v1 do
       # This will route both /api/v1/categorys and /api/v1/categories
       # to the same CategoriesController
       resources :categorys, controller: 'categories'
-      resources :categories
+      resources :categories, only: [:index, :show]
       
       # Other API resources
       resources :companies
       resources :products
       resources :leads
     end
+    
+    # Direct API routes (without v1)
+    resources :categories, only: [:index, :show]
+    resources :companies, only: [:index, :show]
+    resources :products, only: [:index, :show]
   end
 end

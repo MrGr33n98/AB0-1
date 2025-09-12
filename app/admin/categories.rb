@@ -1,5 +1,16 @@
 ActiveAdmin.register Category do
   permit_params :name, :description, :banner, :seo_url, :seo_title, :short_description, :parent_id, :kind, :status, :featured
+
+  filter :name_cont, label: 'Name'
+  filter :description_cont, label: 'Description'
+  filter :short_description_cont, label: 'Short Description'
+  filter :seo_title_cont, label: 'SEO Title'
+  filter :seo_url_cont, label: 'SEO URL'
+  filter :kind, as: :select
+  filter :status, as: :select
+  filter :featured, as: :boolean
+  filter :created_at
+  filter :updated_at
   
   form do |f|
     f.inputs do

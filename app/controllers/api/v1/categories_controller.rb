@@ -1,61 +1,66 @@
-class Api::V1::CategoriesController < ApplicationController
+class Api::V1::CategoriesController < Api::V1::BaseController
   before_action :set_category, only: [:show, :update, :destroy]
 
-  # GET /api/v1/categories
   def index
-    categories = Category.all
-    render json: categories, status: :ok
+    @categories = Category.all
+    render json: @categories
+  rescue => e
+    Rails.logger.error("Categories error: #{e.message}")
+    render json: { error: "Erro interno no servidor" }, status: :internal_server_error
   end
 
-  # GET /api/v1/categories/:id
   def show
-    render json: @category, status: :ok
+    render json: @category
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Categoria não encontrada" }, status: :not_found
+  rescue => e
+    Rails.logger.error("Categories error: #{e.message}")
+    render json: { error: "Erro interno no servidor" }, status: :internal_server_error
   end
 
-  # POST /api/v1/categories
   def create
-    category = Category.new(category_params)
-    if category.save
-      render json: category, status: :created
-    else
-      render json: { errors: category.errors.full_messages }, status: :unprocessable_entity
-    end
-  end
+    @category = Category.new(category_params)
 
-  # PUT/PATCH /api/v1/categories/:id
-  def update
-    if @category.update(category_params)
-      render json: @category, status: :ok
+    if @category.save
+      render json: @category, status: :created
     else
       render json: { errors: @category.errors.full_messages }, status: :unprocessable_entity
     end
+  rescue => e
+    Rails.logger.error("Categories error: #{e.message}")
+    render json: { error: "Erro interno no servidor" }, status: :internal_server_error
   end
 
-  # DELETE /api/v1/categories/:id
+  def update
+    if @category.update(category_params)
+      render json: @category
+    else
+      render json: { errors: @category.errors.full_messages }, status: :unprocessable_entity
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Categoria não encontrada" }, status: :not_found
+  rescue => e
+    Rails.logger.error("Categories error: #{e.message}")
+    render json: { error: "Erro interno no servidor" }, status: :internal_server_error
+  end
+
   def destroy
     @category.destroy
-    head :no_content
+    render json: { message: "Categoria excluída" }, status: :ok
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Categoria não encontrada" }, status: :not_found
+  rescue => e
+    Rails.logger.error("Categories error: #{e.message}")
+    render json: { error: "Erro interno no servidor" }, status: :internal_server_error
   end
 
   private
 
   def set_category
     @category = Category.find(params[:id])
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: "Category not found" }, status: :not_found
   end
 
   def category_params
-    params.require(:category).permit(
-      :name,
-      :seo_url,
-      :seo_title,
-      :short_description,
-      :description,
-      :parent_id,
-      :kind,
-      :status,
-      :featured
-    )
+    params.require(:category).permit(:name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured)
   end
 end

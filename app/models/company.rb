@@ -9,6 +9,13 @@ class Company < ApplicationRecord
   end
 
   def self.ransackable_associations(auth_object = nil)
-    ["products"]
+    ["products", "categories"] # Added categories to the ransackable associations
   end
+
+  # Add this to your Company model if it doesn't exist
+  # Change this line
+  has_and_belongs_to_many :categories, join_table: 'categories_companies'
+  # or
+  # has_many :company_categories
+  # has_many :categories, through: :company_categories
 end

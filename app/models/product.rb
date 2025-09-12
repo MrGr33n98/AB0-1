@@ -8,6 +8,15 @@ class Product < ApplicationRecord
   # Add Active Storage for product image
   has_one_attached :image
   
+  # Add validations
+  validates :name, :price, presence: true
+  
+  # Method to get image URL
+  def image_url
+    return nil unless image.attached?
+    Rails.application.routes.url_helpers.url_for(image)
+  end
+  
   # Add ransackable attributes for ActiveAdmin
   def self.ransackable_attributes(auth_object = nil)
     ["created_at", "id", "name", "description", "price", "updated_at", "company_id",
