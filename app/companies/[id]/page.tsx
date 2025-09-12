@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title: `${company.name} - Empresa de Energia Solar`,
         description: `${company.description} - Localizada em ${company.address}. Telefone: ${company.phone}`,
         url: `https://www.comparesolar.com/companies/${company.id}`,
-        type: 'business.business',
+        type: 'website',
         siteName: 'Compare Solar',
         locale: 'pt_BR',
       },

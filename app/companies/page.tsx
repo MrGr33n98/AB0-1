@@ -20,16 +20,16 @@ export default function CompaniesPage() {
   // Filter and sort companies
   const filteredCompanies = companies
     .filter(company => {
-      const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          company.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = (company.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                          (company.description?.toLowerCase() || '').includes(searchTerm.toLowerCase());
       const matchesLocation = locationFilter === 'all' || 
-                            company.address?.toLowerCase().includes(locationFilter.toLowerCase());
+                            (company.address?.toLowerCase() || '').includes(locationFilter.toLowerCase());
       return matchesSearch && matchesLocation;
     })
     .sort((a, b) => {
       switch (sortBy) {
         case 'name':
-          return a.name.localeCompare(b.name);
+          return (a.name || '').localeCompare(b.name || '');
         case 'location':
           return (a.address || '').localeCompare(b.address || '');
         default:

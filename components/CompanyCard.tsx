@@ -1,99 +1,94 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Zap, ArrowRight } from 'lucide-react';
-import { Category } from '@/lib/api';
+import { Star, MapPin, MessageCircle, Phone, Globe } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Company } from '@/lib/api';
 
-interface CategoryCardProps {
-  category: Category;
+interface CompanyCardProps {
+  company: Company;
   className?: string;
 }
 
-export default function CategoryCard({ category, className = "" }: CategoryCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
+export default function CompanyCard({ company, className = '' }: CompanyCardProps) {
+  const mockData = {
+    rating: 4.7, // Valor fixo para se assemelhar à imagem
+    reviewCount: 134, // Valor fixo para se assemelhar à imagem
+    isVerified: true,
+    isTopRated: true,
+    logo: company.logo_url || `https://source.unsplash.com/random/100x100?logo&sig=${company.id}`,
+    // A imagem de referência não mostra um banner, então vamos ajustar a altura
+  };
 
   return (
     <motion.div
-      className={`relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 hover:border-orange-200 ${className}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      whileHover={{ y: -4 }}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      whileHover={{ y: -6, scale: 1.01 }}
+      transition={{ duration: 0.25, ease: "easeInOut" }}
+      className={`bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 h-full flex flex-col hover:shadow-xl transition-all duration-300 ${className}`}
     >
-      <Link href={`/categories/${category.id}`}>
-        {/* Background */}
-        <div className="relative h-32 bg-gradient-to-br from-orange-400 to-yellow-400 overflow-hidden">
-          <div className="absolute inset-0 bg-white/10 backdrop-blur-sm">
-            <div className="absolute inset-0 bg-grid-pattern opacity-20"></div>
-          </div>
+      {/* Banner/Header Section - Baseado na imagem */}
+      <div className="relative w-full h-32 bg-orange-100/50">
+        {/* Placeholder para a logo SolarReview */}
+        <div className="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
+            {/* O "SolarReview" é parte do design, não da lógica. Usando um placeholder. */}
+            <span className="text-5xl font-extrabold text-orange-200">SolarReview</span>
+        </div>
+      </div>
 
-          {/* Icon */}
-          <div className="absolute top-4 left-4">
-            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-lg">
-              <Zap className="h-6 w-6 text-white" />
-            </div>
-          </div>
-
-          {/* Featured Badge */}
-          {category.featured && (
-            <div className="absolute top-4 right-4">
-              <div className="px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs text-white font-medium">
-                Destaque
-              </div>
-            </div>
-          )}
+      {/* Main Content */}
+      <div className="p-6 pt-0 relative flex flex-col">
+        {/* Company Logo - Posicionada com base na imagem */}
+        <div className="absolute -top-12 left-6">
+          <img
+            src={mockData.logo}
+            alt={`${company.name} logo`}
+            className="w-24 h-24 rounded-full border-4 border-white shadow-lg bg-white object-cover"
+          />
         </div>
 
-        {/* Content */}
-        <div className="p-6 bg-white">
-          <h3 className="text-lg font-bold text-gray-900 mb-2">
-            {category.name}
-          </h3>
+        {/* Company Info */}
+        <div className="flex flex-col mt-16 text-left">
+          <Link href={`/companies/${company.id}`} className="block">
+            <h3 className="text-xl font-bold text-gray-900 leading-tight hover:text-orange-600 transition-colors">
+              {company.name}
+            </h3>
+          </Link>
+          <p className="text-gray-500 text-sm mb-2">By Felipe Henrique</p> {/* Nome de mock como na imagem */}
+          
+          {/* Rating */}
+          <div className="flex items-center text-sm mb-4">
+            <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
+            <span className="font-bold text-gray-800">{mockData.rating.toFixed(1)}</span>
+            <span className="ml-1 text-gray-500">({mockData.reviewCount} Reviews)</span>
+          </div>
 
-          {category.short_description && (
-            <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-              {category.short_description}
-            </p>
-          )}
-
-          {/* Caso o backend já traga contadores */}
-          {("product_count" in category || "company_count" in category) && (
-            <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-              {"product_count" in category && (
-                <span>{(category as any).product_count} produtos</span>
-              )}
-              {"company_count" in category && (
-                <span>{(category as any).company_count} empresas</span>
-              )}
-            </div>
-          )}
-
-          {/* Action */}
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-orange-600">
-              Explorar categoria
-            </span>
-            <motion.div
-              animate={{ x: isHovered ? 4 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ArrowRight className="h-4 w-4 text-orange-600" />
-            </motion.div>
+          {/* Address */}
+          <div className="flex items-center text-sm text-gray-500 mb-6">
+            <MapPin className="w-4 h-4 mr-2 text-gray-400" />
+            <span className="truncate">{company.address}</span>
           </div>
         </div>
-
-        {/* Hover Effect */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-yellow-500/5 pointer-events-none"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isHovered ? 1 : 0 }}
-          transition={{ duration: 0.2 }}
-        />
-      </Link>
+        
+        {/* CTA Buttons */}
+        <div className="mt-auto flex flex-col space-y-3">
+          <Link href={`/companies/${company.id}`} className="w-full">
+            <Button className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-semibold py-3 px-4 rounded-xl hover:from-orange-600 hover:to-yellow-600 transition-all shadow-md">
+              Ver Perfil
+            </Button>
+          </Link>
+          <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-md">
+            Solicitar Orçamento
+          </Button>
+          <Button 
+            variant="outline"
+            className="w-full text-orange-600 border-orange-200 hover:bg-orange-50 font-semibold py-3 px-4 rounded-xl transition-colors"
+          >
+            Avalie essa empresa
+          </Button>
+        </div>
+      </div>
     </motion.div>
   );
 }

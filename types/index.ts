@@ -10,3 +10,15 @@ export interface Category {
   status?: string;
   featured?: boolean;
 }
+
+export interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  category: Category;
+  company: Company;
+}

@@ -1,29 +1,49 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { categoriesApi, Category } from '@/lib/api';
+import { useState, useEffect } from 'react';
+import { categoriesApi } from '@/lib/api';
+import { Category } from './useCategories';
 
-export function useCategory(id: number | null) {
+export function useCategory(id: number) {
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCategory = useCallback(async (categoryId: number) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await categoriesApi.getById(categoryId);
-      setCategory(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch category');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    if (id) fetchCategory(id);
-  }, [id, fetchCategory]);
+    const fetchCategory = async () => {
+      if (!id || isNaN(id)) {
+        setError('Invalid category ID');
+        setLoading(false);
+        return;
+      }
 
-  return { category, loading, error, refetch: () => id && fetchCategory(id) };
+      try {
+        setLoading(true);
+        const data = await categoriesApi.getById(id);
+        console.log('Category data:', data); // For debugging
+        
+        // Ensure products array exists even if API doesn't return it
+        if (!data.products) {
+          data.products = [];
+        }
+        
+        // Ensure companies array exists even if API doesn't return it
+        if (!data.companies) {
+          data.companies = [];
+        }
+        
+        setCategory(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching category:', err);
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategory();
+  }, [id]);
+
+  return { category, loading, error };
 }

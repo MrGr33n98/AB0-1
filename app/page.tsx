@@ -1,18 +1,20 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import Hero from '@/components/Hero';
-import CompanyCard from '@/components/CompanyCard';
-import CategoryCard from '@/components/CategoryCard';
-import ReviewCard from '@/components/ReviewCard';
-import { useCompanies } from '@/hooks/useCompanies';
-import { useCategories } from '@/hooks/useCategories';
-import { reviewsApi } from '@/lib/api';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { useCompanies } from '@/hooks/useCompanies';
+import { useCategories } from '@/hooks/useCategories'; // This line might be the issue
+import CategoryCard from '@/components/CategoryCard';
+import CompanyCard from '@/components/CompanyCard';
+import ReviewCard from '@/components/ReviewCard';
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
+
+import Hero from '@/components/Hero';
+import { reviewsApi } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Star, Zap, Shield, Users, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 
 export default function Home() {
   const { companies, loading: companiesLoading } = useCompanies();
@@ -20,20 +22,36 @@ export default function Home() {
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
 
+  // In your Home component, replace the reviews fetching with mock data temporarily
   useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        const data = await reviewsApi.getAll();
-        setReviews(data.slice(0, 6)); // Show only first 6 reviews
-      } catch (error) {
-        console.error('Error fetching reviews:', error);
-      } finally {
-        setReviewsLoading(false);
-      }
-    };
-
-    fetchReviews();
-  }, []);
+  // Comment out the API call for now
+  // const fetchReviews = async () => {
+  //   try {
+  //     const data = await reviewsApi.getAll();
+  //     setReviews(data.slice(0, 6)); // Show only first 6 reviews
+  //   } catch (error) {
+  //     console.error('Error fetching reviews:', error);
+  //   } finally {
+  //     setReviewsLoading(false);
+  //   }
+  // };
+  
+  // fetchReviews();
+  
+  // Use mock data instead
+  setReviews([
+    {
+      id: 1,
+      title: "Great service",
+      content: "The installation was quick and professional.",
+      rating: 5,
+      user: { name: "John Doe" },
+      company: { name: "Solar Solutions" }
+    },
+    // Add more mock reviews as needed
+  ]);
+  setReviewsLoading(false);
+}, []);
 
   const featuredCompanies = companies.slice(0, 6);
   const featuredCategories = categories.filter(cat => cat.featured).slice(0, 4);

@@ -1,16 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Star, MapPin, Filter, Grid, List, Search } from 'lucide-react';
-// Make sure you're importing useCategory correctly
-import { useCategories } from '@/hooks/useCategories';
+import { Filter, Grid, List, Search } from 'lucide-react';
 import { useCompanies } from '@/hooks/useCompanies';
 import { useProducts } from '@/hooks/useProducts';
 import CompanyCard from '@/components/CompanyCard';
 import ProductCard from '@/components/ProductCard';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -31,57 +28,45 @@ export default function CategoryDetailPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeTab, setActiveTab] = useState('companies');
 
-  // Mock data for demo
-  const mockData = {
-    image: 'https://images.pexels.com/photos/9875456/pexels-photo-9875456.jpeg?auto=compress&cs=tinysrgb&w=1200&h=400&fit=crop',
-    stats: {
-      companies: Math.floor(Math.random() * 50) + 10,
-      products: Math.floor(Math.random() * 200) + 50,
-      avgRating: 4.6,
-      projects: Math.floor(Math.random() * 1000) + 500,
-    }
-  };
+  const relatedCompanies = category?.companies || [];
+  const relatedProducts = category?.products || [];
 
-  // Filter companies and products related to this category
-  const relatedCompanies = companies.filter(company => 
-    company.name.toLowerCase().includes(category?.name.toLowerCase() || '') ||
-    company.description.toLowerCase().includes(category?.name.toLowerCase() || '')
-  );
-
-  const relatedProducts = products; // In real app, filter by category_id
-
-  // Apply search and sort
   const filteredCompanies = relatedCompanies
     .filter(company => 
-      company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      company.description.toLowerCase().includes(searchTerm.toLowerCase())
+      company && company.name && company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (company && company.description && company.description.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     .sort((a, b) => {
-      switch (sortBy) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        default:
-          return 0;
-      }
+      if (!a || !b || !a.name || !b.name) return 0;
+      if (sortBy === 'name') return a.name.localeCompare(b.name);
+      return 0;
     });
 
   const filteredProducts = relatedProducts
     .filter(product => 
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase())
+      product && product.name && product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product && product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     .sort((a, b) => {
+      if (!a || !b) return 0;
       switch (sortBy) {
         case 'name':
-          return a.name.localeCompare(b.name);
+          return a.name?.localeCompare(b.name || '') || 0;
         case 'price-low':
-          return a.price - b.price;
+          return (a.price || 0) - (b.price || 0);
         case 'price-high':
-          return b.price - a.price;
+          return (b.price || 0) - (a.price || 0);
         default:
           return 0;
       }
     });
+
+  const stats = {
+    companies: filteredCompanies.length,
+    products: filteredProducts.length,
+    avgRating: 4.6,
+    projects: Math.floor(Math.random() * 1000) + 500,
+  };
 
   if (categoryLoading) {
     return (
@@ -112,57 +97,58 @@ export default function CategoryDetailPage() {
     );
   }
 
+  const bannerImage = category.banner_url || null;
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="relative h-80 bg-gradient-to-r from-orange-500 to-yellow-500 overflow-hidden">
-        <div className="absolute inset-0 bg-black/20">
-          <img
-            src={mockData.image}
-            alt={category.name}
-            className="w-full h-full object-cover mix-blend-overlay"
-          />
-        </div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-white max-w-3xl"
-          >
-            <div className="flex items-center space-x-3 mb-4">
-              <h1 className="text-4xl md:text-5xl font-bold">{category.name}</h1>
-              {category.featured && (
-                <Badge className="bg-white/20 text-white border-white/30">
-                  Destaque
-                </Badge>
+      <section className="relative h-72 flex justify-center items-center px-4">
+        <div 
+          className="w-full max-w-6xl h-full rounded-2xl overflow-hidden bg-cover bg-center relative"
+          style={bannerImage ? { backgroundImage: `url(${bannerImage})` } : { backgroundImage: 'linear-gradient(to right, #f59e0b, #f97316)' }}
+        >
+          <div className="absolute inset-0 bg-black/30 rounded-2xl"></div>
+          
+          <div className="relative h-full flex items-center px-6">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-white max-w-3xl"
+            >
+              <div className="flex items-center space-x-3 mb-4">
+                <h1 className="text-4xl md:text-5xl font-bold">{category.name}</h1>
+                {category.featured && (
+                  <Badge className="bg-white/20 text-white border-white/30">
+                    Destaque
+                  </Badge>
+                )}
+              </div>
+              
+              {category.description && (
+                <p className="text-xl mb-6 text-white/90">{category.description}</p>
               )}
-            </div>
-            
-            {category.description && (
-              <p className="text-xl mb-6 text-white/90">{category.description}</p>
-            )}
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold">{mockData.stats.companies}</div>
-                <div className="text-sm text-white/80">Empresas</div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{stats.companies}</div>
+                  <div className="text-sm text-white/80">Empresas</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{stats.products}</div>
+                  <div className="text-sm text-white/80">Produtos</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{stats.avgRating}</div>
+                  <div className="text-sm text-white/80">Avaliação</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{stats.projects}+</div>
+                  <div className="text-sm text-white/80">Projetos</div>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">{mockData.stats.products}</div>
-                <div className="text-sm text-white/80">Produtos</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">{mockData.stats.avgRating}</div>
-                <div className="text-sm text-white/80">Avaliação</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">{mockData.stats.projects}+</div>
-                <div className="text-sm text-white/80">Projetos</div>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
@@ -170,7 +156,6 @@ export default function CategoryDetailPage() {
       <section className="py-8 bg-white border-b border-gray-200 sticky top-16 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
-            {/* Search */}
             <div className="flex-1 max-w-md">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -184,7 +169,6 @@ export default function CategoryDetailPage() {
               </div>
             </div>
 
-            {/* Filters */}
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-full sm:w-48">
@@ -269,7 +253,7 @@ export default function CategoryDetailPage() {
                     transition={{ duration: 0.3, delay: index * 0.05 }}
                     layout
                   >
-                    <CompanyCard category={category} {...company} />
+                    <CompanyCard company={company} />
                   </motion.div>
                 ))}
               </motion.div>
