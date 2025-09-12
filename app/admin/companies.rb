@@ -1,6 +1,6 @@
 ActiveAdmin.register Company do
   # Your existing permit_params
-  permit_params :name, :description, :website, :phone, :address, category_ids: []
+  permit_params :name, :description, :website, :phone, :address, :banner, category_ids: []
   
   # Explicitly define filters to avoid the error
   filter :name
@@ -20,6 +20,11 @@ ActiveAdmin.register Company do
       f.input :phone
       f.input :address
       
+      # Add banner upload field
+      f.input :banner, as: :file, hint: f.object.banner.attached? ? 
+        image_tag(url_for(f.object.banner), style: 'max-width:300px;max-height:200px') : 
+        content_tag(:span, "No banner uploaded yet")
+      
       # Add categories checkbox
       f.input :categories, as: :check_boxes
     end
@@ -31,10 +36,12 @@ ActiveAdmin.register Company do
     selectable_column
     id_column
     column :name
-    # Remove email
     column :website
     column :phone
     column :created_at
+    column "Banner" do |company|
+      company.banner.attached? ? image_tag(url_for(company.banner), style: 'max-width:100px;max-height:70px') : "No banner"
+    end
     actions
   end
   
@@ -42,14 +49,21 @@ ActiveAdmin.register Company do
   show do
     attributes_table do
       row :name
-      # Remove email
       row :description
       row :website
       row :phone
       row :address
-      # Remove city, state, zip, country
       row :created_at
       row :updated_at
+      
+      # Add banner display
+      row :banner do |company|
+        if company.banner.attached?
+          image_tag url_for(company.banner), style: 'max-width:300px;max-height:200px'
+        else
+          "No banner uploaded"
+        end
+      end
       
       # Add categories display
       row :categories do |company|

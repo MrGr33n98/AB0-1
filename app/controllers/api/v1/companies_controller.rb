@@ -1,16 +1,18 @@
 class Api::V1::CompaniesController < Api::V1::BaseController
+  include Rails.application.routes.url_helpers  # necessário para url_for
+
   before_action :set_company, only: [:show, :update, :destroy]
 
   def index
     @companies = Company.all
-    render json: @companies
+    render json: @companies.map { |company| company_json(company) }
   rescue => e
     Rails.logger.error("Companies error: #{e.message}")
     render json: { error: "Erro interno no servidor" }, status: :internal_server_error
   end
 
   def show
-    render json: @company
+    render json: company_json(@company)
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Empresa não encontrada" }, status: :not_found
   rescue => e
@@ -22,7 +24,7 @@ class Api::V1::CompaniesController < Api::V1::BaseController
     @company = Company.new(company_params)
 
     if @company.save
-      render json: @company, status: :created
+      render json: company_json(@company), status: :created
     else
       render json: { errors: @company.errors.full_messages }, status: :unprocessable_entity
     end
@@ -33,7 +35,7 @@ class Api::V1::CompaniesController < Api::V1::BaseController
 
   def update
     if @company.update(company_params)
-      render json: @company
+      render json: company_json(@company)
     else
       render json: { errors: @company.errors.full_messages }, status: :unprocessable_entity
     end
@@ -63,6 +65,13 @@ class Api::V1::CompaniesController < Api::V1::BaseController
   end
 
   def company_params
-    params.require(:company).permit(:name, :description, :website, :phone, :address)
+    params.require(:company).permit(:name, :description, :website, :phone, :address, :banner, category_ids: [])
+  end
+
+  # 🔧 Helper para montar JSON customizado
+  def company_json(company)
+    company.as_json.merge(
+      banner_url: company.banner.attached? ? url_for(company.banner) : nil
+    )
   end
 end
