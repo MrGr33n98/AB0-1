@@ -2,10 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Search, Menu, X, Zap } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import SearchBar from './SearchBar';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
@@ -29,34 +27,30 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="p-2 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-lg">
-              <Zap className="h-6 w-6 text-white" />
+          {/* Logo and Desktop Navigation */}
+          <div className="flex items-center space-x-8">
+            <Link href="/" className="flex items-center">
+              <img 
+                src="/images/logo.png" 
+                alt="Logo" 
+                className="max-h-20 w-auto object-contain"
+              />
+            </Link>
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-8">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-gray-600 hover:text-orange-600 font-medium transition-colors duration-200"
+                >
+                  {link.label}
+                </Link>
+              ))}
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-orange-600 to-yellow-600 bg-clip-text text-transparent">
-              Compare Solar
-            </span>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-gray-600 hover:text-orange-600 font-medium transition-colors duration-200 hover:underline underline-offset-4"
-              >
-                {link.label}
-              </Link>
-            ))}
           </div>
-
-          {/* Search Bar (Desktop) */}
-          <div className="hidden lg:block flex-1 max-w-md mx-8">
-            <SearchBar />
-          </div>
-
+          
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             <Link href="/login">
@@ -82,11 +76,6 @@ export default function Navbar() {
               <Menu className="h-6 w-6" />
             )}
           </button>
-        </div>
-
-        {/* Mobile Search Bar */}
-        <div className="lg:hidden pb-4">
-          <SearchBar />
         </div>
       </div>
 

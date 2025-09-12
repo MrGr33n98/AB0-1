@@ -14,12 +14,10 @@ interface CompanyCardProps {
 
 export default function CompanyCard({ company, className = '' }: CompanyCardProps) {
   const mockData = {
-    rating: 4.7, // Valor fixo para se assemelhar à imagem
-    reviewCount: 134, // Valor fixo para se assemelhar à imagem
+    rating: 4.7,
+    reviewCount: 134,
     isVerified: true,
     isTopRated: true,
-    logo: company.logo_url || `https://source.unsplash.com/random/100x100?logo&sig=${company.id}`,
-    // A imagem de referência não mostra um banner, então vamos ajustar a altura
   };
 
   return (
@@ -28,23 +26,30 @@ export default function CompanyCard({ company, className = '' }: CompanyCardProp
       transition={{ duration: 0.25, ease: "easeInOut" }}
       className={`bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 h-full flex flex-col hover:shadow-xl transition-all duration-300 ${className}`}
     >
-      {/* Banner/Header Section - Baseado na imagem */}
-      <div className="relative w-full h-32 bg-orange-100/50">
-        {/* Placeholder para a logo SolarReview */}
-        <div className="absolute inset-0 flex items-center justify-end pr-4 opacity-5">
-            {/* O "SolarReview" é parte do design, não da lógica. Usando um placeholder. */}
-            <span className="text-5xl font-extrabold text-orange-200">SolarReview</span>
-        </div>
+      {/* Banner/Header Section */}
+      <div className="relative w-full h-32">
+        <img 
+          src={company.banner_url || "/images/compare-solar-v1.png"} 
+          alt={`${company.name} banner`}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.currentTarget.src = '/images/compare-solar-v1.png';
+          }}
+        />
       </div>
 
       {/* Main Content */}
       <div className="p-6 pt-0 relative flex flex-col">
-        {/* Company Logo - Posicionada com base na imagem */}
+        {/* Company Logo */}
         <div className="absolute -top-12 left-6">
           <img
-            src={mockData.logo}
+            src={company.logo_url || `/images/logo.png`}
             alt={`${company.name} logo`}
             className="w-24 h-24 rounded-full border-4 border-white shadow-lg bg-white object-cover"
+            onError={(e) => {
+              // Fallback to the main logo if the company logo URL fails to load
+              e.currentTarget.src = '/images/logo.png';
+            }}
           />
         </div>
 
@@ -55,7 +60,7 @@ export default function CompanyCard({ company, className = '' }: CompanyCardProp
               {company.name}
             </h3>
           </Link>
-          <p className="text-gray-500 text-sm mb-2">By Felipe Henrique</p> {/* Nome de mock como na imagem */}
+          <p className="text-gray-500 text-sm mb-2">By Felipe Henrique</p>
           
           {/* Rating */}
           <div className="flex items-center text-sm mb-4">

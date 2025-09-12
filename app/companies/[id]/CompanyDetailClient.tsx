@@ -107,43 +107,55 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                 <span className="text-gray-400 text-lg">Sem imagem de banner disponível</span>
               </div>
             )}
-            <div className="absolute inset-0 bg-black/30 rounded-2xl"></div>
           </div>
 
           {/* Company Info */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 -mt-24 z-10 relative">
-            <div className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
-              <h1 className="text-4xl font-extrabold text-gray-900 mb-2">{company.name}</h1>
-              <p className="text-lg text-gray-600">{company.description}</p>
-              
-              <div className="flex items-center mt-4 space-x-6">
-                <div className="flex flex-wrap gap-2">
-                  {mockData.badges.map((badge) => (
-                    <Badge 
-                      key={badge} 
-                      variant="default"
-                      className="bg-orange-100 text-orange-600 font-semibold border-orange-200"
-                    >
-                      {badge}
-                    </Badge>
-                  ))}
+            <div className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100 flex items-center">
+              {/* Company Logo */}
+              {company.logo_url && (
+                <div className="mr-6">
+                  <img 
+                    src={company.logo_url} 
+                    alt={`${company.name} logo`}
+                    className="w-24 h-24 rounded-full **object-cover** border-2 border-gray-100 shadow-sm"
+                  />
                 </div>
+              )}
+              
+              <div>
+                <h1 className="text-4xl font-extrabold text-gray-900 mb-2">{company.name}</h1>
+                <p className="text-lg text-gray-600">{company.description}</p>
                 
-                <div className="flex items-center">
-                  <div className="flex items-center mr-2">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-5 h-5 ${
-                          i < Math.floor(mockData.rating)
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
-                        }`}
-                      />
+                <div className="flex items-center mt-4 space-x-6">
+                  <div className="flex flex-wrap gap-2">
+                    {mockData.badges.map((badge) => (
+                      <Badge 
+                        key={badge} 
+                        variant="default"
+                        className="bg-orange-100 text-orange-600 font-semibold border-orange-200"
+                      >
+                        {badge}
+                      </Badge>
                     ))}
                   </div>
-                  <span className="text-xl font-bold text-gray-900">{mockData.rating}</span>
-                  <span className="text-gray-500 ml-1">({mockData.reviewCount} reviews)</span>
+                  
+                  <div className="flex items-center">
+                    <div className="flex items-center mr-2">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-5 h-5 ${
+                            i < Math.floor(mockData.rating)
+                              ? 'text-yellow-400 fill-current'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xl font-bold text-gray-900">{mockData.rating}</span>
+                    <span className="text-gray-500 ml-1">({mockData.reviewCount} reviews)</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -449,4 +461,4 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
       </section>
     </div>
   );
-}
+} 

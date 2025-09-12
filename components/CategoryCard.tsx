@@ -3,8 +3,20 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Zap, ArrowRight } from 'lucide-react';
-import { Category } from '@/lib/api';
+import { ArrowRight, Building2, Package } from 'lucide-react'; // Adicionei Building2 e Package para os ícones
+import Image from 'next/image';
+
+interface Category {
+  id: number;
+  name: string;
+  description?: string;
+  companies?: any[];
+  products?: any[];
+  banner_url?: string;
+}
+
+import { Button } from '@/components/ui/button'; // Certifique-se de que este Button seja flexível o suficiente para 'asChild'
+import { Badge } from '@/components/ui/badge'; // Adicionando Badge para um estilo mais moderno nas estatísticas
 
 interface CategoryCardProps {
   category: Category;
@@ -12,63 +24,86 @@ interface CategoryCardProps {
 }
 
 export default function CategoryCard({ category, className = "" }: CategoryCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
-  // Use actual counts if available, otherwise use fallbacks
-  const companyCount = category.companies?.length || 0;
-  const productCount = category.products?.length || 0;
-
-  // Updated banner style logic - only use the banner URL without gradient fallback
-  const bannerStyle = category?.banner_url 
-    ? { backgroundImage: `url(${category.banner_url})` }
-    : {};
+  const displayData = {
+    name: category?.name || 'Nome da Categoria',
+    description: category?.description || 'Explore nossos produtos e serviços de alta qualidade.',
+    companiesCount: category?.companies?.length || 0,
+    productsCount: category?.products?.length || 0,
+    banner_url: !imageError && category?.banner_url
+      ? category.banner_url
+      : "/images/compare-solar-v1.png" // Fallback image
+  };
 
   return (
     <motion.div
-      className={`relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 hover:border-orange-200 ${className}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      whileHover={{ y: -4 }}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      className={`group relative flex flex-col h-full overflow-hidden rounded-xl bg-white
+                  shadow-sm hover:shadow-lg transition-all duration-300
+                  border border-gray-200 hover:border-orange-400 ${className}`}
+      whileHover={{ y: -5, boxShadow: "0 15px 25px -5px rgba(0, 0, 0, 0.1), 0 5px 10px -5px rgba(0, 0, 0, 0.04)" }}
+      // Adicionando um gradiente de borda sutil ao hover para um toque extra
+      style={{
+        borderImageSlice: 1,
+        borderImageSource: "linear-gradient(to right, #fb923c, #fcd34d)", // Laranja para Amarelo
+        borderWidth: "1px",
+        borderStyle: "solid",
+        borderImage: "initial"
+      }}
     >
-      <Link href={`/categories/${category.id}`}>
-        {/* Background with banner image only */}
-        <div 
-          className="relative h-32 overflow-hidden bg-cover bg-center"
-          style={bannerStyle}
-        >
-          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm">
-            <div className="absolute inset-0 opacity-20"></div>
-          </div>
-
-          {/* Ícone */}
-          <div className="absolute top-4 left-4">
-            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-lg">
-              <Zap className="h-6 w-6 text-white" />
-            </div>
-          </div>
-
-          {/* Badge de destaque */}
-          {category.featured && (
-            <div className="absolute top-4 right-4">
-              <div className="px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs text-white font-medium">
-                Destaque
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Rest of the component remains unchanged */}
-        <div className="p-6 bg-white">
-          <h3 className="text-lg font-bold text-gray-900 mb-2">
-            {category.name}
-          </h3>
-
-          {/* Rest of the component... */}
-        </div>
+      <Link href={`/categories/${category?.id || ''}`} className="absolute inset-0 z-10" aria-label={`Ver detalhes da categoria ${displayData.name}`}>
+        {/* Link principal para toda a área do card */}
       </Link>
+
+      {/* IMAGEM DA CATEGORIA */}
+      <div className="relative h-44 w-full overflow-hidden flex-shrink-0">
+        <Image
+          src={displayData.banner_url}
+          alt={`Banner de ${displayData.name}`}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          style={{ objectFit: 'cover' }}
+          className="transition-transform duration-300 group-hover:scale-105"
+          onError={() => setImageError(true)}
+          priority={false} // Use priority para imagens acima da dobra, lazy para o resto
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+        {/* Adicione um overlay sutil para texto legível sobre a imagem */}
+      </div>
+
+      {/* CONTEÚDO DA CATEGORIA */}
+      <div className="p-5 flex flex-col flex-grow z-20"> {/* Z-index para conteúdo acima do link invisível */}
+        <h3 className="text-2xl font-extrabold text-gray-900 mb-2 leading-tight">
+          {displayData.name}
+        </h3>
+        <p className="text-gray-700 text-base mb-4 line-clamp-3 flex-grow">
+          {displayData.description}
+        </p>
+
+        {/* ESTATÍSTICAS COMO BADGES MODERNOS */}
+        <div className="flex flex-wrap gap-2 mb-5 mt-auto"> {/* mt-auto para empurrar para o final */}
+          <Badge variant="outline" className="text-gray-600 bg-orange-50 border-orange-200">
+            <Building2 className="h-3 w-3 mr-1 text-orange-500" />
+            {displayData.companiesCount} {displayData.companiesCount === 1 ? 'empresa' : 'empresas'}
+          </Badge>
+          <Badge variant="outline" className="text-gray-600 bg-green-50 border-green-200">
+            <Package className="h-3 w-3 mr-1 text-green-500" />
+            {displayData.productsCount} {displayData.productsCount === 1 ? 'produto' : 'produtos'}
+          </Badge>
+        </div>
+
+        {/* BOTÃO DE DETALHES - Agora fora do Link principal, pois o Link principal já envolve tudo */}
+        <Button
+          className="w-full bg-gradient-to-r from-orange-500 to-yellow-500
+                     hover:from-orange-600 hover:to-yellow-600 text-white
+                     font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300
+                     transform group-hover:scale-[1.01]"
+          // onClick é redundante aqui se o link já está no card todo, mas mantido se houver necessidade específica
+        >
+          Ver detalhes
+          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+        </Button>
+      </div>
     </motion.div>
   );
 }

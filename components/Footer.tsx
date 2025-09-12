@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Zap, Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
 
 export default function Footer() {
   const companyLinks = [
@@ -33,43 +33,40 @@ export default function Footer() {
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Brand & Description */}
-          <div className="space-y-4">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="p-2 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-lg">
-                <Zap className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold">Compare Solar</span>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+          {/* Brand & Contact Info */}
+          <div className="flex flex-col items-start space-y-4">
+            <Link href="/" className="font-bold text-2xl mb-2 hover:text-orange-400 transition-colors">
+              Compare Solar
             </Link>
-            <p className="text-gray-300 text-sm leading-relaxed">
+            <p className="text-gray-300 text-sm leading-relaxed max-w-xs">
               O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução para sua casa ou empresa.
             </p>
-            <div className="space-y-2">
+            <div className="space-y-3 pt-2">
               <div className="flex items-center space-x-2 text-gray-300">
-                <Mail className="h-4 w-4" />
+                <Mail className="h-4 w-4 text-gray-400" />
                 <span className="text-sm">contato@comparesolar.com.br</span>
               </div>
               <div className="flex items-center space-x-2 text-gray-300">
-                <Phone className="h-4 w-4" />
-                <span className="text-sm">(11) 9999-9999</span>
+                <Phone className="h-4 w-4 text-gray-400" />
+                <span className="text-sm">(65) 99242-3309</span>
               </div>
               <div className="flex items-center space-x-2 text-gray-300">
-                <MapPin className="h-4 w-4" />
-                <span className="text-sm">São Paulo, SP</span>
+                <MapPin className="h-4 w-4 text-gray-400" />
+                <span className="text-sm">Florianópolis, SC</span>
               </div>
             </div>
           </div>
 
           {/* Company Links */}
           <div>
-            <h3 className="font-semibold mb-4">Empresa</h3>
+            <h3 className="font-bold text-lg mb-4">Empresa</h3>
             <ul className="space-y-2">
               {companyLinks.map((link) => (
                 <li key={link.href}>
                   <Link 
                     href={link.href}
-                    className="text-gray-300 hover:text-orange-400 transition-colors duration-200 text-sm"
+                    className="text-gray-300 hover:text-orange-400 transition-colors duration-200 text-base"
                   >
                     {link.label}
                   </Link>
@@ -80,13 +77,13 @@ export default function Footer() {
 
           {/* Support Links */}
           <div>
-            <h3 className="font-semibold mb-4">Suporte</h3>
+            <h3 className="font-bold text-lg mb-4">Suporte</h3>
             <ul className="space-y-2">
               {supportLinks.map((link) => (
                 <li key={link.href}>
                   <Link 
                     href={link.href}
-                    className="text-gray-300 hover:text-orange-400 transition-colors duration-200 text-sm"
+                    className="text-gray-300 hover:text-orange-400 transition-colors duration-200 text-base"
                   >
                     {link.label}
                   </Link>
@@ -97,13 +94,13 @@ export default function Footer() {
 
           {/* Legal Links */}
           <div>
-            <h3 className="font-semibold mb-4">Legal</h3>
+            <h3 className="font-bold text-lg mb-4">Legal</h3>
             <ul className="space-y-2">
               {legalLinks.map((link) => (
                 <li key={link.href}>
                   <Link 
                     href={link.href}
-                    className="text-gray-300 hover:text-orange-400 transition-colors duration-200 text-sm"
+                    className="text-gray-300 hover:text-orange-400 transition-colors duration-200 text-base"
                   >
                     {link.label}
                   </Link>
@@ -114,22 +111,22 @@ export default function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-12 pt-8 border-t border-gray-800">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="text-gray-300 text-sm">
+        <div className="mt-16 pt-8 border-t border-gray-800">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
+            <div className="text-gray-400 text-sm">
               © 2025 Compare Solar. Todos os direitos reservados.
             </div>
-            <div className="flex space-x-4">
+            <div className="flex space-x-5">
               {socialLinks.map((social) => (
                 <a
                   key={social.href}
                   href={social.href}
-                  className="text-gray-300 hover:text-orange-400 transition-colors duration-200"
+                  className="text-gray-400 hover:text-white transition-colors duration-200"
                   aria-label={social.label}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <social.icon className="h-5 w-5" />
+                  <social.icon className="h-6 w-6" />
                 </a>
               ))}
             </div>

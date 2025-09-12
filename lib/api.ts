@@ -11,7 +11,8 @@ export interface Company {
   address: string;
   created_at: string;
   updated_at: string;
-  banner_url?: string; // Add banner URL field
+  banner_url?: string;
+  logo_url?: string; // Add logo URL field
 }
 
 export interface Product {
@@ -219,7 +220,33 @@ function getMockDataForEndpoint(endpoint) {
         phone: "(11) 99999-8888",
         address: "Av. Paulista, 1000, São Paulo, SP",
         created_at: "2023-01-10T08:00:00Z",
-        updated_at: "2023-01-10T08:00:00Z"
+        updated_at: "2023-01-10T08:00:00Z",
+        banner_url: "/images/compare-solar-v1.png", // Using the correct image path
+        logo_url: "/images/logo.png"
+      },
+      {
+        id: 2,
+        name: "Eco Energy",
+        description: "Soluções completas em energia solar fotovoltaica",
+        website: "https://ecoenergy.example.com",
+        phone: "(21) 98888-7777",
+        address: "Rua das Flores, 500, Rio de Janeiro, RJ",
+        created_at: "2023-01-12T09:15:00Z",
+        updated_at: "2023-01-12T09:15:00Z",
+        banner_url: "/images/compare-solar-v1.png", // Using the correct image path
+        logo_url: "/images/logo.png"
+      },
+      {
+        id: 3,
+        name: "Green Power",
+        description: "Energia limpa e sustentável para todos",
+        website: "https://greenpower.example.com",
+        phone: "(31) 97777-6666",
+        address: "Av. Brasil, 300, Belo Horizonte, MG",
+        created_at: "2023-01-14T11:20:00Z",
+        updated_at: "2023-01-14T11:20:00Z",
+        banner_url: "/images/compare-solar-v1.png", // Using the correct image path
+        logo_url: "/images/logo.png"
       }
     ],
     categories: [

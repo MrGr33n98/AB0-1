@@ -3,18 +3,16 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useCompanies } from '@/hooks/useCompanies';
-import { useCategories } from '@/hooks/useCategories'; // This line might be the issue
+import { useCategories } from '@/hooks/useCategories';
 import CategoryCard from '@/components/CategoryCard';
 import CompanyCard from '@/components/CompanyCard';
 import ReviewCard from '@/components/ReviewCard';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
-
+import { ArrowRight, Star, Zap, Shield, Users, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 import Hero from '@/components/Hero';
 import { reviewsApi } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Star, Zap, Shield, Users, ChevronRight } from 'lucide-react';
-import Link from 'next/link';
 
 export default function Home() {
   const { companies, loading: companiesLoading } = useCompanies();
@@ -22,36 +20,37 @@ export default function Home() {
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
 
-  // In your Home component, replace the reviews fetching with mock data temporarily
+  // Mock data for demo
   useEffect(() => {
-  // Comment out the API call for now
-  // const fetchReviews = async () => {
-  //   try {
-  //     const data = await reviewsApi.getAll();
-  //     setReviews(data.slice(0, 6)); // Show only first 6 reviews
-  //   } catch (error) {
-  //     console.error('Error fetching reviews:', error);
-  //   } finally {
-  //     setReviewsLoading(false);
-  //   }
-  // };
-  
-  // fetchReviews();
-  
-  // Use mock data instead
-  setReviews([
-    {
-      id: 1,
-      title: "Great service",
-      content: "The installation was quick and professional.",
-      rating: 5,
-      user: { name: "John Doe" },
-      company: { name: "Solar Solutions" }
-    },
-    // Add more mock reviews as needed
-  ]);
-  setReviewsLoading(false);
-}, []);
+    setReviews([
+      {
+        id: 1,
+        title: "Instalação impecável!",
+        content: "Equipe super profissional e atenciosa. O processo de instalação foi rápido e sem problemas. Recomendo a todos que buscam qualidade e eficiência.",
+        rating: 5,
+        user: { name: "John Doe" },
+        company: { name: "Solar Solutions" }
+      },
+      {
+        id: 2,
+        title: "Economia garantida",
+        content: "Minha conta de luz caiu drasticamente. O investimento valeu a pena e o suporte da empresa foi excelente durante todo o processo.",
+        rating: 5,
+        user: { name: "Jane Smith" },
+        company: { name: "Green Energy Co." }
+      },
+      {
+        id: 3,
+        title: "Atendimento de primeira",
+        content: "Tive algumas dúvidas e a equipe de suporte foi muito paciente e prestativa. O sistema está funcionando perfeitamente.",
+        rating: 4,
+        user: { name: "Peter Jones" },
+        company: { name: "Sun Power" }
+      },
+      // Adicione mais reviews para preencher o grid
+    ]);
+    setReviewsLoading(false);
+  }, []);
 
   const featuredCompanies = companies.slice(0, 6);
   const featuredCategories = categories.filter(cat => cat.featured).slice(0, 4);
@@ -60,22 +59,22 @@ export default function Home() {
     {
       icon: Shield,
       title: 'Empresas Verificadas',
-      description: 'Todas as empresas são verificadas e possuem certificações válidas.',
+      description: 'Todas as empresas parceiras são rigorosamente verificadas para sua segurança.',
     },
     {
       icon: Star,
       title: 'Avaliações Reais',
-      description: 'Reviews de clientes reais para ajudar na sua decisão.',
+      description: 'Decisões inteligentes com reviews autênticos de clientes como você.',
     },
     {
       icon: Zap,
       title: 'Orçamentos Gratuitos',
-      description: 'Compare orçamentos de múltiplas empresas gratuitamente.',
+      description: 'Compare propostas e encontre a melhor opção sem custo algum.',
     },
     {
       icon: Users,
       title: 'Suporte Especializado',
-      description: 'Nossa equipe te ajuda a encontrar a melhor solução.',
+      description: 'Nossa equipe está pronta para te guiar em cada etapa do processo.',
     },
   ];
 
@@ -98,113 +97,80 @@ export default function Home() {
     },
   ];
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  };
+
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
+    <div className="min-h-screen bg-gray-50 antialiased">
+      {/* Hero Section - Mantém a lógica do Hero component, focando na primeira impressão */}
       <Hero />
 
       {/* Featured Categories */}
-      <section className="py-16 bg-white">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center mb-16">
             <motion.h2
               initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.6 }}
-              className="text-3xl md:text-4xl font-bold text-gray-900 mb-4"
+              className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4"
             >
               Categorias em Destaque
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-lg text-gray-600 max-w-2xl mx-auto"
+              className="text-xl text-gray-600 max-w-3xl mx-auto"
             >
-              Explore nossas principais categorias de produtos e serviços de energia solar
+              Explore nossas principais categorias de produtos e serviços de energia solar.
             </motion.p>
           </div>
 
           {categoriesLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="h-48 rounded-xl" />
+                <Skeleton key={i} className="h-56 rounded-2xl" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredCategories.map((category, index) => (
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.5 }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+            >
+              {featuredCategories.map((category) => (
                 <motion.div
                   key={category.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  variants={itemVariants}
                 >
                   <CategoryCard category={category} />
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
 
-          <div className="text-center mt-8">
+          <div className="text-center mt-12">
             <Link href="/categories">
-              <Button variant="outline" size="lg">
+              <Button size="lg" variant="ghost" className="text-orange-600 hover:text-orange-700 font-bold text-lg">
                 Ver Todas as Categorias
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Companies */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <motion.h2
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-3xl md:text-4xl font-bold text-gray-900 mb-4"
-            >
-              Empresas Recomendadas
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-lg text-gray-600 max-w-2xl mx-auto"
-            >
-              Conheça as empresas mais bem avaliadas pelos nossos usuários
-            </motion.p>
-          </div>
-
-          {companiesLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <Skeleton key={i} className="h-80 rounded-xl" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredCompanies.map((company, index) => (
-                <motion.div
-                  key={company.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                >
-                  <CompanyCard company={company} />
-                </motion.div>
-              ))}
-            </div>
-          )}
-
-          <div className="text-center mt-8">
-            <Link href="/companies">
-              <Button size="lg" className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600">
-                Ver Todas as Empresas
-                <ChevronRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
           </div>
@@ -212,151 +178,239 @@ export default function Home() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-16 bg-white">
+      <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center mb-16">
             <motion.h2
               initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.6 }}
-              className="text-3xl md:text-4xl font-bold text-gray-900 mb-4"
+              className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4"
             >
-              Por que Escolher o Compare Solar?
+              Por que nos Escolher?
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-lg text-gray-600 max-w-2xl mx-auto"
+              className="text-xl text-gray-600 max-w-3xl mx-auto"
             >
-              Conectamos você com as melhores empresas de energia solar do Brasil
+              Conectamos você com as melhores empresas de energia solar do Brasil, com total confiança.
             </motion.p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {benefits.map((benefit, index) => (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.5 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+          >
+            {benefits.map((benefit) => (
               <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="text-center p-6"
+                key={benefit.title}
+                variants={itemVariants}
+                className="text-center p-8 bg-white rounded-2xl shadow-lg border border-gray-100"
               >
-                <div className="flex justify-center mb-4">
-                  <div className="p-4 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-xl shadow-lg">
-                    <benefit.icon className="h-8 w-8 text-white" />
+                <div className="flex justify-center mb-6">
+                  <div className="p-4 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-2xl shadow-xl">
+                    <benefit.icon className="h-10 w-10 text-white" />
                   </div>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{benefit.title}</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">{benefit.title}</h3>
                 <p className="text-gray-600">{benefit.description}</p>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Reviews Section */}
-      <section className="py-16 bg-gray-50">
+      {/* Featured Companies */}
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center mb-16">
             <motion.h2
               initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.6 }}
-              className="text-3xl md:text-4xl font-bold text-gray-900 mb-4"
+              className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4"
+            >
+              Empresas Recomendadas
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-xl text-gray-600 max-w-3xl mx-auto"
+            >
+              Conheça as empresas mais bem avaliadas e verificadas pelos nossos usuários.
+            </motion.p>
+          </div>
+
+          {companiesLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="h-96 rounded-2xl" />
+              ))}
+            </div>
+          ) : (
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.5 }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            >
+              {featuredCompanies.map((company) => (
+                <motion.div
+                  key={company.id}
+                  variants={itemVariants}
+                >
+                  <CompanyCard company={company} />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+
+          <div className="text-center mt-12">
+            <Link href="/companies">
+              <Button size="lg" className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white font-bold text-lg">
+                Ver Todas as Empresas
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+      
+      {/* Reviews Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <motion.h2
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
+              transition={{ duration: 0.6 }}
+              className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4"
             >
               O que Nossos Clientes Dizem
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-lg text-gray-600 max-w-2xl mx-auto"
+              className="text-xl text-gray-600 max-w-3xl mx-auto"
             >
-              Reviews reais de clientes que encontraram a solução perfeita através do Compare Solar
+              Reviews reais de quem já encontrou a solução perfeita com o Compare Solar.
             </motion.p>
           </div>
 
           {reviewsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <Skeleton key={i} className="h-64 rounded-xl" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-64 rounded-2xl" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {reviews.map((review, index) => (
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.5 }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            >
+              {reviews.map((review) => (
                 <motion.div
                   key={review.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  variants={itemVariants}
                 >
                   <ReviewCard review={review} />
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
+          
+          <div className="text-center mt-12">
+            <Link href="/reviews">
+              <Button size="lg" variant="ghost" className="text-orange-600 hover:text-orange-700 font-bold text-lg">
+                Ver Todas as Reviews
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* FAQ Section */}
-      <section className="py-16 bg-white">
+      <section className="py-20 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center mb-16">
             <motion.h2
               initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.6 }}
-              className="text-3xl md:text-4xl font-bold text-gray-900 mb-4"
+              className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4"
             >
               Perguntas Frequentes
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-lg text-gray-600"
+              className="text-xl text-gray-600"
             >
-              Tire suas dúvidas sobre o Compare Solar
+              Respostas para as suas principais dúvidas sobre o Compare Solar.
             </motion.p>
           </div>
 
-          <div className="space-y-6">
-            {faqs.map((faq, index) => (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.5 }}
+            className="space-y-6"
+          >
+            {faqs.map((faq) => (
               <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="bg-gray-50 rounded-xl p-6"
+                key={faq.question}
+                variants={itemVariants}
+                className="bg-gray-50 rounded-2xl p-8 shadow-md border border-gray-100"
               >
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">{faq.question}</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">{faq.question}</h3>
                 <p className="text-gray-600">{faq.answer}</p>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-orange-500 to-yellow-500">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <section className="py-20 bg-gradient-to-r from-orange-500 to-yellow-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.5 }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Pronto para Começar a Economizar?
+            <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
+              Pronto para Começar?
             </h2>
-            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-              Solicite orçamentos gratuitos das melhores empresas de energia solar do Brasil
+            <p className="text-xl text-white/90 mb-10 max-w-3xl mx-auto">
+              Solicite orçamentos gratuitos das melhores empresas de energia solar do Brasil.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
               <Button 
                 size="lg" 
-                className="bg-white text-orange-600 hover:bg-gray-100 px-8 py-3 rounded-xl text-lg font-semibold"
+                className="bg-white text-orange-600 hover:bg-gray-100 px-10 py-4 rounded-full text-lg font-bold shadow-lg transition-all"
               >
                 Solicitar Orçamento Grátis
               </Button>
@@ -364,7 +418,7 @@ export default function Home() {
                 <Button 
                   variant="outline" 
                   size="lg"
-                  className="border-2 border-white text-white hover:bg-white hover:text-orange-600 px-8 py-3 rounded-xl text-lg font-semibold"
+                  className="border-2 border-white text-white hover:bg-white hover:text-orange-600 px-10 py-4 rounded-full text-lg font-bold transition-all"
                 >
                   Explorar Empresas
                 </Button>
