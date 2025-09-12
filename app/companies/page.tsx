@@ -6,7 +6,7 @@ import { Filter, MapPin, Star, Grid, List } from 'lucide-react';
 import CompanyCard from '@/components/CompanyCard';
 import { useCompanies } from '@/hooks/useCompanies';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input'; // CORRIGIDO AQUI!
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -44,11 +44,11 @@ export default function CompaniesPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12">
+      <div className="min-h-screen bg-background py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-            <p className="text-red-600">Erro ao carregar empresas: {error}</p>
-            <Button className="mt-4" onClick={() => window.location.reload()}>
+          <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-6 text-center">
+            <p className="text-destructive">Erro ao carregar empresas: {error}</p>
+            <Button className="mt-4" onClick={() => window.location.reload()} variant="outline">
               Tentar Novamente
             </Button>
           </div>
@@ -58,15 +58,15 @@ export default function CompaniesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-orange-500 to-yellow-500 py-16">
+      <section className="bg-gradient-to-r from-primary to-accent py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center text-white"
+            className="text-primary-foreground text-center"
           >
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Encontre a Melhor Empresa Solar
@@ -80,7 +80,7 @@ export default function CompaniesPage() {
                 placeholder="Buscar empresas por nome ou descrição..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-12 text-base bg-white text-gray-900"
+                className="h-12 text-base bg-card text-foreground border-input placeholder:text-muted-foreground focus-visible:ring-ring"
               />
             </div>
           </motion.div>
@@ -88,17 +88,17 @@ export default function CompaniesPage() {
       </section>
 
       {/* Filters and Controls */}
-      <section className="py-8 bg-white border-b border-gray-200 sticky top-16 z-40">
+      <section className="py-8 bg-card border-b border-border sticky top-16 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
             {/* Filters */}
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
               <Select value={locationFilter} onValueChange={setLocationFilter}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <MapPin className="w-4 h-4 mr-2" />
+                <SelectTrigger className="w-full sm:w-48 bg-background text-foreground border-input focus:ring-ring">
+                  <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
                   <SelectValue placeholder="Localização" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-popover text-popover-foreground border-border">
                   <SelectItem value="all">Todas as localizações</SelectItem>
                   {locations.map(location => (
                     <SelectItem key={location} value={location}>
@@ -109,10 +109,10 @@ export default function CompaniesPage() {
               </Select>
 
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full sm:w-48">
+                <SelectTrigger className="w-full sm:w-48 bg-background text-foreground border-input focus:ring-ring">
                   <SelectValue placeholder="Ordenar por" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-popover text-popover-foreground border-border">
                   <SelectItem value="name">Nome A-Z</SelectItem>
                   <SelectItem value="location">Localização</SelectItem>
                   <SelectItem value="rating">Melhor avaliada</SelectItem>
@@ -122,17 +122,17 @@ export default function CompaniesPage() {
 
             {/* Results count and view mode */}
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-muted-foreground">
                 {filteredCompanies.length} {filteredCompanies.length === 1 ? 'empresa' : 'empresas'}
               </span>
               
-              <div className="flex bg-gray-100 rounded-lg p-1">
+              <div className="flex bg-muted rounded-lg p-1">
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`p-2 rounded-md transition-colors ${
                     viewMode === 'grid' 
-                      ? 'bg-white shadow-sm text-orange-600' 
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-background shadow-sm text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   <Grid className="w-4 h-4" />
@@ -141,8 +141,8 @@ export default function CompaniesPage() {
                   onClick={() => setViewMode('list')}
                   className={`p-2 rounded-md transition-colors ${
                     viewMode === 'list' 
-                      ? 'bg-white shadow-sm text-orange-600' 
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-background shadow-sm text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   <List className="w-4 h-4" />
@@ -154,7 +154,7 @@ export default function CompaniesPage() {
       </section>
 
       {/* Companies Grid */}
-      <section className="py-12">
+      <section className="py-12 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {loading ? (
             <div className={`grid gap-6 ${
@@ -163,7 +163,7 @@ export default function CompaniesPage() {
                 : 'grid-cols-1'
             }`}>
               {[...Array(9)].map((_, i) => (
-                <Skeleton key={i} className="h-80 rounded-xl" />
+                <Skeleton key={i} className="h-80 rounded-xl bg-muted" />
               ))}
             </div>
           ) : filteredCompanies.length > 0 ? (
@@ -188,14 +188,14 @@ export default function CompaniesPage() {
               ))}
             </motion.div>
           ) : (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Filter className="w-8 h-8 text-gray-400" />
+            <div className="text-center py-16 bg-card rounded-xl p-8 border border-border">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Filter className="w-8 h-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-foreground mb-2">
                 Nenhuma empresa encontrada
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-muted-foreground mb-6">
                 Tente ajustar os filtros ou termos de busca para encontrar empresas.
               </p>
               <Button
@@ -205,6 +205,7 @@ export default function CompaniesPage() {
                   setSortBy('name');
                 }}
                 variant="outline"
+                className="text-primary border-border hover:bg-muted"
               >
                 Limpar Filtros
               </Button>

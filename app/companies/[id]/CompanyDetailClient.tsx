@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
+import { useRouter } from 'next/navigation'; // Importa useRouter
+import { // Adicionado 'ArrowLeft' para o ícone de voltar
   Star, 
   MapPin, 
   Phone, 
@@ -14,7 +15,8 @@ import {
   Calendar,
   ExternalLink,
   MessageCircle,
-  ChevronsRight
+  ChevronsRight,
+  ArrowLeft // Ícone de voltar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +36,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
   const [reviews, setReviews] = useState<Review[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const router = useRouter(); // Inicializa o router
 
   // Mock data for demo
   const mockData = {
@@ -90,10 +93,22 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
   }, [company.id]);
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans antialiased">
+    <div className="min-h-screen bg-background font-sans antialiased">
       {/* Hero Section */}
-      <section className="relative bg-white py-12 shadow-sm rounded-b-3xl">
+      <section className="relative bg-card py-12 shadow-sm rounded-b-3xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Botão de Voltar */}
+          <div className="mb-4">
+            <Button 
+              variant="outline" 
+              className="group text-muted-foreground hover:text-foreground border-border hover:bg-muted transition-colors"
+              onClick={() => router.back()}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" /> {/* Ícone de seta para a esquerda */}
+              Voltar
+            </Button>
+          </div>
+
           {/* Banner Image */}
           <div className="relative w-full mb-8">
             {company.banner_url ? (
@@ -103,29 +118,29 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                 className="w-full h-[350px] object-cover rounded-2xl shadow-lg"
               />
             ) : (
-              <div className="w-full h-[350px] bg-gray-100 rounded-2xl flex items-center justify-center shadow-lg">
-                <span className="text-gray-400 text-lg">Sem imagem de banner disponível</span>
+              <div className="w-full h-[350px] bg-muted rounded-2xl flex items-center justify-center shadow-lg">
+                <span className="text-muted-foreground text-lg">Sem imagem de banner disponível</span>
               </div>
             )}
           </div>
 
           {/* Company Info */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 -mt-24 z-10 relative">
-            <div className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100 flex items-center">
+            <div className="bg-card p-6 rounded-2xl shadow-xl border border-border flex items-center">
               {/* Company Logo */}
               {company.logo_url && (
                 <div className="mr-6">
                   <img 
                     src={company.logo_url} 
                     alt={`${company.name} logo`}
-                    className="w-24 h-24 rounded-full **object-cover** border-2 border-gray-100 shadow-sm"
+                    className="w-24 h-24 rounded-full object-cover border-2 border-border shadow-sm"
                   />
                 </div>
               )}
               
               <div>
-                <h1 className="text-4xl font-extrabold text-gray-900 mb-2">{company.name}</h1>
-                <p className="text-lg text-gray-600">{company.description}</p>
+                <h1 className="text-4xl font-extrabold text-foreground mb-2">{company.name}</h1>
+                <p className="text-lg text-muted-foreground">{company.description}</p>
                 
                 <div className="flex items-center mt-4 space-x-6">
                   <div className="flex flex-wrap gap-2">
@@ -133,7 +148,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                       <Badge 
                         key={badge} 
                         variant="default"
-                        className="bg-orange-100 text-orange-600 font-semibold border-orange-200"
+                        className="bg-accent/10 text-accent-foreground font-semibold border-accent/20"
                       >
                         {badge}
                       </Badge>
@@ -148,25 +163,25 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                           className={`w-5 h-5 ${
                             i < Math.floor(mockData.rating)
                               ? 'text-yellow-400 fill-current'
-                              : 'text-gray-300'
+                              : 'text-muted-foreground/30'
                           }`}
                         />
                       ))}
                     </div>
-                    <span className="text-xl font-bold text-gray-900">{mockData.rating}</span>
-                    <span className="text-gray-500 ml-1">({mockData.reviewCount} reviews)</span>
+                    <span className="text-xl font-bold text-foreground">{mockData.rating}</span>
+                    <span className="text-muted-foreground ml-1">({mockData.reviewCount} reviews)</span>
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-orange-500 hover:bg-orange-600 transition-colors shadow-md">
+              <Button size="lg" className="bg-primary hover:bg-primary/90 transition-colors shadow-md text-primary-foreground">
                 <MessageCircle className="mr-2 h-5 w-5" />
                 Solicitar Orçamento
               </Button>
-              <Button size="lg" variant="outline" className="border-gray-300 hover:bg-gray-100 transition-colors">
-                <Phone className="mr-2 h-5 w-5 text-gray-600" />
+              <Button size="lg" variant="outline" className="border-border hover:bg-muted transition-colors text-foreground">
+                <Phone className="mr-2 h-5 w-5 text-primary" />
                 {company.phone}
               </Button>
             </div>
@@ -175,34 +190,34 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
           {/* Tabs moved up here */}
           <div className="mt-12">
             <Tabs defaultValue="overview" className="space-y-8">
-              <TabsList className="grid w-full grid-cols-5 bg-white p-2 rounded-xl shadow-sm">
+              <TabsList className="grid w-full grid-cols-5 bg-card p-2 rounded-xl shadow-sm border border-border">
                 <TabsTrigger 
                   value="overview" 
-                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:rounded-lg"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:rounded-lg"
                 >
                   Visão Geral
                 </TabsTrigger>
                 <TabsTrigger 
                   value="products"
-                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:rounded-lg"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:rounded-lg"
                 >
                   Produtos
                 </TabsTrigger>
                 <TabsTrigger 
                   value="reviews"
-                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:rounded-lg"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:rounded-lg"
                 >
                   Reviews
                 </TabsTrigger>
                 <TabsTrigger 
                   value="gallery"
-                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:rounded-lg"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:rounded-lg"
                 >
                   Galeria
                 </TabsTrigger>
                 <TabsTrigger 
                   value="stats"
-                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:rounded-lg"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:rounded-lg"
                 >
                   Estatísticas
                 </TabsTrigger>
@@ -212,36 +227,36 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-2">
                   <TabsContent value="overview" className="space-y-8">
-                    <Card className="rounded-2xl shadow-md">
+                    <Card className="rounded-2xl shadow-md bg-card border border-border">
                       <CardHeader>
-                        <CardTitle className="text-2xl font-bold">Sobre a Empresa</CardTitle>
+                        <CardTitle className="text-2xl font-bold text-foreground">Sobre a Empresa</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-gray-700 leading-relaxed mb-6 text-base">
+                        <p className="text-muted-foreground leading-relaxed mb-6 text-base">
                           {company.description}
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div>
-                            <h4 className="font-semibold text-xl text-gray-900 mb-3">Serviços Oferecidos</h4>
+                            <h4 className="font-semibold text-xl text-foreground mb-3">Serviços Oferecidos</h4>
                             <ul className="space-y-3">
                               {mockData.services.map((service) => (
-                                <li key={service} className="flex items-center text-gray-700">
-                                  <ChevronsRight className="w-4 h-4 text-orange-500 mr-2" />
+                                <li key={service} className="flex items-center text-muted-foreground">
+                                  <ChevronsRight className="w-4 h-4 text-primary mr-2" />
                                   {service}
                                 </li>
                               ))}
                             </ul>
                           </div>
                           <div>
-                            <h4 className="font-semibold text-xl text-gray-900 mb-3">Certificações</h4>
+                            <h4 className="font-semibold text-xl text-foreground mb-3">Certificações</h4>
                             <div className="flex flex-wrap gap-3">
                               {mockData.certifications.map((cert) => (
                                 <Badge 
                                   key={cert} 
                                   variant="outline" 
-                                  className="text-sm border-2 border-orange-200 text-gray-800"
+                                  className="text-sm border-2 border-border text-foreground"
                                 >
-                                  <Shield className="w-4 h-4 mr-2 text-orange-500" />
+                                  <Shield className="w-4 h-4 mr-2 text-primary" />
                                   {cert}
                                 </Badge>
                               ))}
@@ -253,10 +268,10 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                   </TabsContent>
 
                   <TabsContent value="products" className="space-y-8">
-                    <Card className="rounded-2xl shadow-md">
+                    <Card className="rounded-2xl shadow-md bg-card border border-border">
                       <CardHeader>
-                        <CardTitle className="text-2xl font-bold">Produtos da Empresa</CardTitle>
-                        <CardDescription>
+                        <CardTitle className="text-2xl font-bold text-foreground">Produtos da Empresa</CardTitle>
+                        <CardDescription className="text-muted-foreground">
                           Conheça os produtos e soluções oferecidos por {company.name}
                         </CardDescription>
                       </CardHeader>
@@ -264,7 +279,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                         {productsLoading ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {[...Array(4)].map((_, i) => (
-                              <Skeleton key={i} className="h-80 rounded-2xl" />
+                              <Skeleton key={i} className="h-80 rounded-2xl bg-muted" />
                             ))}
                           </div>
                         ) : products.length > 0 ? (
@@ -274,8 +289,8 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                             ))}
                           </div>
                         ) : (
-                          <div className="text-center py-12 bg-gray-100 rounded-xl">
-                            <p className="text-gray-600">Nenhum produto cadastrado ainda.</p>
+                          <div className="text-center py-12 bg-muted rounded-xl border border-border">
+                            <p className="text-muted-foreground">Nenhum produto cadastrado ainda.</p>
                           </div>
                         )}
                       </CardContent>
@@ -283,10 +298,10 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                   </TabsContent>
 
                   <TabsContent value="reviews" className="space-y-8">
-                    <Card className="rounded-2xl shadow-md">
+                    <Card className="rounded-2xl shadow-md bg-card border border-border">
                       <CardHeader>
-                        <CardTitle className="text-2xl font-bold">Avaliações dos Clientes</CardTitle>
-                        <CardDescription>
+                        <CardTitle className="text-2xl font-bold text-foreground">Avaliações dos Clientes</CardTitle>
+                        <CardDescription className="text-muted-foreground">
                           Veja o que os clientes falam sobre {company.name}
                         </CardDescription>
                       </CardHeader>
@@ -294,7 +309,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                         {reviewsLoading ? (
                           <div className="space-y-6">
                             {[...Array(3)].map((_, i) => (
-                              <Skeleton key={i} className="h-48 rounded-2xl" />
+                              <Skeleton key={i} className="h-48 rounded-2xl bg-muted" />
                             ))}
                           </div>
                         ) : reviews.length > 0 ? (
@@ -304,8 +319,8 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                             ))}
                           </div>
                         ) : (
-                          <div className="text-center py-12 bg-gray-100 rounded-xl">
-                            <p className="text-gray-600">Nenhuma avaliação ainda.</p>
+                          <div className="text-center py-12 bg-muted rounded-xl border border-border">
+                            <p className="text-muted-foreground">Nenhuma avaliação ainda.</p>
                           </div>
                         )}
                       </CardContent>
@@ -313,10 +328,10 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                   </TabsContent>
 
                   <TabsContent value="gallery" className="space-y-8">
-                    <Card className="rounded-2xl shadow-md">
+                    <Card className="rounded-2xl shadow-md bg-card border border-border">
                       <CardHeader>
-                        <CardTitle className="text-2xl font-bold">Galeria de Projetos</CardTitle>
-                        <CardDescription>
+                        <CardTitle className="text-2xl font-bold text-foreground">Galeria de Projetos</CardTitle>
+                        <CardDescription className="text-muted-foreground">
                           Veja alguns dos projetos realizados por {company.name}
                         </CardDescription>
                       </CardHeader>
@@ -333,7 +348,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                                 className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
                               />
                               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                                <ExternalLink className="w-8 h-8 text-white" />
+                                <ExternalLink className="w-8 h-8 text-primary-foreground" />
                               </div>
                             </div>
                           ))}
@@ -343,10 +358,10 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                   </TabsContent>
 
                   <TabsContent value="stats" className="space-y-8">
-                    <Card className="rounded-2xl shadow-md">
+                    <Card className="rounded-2xl shadow-md bg-card border border-border">
                       <CardHeader>
-                        <CardTitle className="text-2xl font-bold">Estatísticas da Empresa</CardTitle>
-                        <CardDescription>
+                        <CardTitle className="text-2xl font-bold text-foreground">Estatísticas da Empresa</CardTitle>
+                        <CardDescription className="text-muted-foreground">
                           Dados e números de destaque sobre {company.name}
                         </CardDescription>
                       </CardHeader>
@@ -358,45 +373,45 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                               initial={{ opacity: 0, y: 30 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ duration: 0.6, delay: index * 0.1 }}
-                              className="flex flex-col items-center text-center p-4 bg-gray-50 rounded-xl"
+                              className="flex flex-col items-center text-center p-4 bg-muted rounded-xl"
                             >
                               <div className="flex justify-center mb-2">
-                                <div className="p-3 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-xl">
-                                  <stat.icon className="h-6 w-6 text-white" />
+                                <div className="p-3 bg-gradient-to-br from-primary to-accent rounded-xl">
+                                  <stat.icon className="h-6 w-6 text-primary-foreground" />
                                 </div>
                               </div>
-                              <div className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</div>
-                              <div className="text-sm text-gray-600">{stat.label}</div>
+                              <div className="text-2xl font-bold text-foreground mb-1">{stat.value}</div>
+                              <div className="text-sm text-muted-foreground">{stat.label}</div>
                             </motion.div>
                           ))}
                         </div>
                       </CardContent>
                     </Card>
 
-                    <Card className="rounded-2xl shadow-md">
+                    <Card className="rounded-2xl shadow-md bg-card border border-border">
                       <CardHeader>
-                        <CardTitle className="text-xl font-bold">Visão Rápida</CardTitle>
+                        <CardTitle className="text-xl font-bold text-foreground">Visão Rápida</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
                           <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Avaliação Média</span>
+                            <span className="text-muted-foreground">Avaliação Média</span>
                             <div className="flex items-center">
                               <Star className="w-5 h-5 text-yellow-400 fill-current mr-1" />
-                              <span className="font-bold text-lg">{mockData.rating}</span>
+                              <span className="font-bold text-lg text-foreground">{mockData.rating}</span>
                             </div>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Total de Reviews</span>
-                            <span className="font-bold text-lg">{mockData.reviewCount}</span>
+                            <span className="text-muted-foreground">Total de Reviews</span>
+                            <span className="font-bold text-lg text-foreground">{mockData.reviewCount}</span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Projetos Concluídos</span>
-                            <span className="font-bold text-lg">{mockData.completedProjects}+</span>
+                            <span className="text-muted-foreground">Projetos Concluídos</span>
+                            <span className="font-bold text-lg text-foreground">{mockData.completedProjects}+</span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Anos no Mercado</span>
-                            <span className="font-bold text-lg">{mockData.yearsInBusiness}+</span>
+                            <span className="text-muted-foreground">Anos no Mercado</span>
+                            <span className="font-bold text-lg text-foreground">{mockData.yearsInBusiness}+</span>
                           </div>
                         </div>
                       </CardContent>
@@ -406,47 +421,47 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
 
                 {/* Sidebar */}
                 <div className="space-y-8">
-                  <Card className="rounded-2xl shadow-lg">
+                  <Card className="rounded-2xl shadow-lg bg-card border border-border">
                     <CardHeader>
-                      <CardTitle className="text-xl font-bold">Informações de Contato</CardTitle>
+                      <CardTitle className="text-xl font-bold text-foreground">Informações de Contato</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-5">
                       <div className="flex items-center space-x-4">
-                        <div className="p-2 bg-orange-100 rounded-full">
-                          <Phone className="h-5 w-5 text-orange-500" />
+                        <div className="p-2 bg-muted rounded-full">
+                          <Phone className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Telefone</p>
-                          <p className="font-semibold text-gray-800">{company.phone}</p>
+                          <p className="text-sm text-muted-foreground">Telefone</p>
+                          <p className="font-semibold text-foreground">{company.phone}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-4">
-                        <div className="p-2 bg-orange-100 rounded-full">
-                          <Globe className="h-5 w-5 text-orange-500" />
+                        <div className="p-2 bg-muted rounded-full">
+                          <Globe className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Website</p>
+                          <p className="text-sm text-muted-foreground">Website</p>
                           <a 
                             href={company.website} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="font-semibold text-orange-600 hover:underline"
+                            className="font-semibold text-primary hover:underline"
                           >
                             {company.website}
                           </a>
                         </div>
                       </div>
                       <div className="flex items-start space-x-4">
-                        <div className="p-2 bg-orange-100 rounded-full mt-1">
-                          <MapPin className="h-5 w-5 text-orange-500" />
+                        <div className="p-2 bg-muted rounded-full mt-1">
+                          <MapPin className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Endereço</p>
-                          <p className="font-semibold text-gray-800">{company.address}</p>
+                          <p className="text-sm text-muted-foreground">Endereço</p>
+                          <p className="font-semibold text-foreground">{company.address}</p>
                         </div>
                       </div>
-                      <div className="pt-6 border-t border-gray-100">
-                        <Button className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 shadow-md transition-colors">
+                      <div className="pt-6 border-t border-border">
+                        <Button className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-md transition-colors text-primary-foreground">
                           <MessageCircle className="mr-2 h-4 w-4" />
                           Solicitar Orçamento
                         </Button>
@@ -461,4 +476,4 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
       </section>
     </div>
   );
-} 
+}
