@@ -2,6 +2,55 @@ ActiveAdmin.register Category do
   # Permit params for categories
   permit_params :name, :description, :featured, :banner, :seo_url, :seo_title, :short_description, :parent_id, :kind, :status, company_ids: []
   
+  # Add CSV import action
+  action_item :import_csv, only: :index do
+    link_to 'Import CSV', upload_csv_admin_categories_path
+  end
+  
+  collection_action :upload_csv, method: :get do
+    render "admin/csv/upload_csv"
+  end
+  
+  collection_action :import_csv, method: :post do
+    if params[:csv_file].nil?
+      redirect_to upload_csv_admin_categories_path, alert: "No file selected"
+      return
+    end
+    
+    success_count = 0
+    errors = []
+    
+    begin
+      CSV.foreach(params[:csv_file].path, headers: true) do |row|
+        category = Category.new(
+          name: row['name'],
+          seo_url: row['seo_url'] || row['name'].parameterize,
+          seo_title: row['seo_title'],
+          short_description: row['short_description'],
+          description: row['description'],
+          parent_id: row['parent_id'].present? ? row['parent_id'] : nil,
+          kind: row['kind'] || 'product',
+          status: row['status'] || 'active',
+          featured: row['featured'] == 'true'
+        )
+        
+        if category.save
+          success_count += 1
+        else
+          errors << "Row #{$. + 1}: #{category.errors.full_messages.join(', ')}"
+        end
+      end
+      
+      if errors.empty?
+        redirect_to admin_categories_path, notice: "Successfully imported #{success_count} categories"
+      else
+        redirect_to admin_categories_path, alert: "Imported #{success_count} categories with #{errors.count} errors: #{errors.join('; ')}"
+      end
+    rescue StandardError => e
+      redirect_to admin_categories_path, alert: "Import failed: #{e.message}"
+    end
+  end
+  
   # Define filters
   filter :name
   filter :description

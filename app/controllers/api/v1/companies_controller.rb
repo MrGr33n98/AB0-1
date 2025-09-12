@@ -65,13 +65,14 @@ class Api::V1::CompaniesController < Api::V1::BaseController
   end
 
   def company_params
-    params.require(:company).permit(:name, :description, :website, :phone, :address, :banner, category_ids: [])
+    params.require(:company).permit(:name, :description, :website, :phone, :address, :banner, :logo, category_ids: [])
   end
 
   # 🔧 Helper para montar JSON customizado
   def company_json(company)
     company.as_json.merge(
-      banner_url: company.banner.attached? ? url_for(company.banner) : nil
+      banner_url: company.banner.attached? ? url_for(company.banner) : nil,
+      logo_url: company.logo.attached? ? url_for(company.logo) : nil
     )
   end
 end

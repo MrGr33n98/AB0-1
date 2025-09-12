@@ -9,8 +9,13 @@
       </div>
       <div class="form-group">
         <p class="help-text">
-          CSV should have headers: name, description
+          CSV should have the following headers:
         </p>
+        <pre>name,seo_url,seo_title,short_description,description,parent_id,kind,status,featured</pre>
+        <p class="help-text">
+          Example:
+        </p>
+        <pre>Solar Panels,solar-panels,Solar Panels | Compare Solar,High efficiency panels,Detailed description,,product,active,true</pre>
       </div>
       <div class="form-group">
         <%= submit_tag "Import CSV", class: "button" %>
