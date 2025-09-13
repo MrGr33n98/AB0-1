@@ -1,29 +1,29 @@
-# Etapa 1: Build das dependências
-FROM ruby:3.2 AS builder
+# Usa exatamente a versão que você tem localmente
+FROM ruby:3.2.2
 
+# Instalar dependências necessárias
+RUN apt-get update -qq && apt-get install -y \
+  nodejs \
+  postgresql-client \
+  build-essential
+
+# Define o diretório de trabalho
 WORKDIR /app
 
-# Instalar dependências do sistema
-RUN apt-get update -qq && apt-get install -y nodejs postgresql-client build-essential libpq-dev
-
-# Copiar Gemfile e instalar gems
+# Copia Gemfile e Gemfile.lock antes (para aproveitar cache)
 COPY Gemfile* ./
+
+# Instala bundler compatível
+RUN gem install bundler -v 2.4.16
+
+# Instala gems
 RUN bundle install
 
-# Copiar o restante do código
+# Copia o restante do projeto
 COPY . .
 
-# Etapa 2: Runtime
-FROM ruby:3.2
-
-WORKDIR /app
-
-RUN apt-get update -qq && apt-get install -y nodejs postgresql-client
-
-COPY --from=builder /app /app
-
-# Expor a porta da aplicação Rails
+# Expõe a porta (ajuste se usar outra)
 EXPOSE 3001
 
-# Rodar servidor Rails
+# Comando padrão (migrate + server)
 CMD ["bash", "-c", "bundle exec rails db:migrate && bundle exec rails s -b 0.0.0.0 -p 3001"]
