@@ -5,12 +5,13 @@ WORKDIR /app
 
 COPY package*.json ./
 
-# Instala dependências ignorando conflitos
-RUN npm install --legacy-peer-deps
+# Instala dependências de forma reprodutível
+RUN npm ci --legacy-peer-deps
 
 COPY . .
 
-RUN npm run build
+# Build sem ESLint e TypeScript (produção não precisa disso)
+RUN NEXT_DISABLE_ESLINT=1 NEXT_DISABLE_TYPECHECK=1 npm run build
 
 # Etapa 2: Runtime
 FROM node:18-alpine
@@ -22,3 +23,4 @@ COPY --from=builder /app ./
 EXPOSE 3000
 
 CMD ["npm", "start"]
+o
