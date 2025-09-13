@@ -1,0 +1,44 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main
+      - master-frontend  # opcional, caso queira deploy automático desta branch
+
+jobs:
+  deploy-to-server:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: |
+          docker build -t ab0-frontend:${{ github.sha }} .
+
+      - name: Save Docker image as tar
+        run: |
+          docker save ab0-frontend:${{ github.sha }} -o ab0-frontend.tar
+          chmod 644 ab0-frontend.tar
+
+      - name: Copy docker image to droplet
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          source: ab0-frontend.tar
+          target: ~/images
+
+      - name: Load and Run docker container
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          script: |
+            docker load -i ~/images/ab0-frontend.tar
+            docker rm -f ab0-frontend || true
+            docker run -d --name ab0-frontend -p 3000:3000 ab0-frontend:${{ github.sha }}
