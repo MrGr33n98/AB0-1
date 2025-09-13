@@ -10,8 +10,12 @@ RUN npm ci --legacy-peer-deps
 
 COPY . .
 
-# Build sem ESLint e TypeScript (produção não precisa disso)
-RUN NEXT_DISABLE_ESLINT=1 NEXT_DISABLE_TYPECHECK=1 npm run build
+# Build sem ESLint e sem TypeScript
+ENV NEXT_DISABLE_ESLINT=1
+ENV NEXT_DISABLE_TYPECHECK=1
+ENV SKIP_BUILD_VALIDATION=true
+
+RUN npm run build
 
 # Etapa 2: Runtime
 FROM node:18-alpine
