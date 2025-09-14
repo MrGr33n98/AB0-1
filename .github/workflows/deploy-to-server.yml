@@ -1,0 +1,52 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+
+jobs:
+  deploy-to-server:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Create .env.production
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env.production
+          echo "RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}" >> .env.production
+          # Add other environment variables as needed
+          cat .env.production
+
+      - name: Build Docker image
+        run: |
+          docker build -t ab0-backend:${{ github.sha }} .
+
+      - name: Save Docker image as tar
+        run: |
+          docker save ab0-backend:${{ github.sha }} -o ab0-backend.tar
+          chmod 644 ab0-backend.tar
+
+      - name: Copy docker image to droplet
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          source: ab0-backend.tar
+          target: ~/images
+
+      - name: Load and Run docker container
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          script: |
+            docker load -i ~/images/ab0-backend.tar
+            docker rm -f ab0-backend || true
+            docker run -d --name ab0-backend -p 3001:3001 ab0-backend:${{ github.sha }}
