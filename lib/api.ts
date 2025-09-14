@@ -103,11 +103,13 @@ export interface DashboardStats {
 }
 
 // Generic fetch function
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://64.225.59.107:3001/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://64.225.59.107:3001';
 
 export async function fetchApi<T>(endpoint: string, options: any = {}): Promise<T> {
-  const cleanEndpoint = endpoint.startsWith('/api/v1') ? endpoint.replace('/api/v1', '') : endpoint;
-  const url = `${API_BASE_URL}${cleanEndpoint.startsWith('/') ? cleanEndpoint : '/' + cleanEndpoint}`;
+  // Ensure we always use /api/v1 prefix
+  const apiPrefix = '/api/v1';
+  const cleanEndpoint = endpoint.startsWith(apiPrefix) ? endpoint : `${apiPrefix}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
+  const url = `${API_BASE_URL}${cleanEndpoint}`;
   
   console.log(`Fetching from: ${url}`);
 
