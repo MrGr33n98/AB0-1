@@ -106,7 +106,6 @@ export interface DashboardStats {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://64.225.59.107:3001/api/v1';
 
 export async function fetchApi<T>(endpoint: string, options: any = {}): Promise<T> {
-  // Remove /api/v1 from endpoint if it's already in the base URL
   const cleanEndpoint = endpoint.startsWith('/api/v1') ? endpoint.replace('/api/v1', '') : endpoint;
   const url = `${API_BASE_URL}${cleanEndpoint.startsWith('/') ? cleanEndpoint : '/' + cleanEndpoint}`;
   
