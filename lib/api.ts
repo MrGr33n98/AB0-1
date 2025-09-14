@@ -20,6 +20,7 @@ export interface Product {
   company_id: number;
   created_at: string;
   updated_at: string;
+  image_url?: string;
 }
 
 export interface Lead {
@@ -102,9 +103,9 @@ export interface DashboardStats {
 }
 
 // Generic fetch function
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://64.225.59.107:3001/api/v1';
 
-export async function fetchApi(endpoint: string, options: any = {}) {
+export async function fetchApi<T>(endpoint: string, options: any = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
   console.log(`Fetching from: ${url}`);
 
@@ -216,8 +217,36 @@ export const reviewsApi = {
 
 // Categories API
 export const categoriesApi = {
-  getAll: (): Promise<Category[]> => fetchApi('/categories'),
-  getById: (id: number): Promise<Category> => fetchApi(`/categories/${id}`),
+  getAll: (): Promise<Category[]> => fetchApi<Category[]>('/categories'),
+  getById: (id: number): Promise<Category> => fetchApi<Category>(`/categories/${id}`),
+  create: (category: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<Category> =>
+    fetchApi<Category>('/categories', {
+      method: 'POST',
+      body: JSON.stringify({ category }),
+    }),
+  update: (id: number, category: Partial<Category>): Promise<Category> =>
+    fetchApi<Category>(`/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ category }),
+    }),
+  delete: (id: number): Promise<void> =>
+    fetchApi<void>(`/categories/${id}`, { method: 'DELETE' }),
+  import: (file: File): Promise<{ message: string, errors?: string[] }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    return fetch(`${API_BASE_URL}/admin/categories/import`, {
+      method: 'POST',
+      body: formData,
+    }).then(response => {
+      if (!response.ok) {
+        return response.json().then(data => {
+          throw new Error(data.error || `Failed to import: ${response.status}`);
+        });
+      }
+      return response.json();
+    });
+  }
 };
 
 // Plans API
