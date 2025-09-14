@@ -103,9 +103,13 @@ export interface DashboardStats {
 }
 
 // Generic fetch function
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://64.225.59.107:3001/api/v1';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'http://64.225.59.107:3001/api/v1';
 
-export async function fetchApi<T>(endpoint: string, options: any = {}): Promise<T> {
+export async function fetchApi<T>(
+  endpoint: string,
+  options: any = {}
+): Promise<T> {
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
   console.log(`Fetching from: ${url}`);
 
@@ -113,7 +117,7 @@ export async function fetchApi<T>(endpoint: string, options: any = {}): Promise<
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json',
       ...options.headers,
     },
   });
@@ -124,7 +128,8 @@ export async function fetchApi<T>(endpoint: string, options: any = {}): Promise<
       const contentType = response.headers.get('content-type');
       if (contentType?.includes('application/json')) {
         const errorJson = await response.json();
-        errorDetail = errorJson.error || errorJson.message || JSON.stringify(errorJson);
+        errorDetail =
+          errorJson.error || errorJson.message || JSON.stringify(errorJson);
       } else {
         errorDetail = await response.text();
       }
@@ -147,7 +152,9 @@ export const dashboardApi = {
 export const companiesApi = {
   getAll: (): Promise<Company[]> => fetchApi('/companies'),
   getById: (id: number): Promise<Company> => fetchApi(`/companies/${id}`),
-  create: (company: Omit<Company, 'id' | 'created_at' | 'updated_at'>): Promise<Company> =>
+  create: (
+    company: Omit<Company, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Company> =>
     fetchApi('/companies', {
       method: 'POST',
       body: JSON.stringify({ company }),
@@ -165,7 +172,9 @@ export const companiesApi = {
 export const productsApi = {
   getAll: (): Promise<Product[]> => fetchApi('/products'),
   getById: (id: number): Promise<Product> => fetchApi(`/products/${id}`),
-  create: (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product> =>
+  create: (
+    product: Omit<Product, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Product> =>
     fetchApi('/products', {
       method: 'POST',
       body: JSON.stringify({ product }),
@@ -183,7 +192,9 @@ export const productsApi = {
 export const leadsApi = {
   getAll: (): Promise<Lead[]> => fetchApi('/leads'),
   getById: (id: number): Promise<Lead> => fetchApi(`/leads/${id}`),
-  create: (lead: Omit<Lead, 'id' | 'created_at' | 'updated_at'>): Promise<Lead> =>
+  create: (
+    lead: Omit<Lead, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Lead> =>
     fetchApi('/leads', {
       method: 'POST',
       body: JSON.stringify({ lead }),
@@ -201,7 +212,9 @@ export const leadsApi = {
 export const reviewsApi = {
   getAll: (): Promise<Review[]> => fetchApi('/reviews'),
   getById: (id: number): Promise<Review> => fetchApi(`/reviews/${id}`),
-  create: (review: Omit<Review, 'id' | 'created_at' | 'updated_at'>): Promise<Review> =>
+  create: (
+    review: Omit<Review, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Review> =>
     fetchApi('/reviews', {
       method: 'POST',
       body: JSON.stringify({ review }),
@@ -218,8 +231,11 @@ export const reviewsApi = {
 // Categories API
 export const categoriesApi = {
   getAll: (): Promise<Category[]> => fetchApi<Category[]>('/categories'),
-  getById: (id: number): Promise<Category> => fetchApi<Category>(`/categories/${id}`),
-  create: (category: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<Category> =>
+  getById: (id: number): Promise<Category> =>
+    fetchApi<Category>(`/categories/${id}`),
+  create: (
+    category: Omit<Category, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Category> =>
     fetchApi<Category>('/categories', {
       method: 'POST',
       body: JSON.stringify({ category }),
@@ -231,29 +247,15 @@ export const categoriesApi = {
     }),
   delete: (id: number): Promise<void> =>
     fetchApi<void>(`/categories/${id}`, { method: 'DELETE' }),
-  import: (file: File): Promise<{ message: string, errors?: string[] }> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    return fetch(`${API_BASE_URL}/admin/categories/import`, {
-      method: 'POST',
-      body: formData,
-    }).then(response => {
-      if (!response.ok) {
-        return response.json().then(data => {
-          throw new Error(data.error || `Failed to import: ${response.status}`);
-        });
-      }
-      return response.json();
-    });
-  }
 };
 
 // Plans API
 export const plansApi = {
   getAll: (): Promise<Plan[]> => fetchApi('/plans'),
   getById: (id: number): Promise<Plan> => fetchApi(`/plans/${id}`),
-  create: (plan: Omit<Plan, 'id' | 'created_at' | 'updated_at'>): Promise<Plan> =>
+  create: (
+    plan: Omit<Plan, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Plan> =>
     fetchApi('/plans', {
       method: 'POST',
       body: JSON.stringify({ plan }),
@@ -271,7 +273,9 @@ export const plansApi = {
 export const articlesApi = {
   getAll: (): Promise<Article[]> => fetchApi('/articles'),
   getById: (id: number): Promise<Article> => fetchApi(`/articles/${id}`),
-  create: (article: Omit<Article, 'id' | 'created_at' | 'updated_at'>): Promise<Article> =>
+  create: (
+    article: Omit<Article, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Article> =>
     fetchApi('/articles', {
       method: 'POST',
       body: JSON.stringify({ article }),
@@ -289,7 +293,9 @@ export const articlesApi = {
 export const badgesApi = {
   getAll: (): Promise<Badge[]> => fetchApi('/badges'),
   getById: (id: number): Promise<Badge> => fetchApi(`/badges/${id}`),
-  create: (badge: Omit<Badge, 'id' | 'created_at' | 'updated_at'>): Promise<Badge> =>
+  create: (
+    badge: Omit<Badge, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Badge> =>
     fetchApi('/badges', {
       method: 'POST',
       body: JSON.stringify({ badge }),
@@ -305,10 +311,10 @@ export const badgesApi = {
 
 // Search API
 export const searchApi = {
-  companies: (query: string): Promise<Company[]> => 
+  companies: (query: string): Promise<Company[]> =>
     fetchApi(`/search/companies?q=${encodeURIComponent(query)}`),
-  products: (query: string): Promise<Product[]> => 
+  products: (query: string): Promise<Product[]> =>
     fetchApi(`/search/products?q=${encodeURIComponent(query)}`),
-  articles: (query: string): Promise<Article[]> => 
+  articles: (query: string): Promise<Article[]> =>
     fetchApi(`/search/articles?q=${encodeURIComponent(query)}`),
 };
