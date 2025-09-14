@@ -1,41 +1,19 @@
-'use client';
-
 import { useState, useEffect } from 'react';
+import { Category, categoriesApi } from '@/lib/api';
 
-export interface Category {
-  id: number;
-  name: string;
-  description?: string;
-  short_description?: string;
-  featured?: boolean;
-  banner_url?: string;
-  companies?: any[];
-  products?: any[];
-}
-
-export const useCategories = () => {
+export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-        const response = await fetch(`${apiUrl}/api/categories`);
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch categories: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('Categories data:', data);
+        const data = await categoriesApi.getAll();
         setCategories(data);
-        setError(null);
       } catch (err) {
-        console.error('Error fetching categories:', err);
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        setError(err instanceof Error ? err : new Error('Failed to fetch categories'));
       } finally {
         setLoading(false);
       }
@@ -45,4 +23,4 @@ export const useCategories = () => {
   }, []);
 
   return { categories, loading, error };
-};
+}
