@@ -103,21 +103,20 @@ export interface DashboardStats {
 }
 
 // Generic fetch function
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://64.225.59.107:3001/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://64.225.59.107:3001/api/v1';
 
-export async function fetchApi<T>(
-  endpoint: string,
-  options: any = {}
-): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
+export async function fetchApi<T>(endpoint: string, options: any = {}): Promise<T> {
+  // Remove /api/v1 from endpoint if it's already in the base URL
+  const cleanEndpoint = endpoint.startsWith('/api/v1') ? endpoint.replace('/api/v1', '') : endpoint;
+  const url = `${API_BASE_URL}${cleanEndpoint.startsWith('/') ? cleanEndpoint : '/' + cleanEndpoint}`;
+  
   console.log(`Fetching from: ${url}`);
 
   const response = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      Accept: 'application/json',
+      'Accept': 'application/json',
       ...options.headers,
     },
   });
@@ -230,7 +229,7 @@ export const reviewsApi = {
 
 // Categories API
 export const categoriesApi = {
-  getAll: (): Promise<Category[]> => fetchApi<Category[]>('/categories'),
+  getAll: (): Promise<Category[]> => fetchApi('/categories'),
   getById: (id: number): Promise<Category> =>
     fetchApi<Category>(`/categories/${id}`),
   create: (
