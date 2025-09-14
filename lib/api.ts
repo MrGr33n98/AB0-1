@@ -133,54 +133,33 @@ export async function fetchApi(endpoint, options = {}) {
         },
       });
 
-      if (!response.ok) {
-        let errorDetail = '';
-        try {
-          // Try to parse as JSON first
-          const contentType = response.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            const errorJson = await response.json();
-            errorDetail = errorJson.error || errorJson.message || JSON.stringify(errorJson);
-          } else {
-            // Fallback to text for non-JSON responses (like HTML error pages)
-            const errorText = await response.text();
-            // Extract meaningful message from HTML if possible
-            const messageMatch = errorText.match(/<h1[^>]*>([^<]+)<\/h1>/i) ||
-                               errorText.match(/<title[^>]*>([^<]+)<\/title>/i);
-            errorDetail = messageMatch ? messageMatch[1].trim() : 'Unknown error';
-          }
-        } catch (e) {
-          errorDetail = 'Could not parse error response';
+    if (!response.ok) {
+      let errorDetail = '';
+      try {
+        // Try to parse as JSON first
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorJson = await response.json();
+          errorDetail = errorJson.error || errorJson.message || JSON.stringify(errorJson);
+        } else {
+          // Fallback to text for non-JSON responses
+          errorDetail = await response.text();
         }
-        
-        console.error(`API Error (${response.status}):`, errorDetail);
-        throw new Error(`API error (${response.status}): ${errorDetail}`);
+      } catch (e) {
+        errorDetail = 'Could not parse error response';
       }
-
-      // If we get here, the request was successful
-      console.log(`✅ Successful API call to: ${url}`);
-      return await response.json();
-    } catch (error) {
-      console.error(`Error fetching ${url}:`, error);
-      lastError = error;
-      // Continue to the next URL configuration
+      
+      console.error(`API Error (${response.status}):`, errorDetail);
+      throw new Error(`API error (${response.status}): ${errorDetail}`);
     }
+
+    // If we get here, the request was successful
+    console.log(`✅ Successful API call to: ${url}`);
+    return await response.json();
+  } catch (error) {
+    console.error(`Error fetching ${url}:`, error);
+    throw error;
   }
-  
-  // If we get here, all URL configurations failed
-  console.error(`All API configurations failed for endpoint: ${endpoint}`);
-  
-  // Log diagnostic information
-  console.log(`
-    API Diagnostics:
-    - Endpoint: ${endpoint}
-    - Base URL: ${API_BASE_URL}
-    - Method: ${options.method || 'GET'}
-    - Headers: ${JSON.stringify(options.headers || {})}
-    - Last Error: ${lastError?.message}
-  `);
-  
-  throw new Error(`Error fetching ${endpoint}: ${lastError?.message}`);
 }
 
 // Function to provide mock data for development
@@ -348,26 +327,26 @@ export const reviewsApi = {
 };
 
 // Categories API
-// Add or update the categoriesApi object in your api.ts file
-
 export const categoriesApi = {
-  getAll: async () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    const response = await fetch(`${apiUrl}/api/categories`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch categories: ${response.status}`);
-    }
-    return response.json();
-  },
-  
-  getById: async (id: number) => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    const response = await fetch(`${apiUrl}/api/categories/${id}`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch category: ${response.status}`);
-    }
-    return response.json();
-  }
+  getAll: (): Promise<Category[]> => fetchApi('/api/v1/categories'),
+
+  getById: (id: number): Promise<Category> =>
+    fetchApi(`/api/v1/categories/${id}`),
+
+  create: (category: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<Category> =>
+    fetchApi('/api/v1/categories', {
+      method: 'POST',
+      body: JSON.stringify({ category }),
+    }),
+
+  update: (id: number, category: Partial<Category>): Promise<Category> =>
+    fetchApi(`/api/v1/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ category }),
+    }),
+
+  delete: (id: number): Promise<void> =>
+    fetchApi(`/api/v1/categories/${id}`, { method: 'DELETE' }),
 };
 
 // Plans API
