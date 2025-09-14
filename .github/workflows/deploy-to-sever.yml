@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - master-frontend  # opcional, caso queira deploy automático desta branch
+      - master-frontend
 
 jobs:
   deploy-to-server:
@@ -13,6 +13,12 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
+      - name: Criar .env.production
+        run: |
+          echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" > .env.production
+          # adicione outras envs aqui se precisar
+          cat .env.production
 
       - name: Build Docker image
         run: |
