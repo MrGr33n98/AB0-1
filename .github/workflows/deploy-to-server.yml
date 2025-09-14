@@ -50,6 +50,28 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
           script: |
+            # Load new image
             docker load -i ~/images/ab0-backend.tar
+            
+            # Stop and remove old container
             docker rm -f ab0-backend || true
-            docker run -d --name ab0-backend -p 3001:3001 ab0-backend:${{ github.sha }}
+            
+            # Run new container with environment variables
+            docker run -d \
+              --name ab0-backend \
+              --network=host \
+              -e RAILS_ENV=production \
+              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+              -e RAILS_MASTER_KEY="${{ secrets.RAILS_MASTER_KEY }}" \
+              -e POSTGRES_HOST="${{ secrets.POSTGRES_HOST }}" \
+              -e POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
+              -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
+              -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
+              -p 3001:3001 \
+              ab0-backend:${{ github.sha }}
+            
+            # Verify container is running
+            docker ps | grep ab0-backend
+            
+            # Check logs for any errors
+            docker logs ab0-backend
