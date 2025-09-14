@@ -3,7 +3,7 @@ require 'csv'
 module Api
   module V1
     module Admin
-      class CategoriesController < ApplicationController
+      class CategoriesController < Api::V1::BaseController
         # Skip CSRF protection for API endpoints
         skip_before_action :verify_authenticity_token, only: [:import]
         

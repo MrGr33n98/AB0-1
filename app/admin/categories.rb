@@ -1,6 +1,6 @@
-ActiveAdmin.register Category do
+ActiveAdmin.register Category, namespace: :admin do
   # Permit params for categories
-  permit_params :name, :description, :featured, :banner, :seo_url, :seo_title, :short_description, :parent_id, :kind, :status, company_ids: []
+  permit_params :name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured
   
   # Add CSV import action
   action_item :import_csv, only: :index do
