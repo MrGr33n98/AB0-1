@@ -59,7 +59,6 @@ jobs:
             # Run new container with environment variables
             docker run -d \
               --name ab0-backend \
-              --network=host \
               -e RAILS_ENV=production \
               -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               -e RAILS_MASTER_KEY="${{ secrets.RAILS_MASTER_KEY }}" \
@@ -69,9 +68,3 @@ jobs:
               -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
               -p 3001:3001 \
               ab0-backend:${{ github.sha }}
-            
-            # Verify container is running
-            docker ps | grep ab0-backend
-            
-            # Check logs for any errors
-            docker logs ab0-backend
