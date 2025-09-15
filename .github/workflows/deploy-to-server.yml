@@ -11,6 +11,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: docker build -t ab0-backend:${{ github.sha }} .
+
+      - name: Save Docker image as tar
+        run: |
+          docker save ab0-backend:${{ github.sha }} -o ab0-backend.tar
+          chmod 644 ab0-backend.tar
+
+      - name: Copy Docker image to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          source: "ab0-backend.tar"
+          target: "~/images"
+
       - name: SSH Deploy to VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
