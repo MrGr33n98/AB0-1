@@ -29,14 +29,14 @@ jobs:
           docker save ab0-frontend:${{ github.sha }} -o ab0-frontend.tar
           chmod 644 ab0-frontend.tar
 
-      - name: Copy docker image to droplet
+      - name: Copy docker image and env file to droplet
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
-          source: ab0-frontend.tar
-          target: ~/images
+          source: "ab0-frontend.tar,.env.production"
+          target: "~"
 
       - name: Load and Run docker container
         uses: appleboy/ssh-action@v1.0.3
@@ -48,6 +48,10 @@ jobs:
             # Criar rede se não existir
             docker network create ab0-network || true
 
+            # Mover imagem para diretório images
+            mkdir -p ~/images
+            mv ~/ab0-frontend.tar ~/images/
+
             # Carregar nova imagem
             docker load -i ~/images/ab0-frontend.tar
 
@@ -58,6 +62,6 @@ jobs:
             docker run -d \
               --name ab0-frontend \
               --network ab0-network \
-              --env-file .env.production \
+              --env-file ~/.env.production \
               -p 3000:3000 \
               ab0-frontend:${{ github.sha }}
