@@ -46,7 +46,7 @@ Rails.application.configure do
   # config.action_cable.allowed_request_origins = [ "http://example.com", /http:\/\/example.*/ ]
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  # config.force_ssl = true
+  config.force_ssl = false
 
   # Include generic and useful information about system operation, but avoid logging too much
   # information to avoid inadvertent exposure of personally identifiable information (PII).
@@ -93,10 +93,18 @@ Rails.application.configure do
   
   # Configure host for URL generation (needed for Active Storage URLs)
   Rails.application.routes.default_url_options = {
-    host: ENV['APP_HOST'] || '64.225.59.107:3001',
+    host: ENV['APP_HOST'] || '64.225.59.107',
+    port: 3001,
     protocol: 'http'
   }
 
   # Allow all hosts in production for ActiveAdmin
   config.hosts.clear
+  
+  # Configure Action Mailer host
+  config.action_mailer.default_url_options = {
+    host: ENV['APP_HOST'] || '64.225.59.107',
+    port: 3001,
+    protocol: 'http'
+  }
 end
