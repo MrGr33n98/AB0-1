@@ -1,126 +1,73 @@
-name: Deploy Backend
+- name: Load and Run docker container
+uses: appleboy/ssh-action@v1.0.3
+with:
+  host: ${{ secrets.HOST }}
+  username: ${{ secrets.USERNAME }}
+  key: ${{ secrets.KEY }}
+  script: |
+    # Export secrets for use in this SSH session
+    export POSTGRES_USER="${{ secrets.POSTGRES_USER }}"
+    export POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}"
+    export POSTGRES_DB="${{ secrets.POSTGRES_DB }}"
+    export RAILS_MASTER_KEY="${{ secrets.RAILS_MASTER_KEY }}"
+    export JWT_SECRET="${{ secrets.JWT_SECRET }}"
 
-on:
-  push:
-    branches:
-      - main
-      - master
-      - develop
+    # Load new image
+    docker load -i ~/images/ab0-backend.tar
 
-jobs:
-  deploy-to-server:
-    runs-on: ubuntu-latest
+    # Stop and remove old container
+    docker rm -f ab0-backend || true
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+    # Create network if it doesn't exist
+    docker network create ab0-network || true
 
-      - name: Create .env.production
-        run: |
-          cat > .env.production << EOL
-          RAILS_ENV=production
-          DATABASE_URL=${{ secrets.DATABASE_URL }}
-          RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
-          POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}
-          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-          CORS_ORIGINS=http://64.225.59.107:3000
-          JWT_SECRET=${{ secrets.JWT_SECRET }}
-          EOL
+    # PostgreSQL handling (same as before)
+    if ! docker ps | grep -q ab0-postgres; then
+      if docker ps -a | grep -q ab0-postgres; then
+        docker start ab0-postgres
+      else
+        docker run -d \
+          --name ab0-postgres \
+          --network ab0-network \
+          -e "POSTGRES_USER=$POSTGRES_USER" \
+          -e "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" \
+          -e "POSTGRES_DB=$POSTGRES_DB" \
+          -e "POSTGRES_HOST_AUTH_METHOD=trust" \
+          -p 5432:5432 \
+          postgres:14
+      fi
+      sleep 10
+      docker exec ab0-postgres psql -U postgres -c "CREATE USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';" || true
+      docker exec ab0-postgres psql -U postgres -c "ALTER USER $POSTGRES_USER WITH SUPERUSER;" || true
+      docker exec ab0-postgres psql -U postgres -c "CREATE DATABASE $POSTGRES_DB OWNER $POSTGRES_USER;" || true
+    fi
 
-      - name: Build Docker image
-        run: |
-          docker build -t ab0-backend:${{ github.sha }} .
+    # Run backend container
+    docker run -d \
+      --name ab0-backend \
+      --network ab0-network \
+      -e RAILS_ENV=production \
+      -e "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@ab0-postgres:5432/${POSTGRES_DB}" \
+      -e "RAILS_MASTER_KEY=$RAILS_MASTER_KEY" \
+      -e "POSTGRES_HOST=ab0-postgres" \
+      -e "POSTGRES_USER=$POSTGRES_USER" \
+      -e "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" \
+      -e "POSTGRES_DB=$POSTGRES_DB" \
+      -e "CORS_ORIGINS=http://64.225.59.107:3000" \
+      -e "JWT_SECRET=$JWT_SECRET" \
+      -p 0.0.0.0:3001:3001 \
+      ab0-backend:${{ github.sha }}
 
-      - name: Save Docker image as tar
-        run: |
-          docker save ab0-backend:${{ github.sha }} -o ab0-backend.tar
-          chmod 644 ab0-backend.tar
-
-      - name: Copy docker image to droplet
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY }}
-          source: "ab0-backend.tar"
-          target: "~/images"
-          strip_components: 0
-
-      - name: Load and Run docker container
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY }}
-          script: |
-            # Load new image
-            docker load -i ~/images/ab0-backend.tar
-
-            # Stop and remove old container
-            docker rm -f ab0-backend || true
-
-            # Create network if it doesn't exist
-            docker network create ab0-network || true
-            
-            # Ensure PostgreSQL is running
-            if ! docker ps | grep -q ab0-postgres; then
-              if docker ps -a | grep -q ab0-postgres; then
-                # Container exists but not running, start it
-                docker start ab0-postgres
-              else
-                # Container doesn't exist, create it
-                docker run -d \
-                  --name ab0-postgres \
-                  --network ab0-network \
-                  -e "POSTGRES_USER=${POSTGRES_USER}" \
-                  -e "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" \
-                  -e "POSTGRES_DB=${POSTGRES_DB}" \
-                  -e "POSTGRES_HOST_AUTH_METHOD=trust" \
-                  -p 5432:5432 \
-                  postgres:14
-              fi
-              
-              # Wait for PostgreSQL to be ready and create user
-              sleep 10
-              docker exec ab0-postgres psql -U postgres -c "CREATE USER ${POSTGRES_USER} WITH PASSWORD '${POSTGRES_PASSWORD}';" || true
-              docker exec ab0-postgres psql -U postgres -c "ALTER USER ${POSTGRES_USER} WITH SUPERUSER;" || true
-              docker exec ab0-postgres psql -U postgres -c "CREATE DATABASE ${POSTGRES_DB} OWNER ${POSTGRES_USER};" || true
-            fi
-
-            # Run backend container with correct database URL
-            docker run -d \
-              --name ab0-backend \
-              --network ab0-network \
-              -e RAILS_ENV=production \
-              -e "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@ab0-postgres:5432/${POSTGRES_DB}" \
-              -e "RAILS_MASTER_KEY=${RAILS_MASTER_KEY}" \
-              -e "POSTGRES_HOST=ab0-postgres" \
-              -e "POSTGRES_USER=${POSTGRES_USER}" \
-              -e "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" \
-              -e "POSTGRES_DB=${POSTGRES_DB}" \
-              -e "CORS_ORIGINS=http://64.225.59.107:3000" \
-              -e "JWT_SECRET=${JWT_SECRET}" \
-              -p 0.0.0.0:3001:3001 \
-              ab0-backend:${{ github.sha }}
-
-            # Additional debug information
-            echo "Network Settings:"
-            docker inspect ab0-backend | grep -A 20 "NetworkSettings"
-            
-            echo "Process Listening:"
-            docker exec ab0-backend netstat -tulpn | grep 3001
-
-            # Debug information
-            echo "Container Status:"
-            docker ps | grep ab0-backend
-
-            echo "Container Logs:"
-            docker logs --tail=50 ab0-backend
-
-            echo "Network Check:"
-            docker network inspect ab0-network | grep ab0-backend || true
-
-            echo "Port Check:"
-            ss -tulpn | grep 3001 || true
+    # Debug info (igual)
+    echo "Network Settings:"
+    docker inspect ab0-backend | grep -A 20 "NetworkSettings"
+    echo "Process Listening:"
+    docker exec ab0-backend netstat -tulpn | grep 3001
+    echo "Container Status:"
+    docker ps | grep ab0-backend
+    echo "Container Logs:"
+    docker logs --tail=50 ab0-backend
+    echo "Network Check:"
+    docker network inspect ab0-network | grep ab0-backend || true
+    echo "Port Check:"
+    ss -tulpn | grep 3001 || true
