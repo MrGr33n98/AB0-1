@@ -10,9 +10,14 @@ Rails.application.routes.draw do
   # =============================================
   namespace :api do
     namespace :v1 do
-      namespace :admin do
-        resources :categories
-      end
+      # Authentication
+      post 'auth/login', to: 'authentication#login'
+      post 'auth/register', to: 'authentication#register'
+      
+      # Dashboard
+      get 'dashboard/stats', to: 'dashboard#stats'
+      
+      # Resources
       resources :categories
       resources :companies
       resources :products
@@ -21,11 +26,12 @@ Rails.application.routes.draw do
       resources :badges
       resources :articles
       resources :plans
+      resources :users, only: [:show, :update]
       
-      # Search endpoints
-      get 'search/companies', to: 'search#companies'
-      get 'search/products', to: 'search#products'
-      get 'search/articles', to: 'search#articles'
+      # Search
+      get 'search/companies'
+      get 'search/products'
+      get 'search/articles'
     end
   end
 
