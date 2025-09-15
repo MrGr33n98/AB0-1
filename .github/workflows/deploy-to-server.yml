@@ -52,16 +52,17 @@ jobs:
           script: |
             # Load new image
             docker load -i ~/images/ab0-backend.tar
-            
+
             # Stop and remove old container
             docker rm -f ab0-backend || true
-            
+
             # Create network if it doesn't exist
             docker network create ab0-network || true
-            
+
             # Run new container with environment variables
             docker run -d \
               --name ab0-backend \
+              --network ab0-network \
               -e RAILS_ENV=production \
               -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               -e RAILS_MASTER_KEY="${{ secrets.RAILS_MASTER_KEY }}" \
@@ -71,19 +72,19 @@ jobs:
               -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
               -p 3001:3001 \
               ab0-backend:${{ github.sha }}
-            
+
             # Wait for container to start
             sleep 10
-            
+
             # Debug information
             echo "Container Status:"
             docker ps | grep ab0-backend
-            
+
             echo "Container Logs:"
-            docker logs ab0-backend
-            
+            docker logs --tail=50 ab0-backend
+
             echo "Network Check:"
-            docker network inspect ab0-network
-            
+            docker network inspect ab0-network | grep ab0-backend || true
+
             echo "Port Check:"
-            netstat -tulpn | grep 3001
+            ss -tulpn | grep 3001 || true
