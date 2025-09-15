@@ -103,41 +103,35 @@ export interface DashboardStats {
 }
 
 // Generic fetch function
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://64.225.59.107:3001';
+// Update the API base URL configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://64.225.59.107:3001/api/v1';
 
 export async function fetchApi<T>(endpoint: string, options: any = {}): Promise<T> {
-  // Ensure we always use /api/v1 prefix
-  const apiPrefix = '/api/v1';
-  const cleanEndpoint = endpoint.startsWith(apiPrefix) ? endpoint : `${apiPrefix}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   const url = `${API_BASE_URL}${cleanEndpoint}`;
   
-  console.log(`Fetching from: ${url}`);
+  const defaultHeaders = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+
+  // Add authentication token if available
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    defaultHeaders['Authorization'] = `Bearer ${token}`;
+  }
 
   const response = await fetch(url, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      ...defaultHeaders,
       ...options.headers,
     },
   });
 
   if (!response.ok) {
-    let errorDetail = '';
-    try {
-      const contentType = response.headers.get('content-type');
-      if (contentType?.includes('application/json')) {
-        const errorJson = await response.json();
-        errorDetail =
-          errorJson.error || errorJson.message || JSON.stringify(errorJson);
-      } else {
-        errorDetail = await response.text();
-      }
-    } catch (e) {
-      errorDetail = 'Could not parse error response';
-    }
-    console.error(`API Error (${response.status}): ${errorDetail}`);
-    throw new Error(`API error (${response.status}): ${errorDetail}`);
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `API error (${response.status})`);
   }
 
   return response.json();

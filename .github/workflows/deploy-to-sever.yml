@@ -17,7 +17,7 @@ jobs:
       - name: Criar .env.production
         run: |
           echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" > .env.production
-          # adicione outras envs aqui se precisar
+          # adicione outras envs do frontend aqui se precisar
           cat .env.production
 
       - name: Build Docker image
@@ -45,6 +45,19 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
           script: |
+            # Criar rede se não existir
+            docker network create ab0-network || true
+
+            # Carregar nova imagem
             docker load -i ~/images/ab0-frontend.tar
+
+            # Remover container antigo
             docker rm -f ab0-frontend || true
-            docker run -d --name ab0-frontend -p 3000:3000 ab0-frontend:${{ github.sha }}
+
+            # Rodar container na rede compartilhada
+            docker run -d \
+              --name ab0-frontend \
+              --network ab0-network \
+              --env-file .env.production \
+              -p 3000:3000 \
+              ab0-frontend:${{ github.sha }}
