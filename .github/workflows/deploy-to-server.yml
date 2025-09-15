@@ -41,7 +41,8 @@ jobs:
             export POSTGRES_USER="${{ secrets.POSTGRES_USER }}"
             export POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}"
             export POSTGRES_DB="${{ secrets.POSTGRES_DB }}"
-            export RAILS_MASTER_KEY="${{ secrets.RAILS_MASTER_KEY }}"
+            # remove quebras de linha no master key
+            export RAILS_MASTER_KEY="$(echo "${{ secrets.RAILS_MASTER_KEY }}" | tr -d '\n\r')"
             export JWT_SECRET="${{ secrets.JWT_SECRET }}"
 
             docker load -i ~/images/ab0-backend.tar
