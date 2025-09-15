@@ -17,13 +17,17 @@ jobs:
 
       - name: Create .env.production
         run: |
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env.production
-          echo "RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}" >> .env.production
-          echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}" >> .env.production
-          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env.production
-          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env.production
-          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env.production
-          cat .env.production
+          cat > .env.production << EOL
+          RAILS_ENV=production
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
+          POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}
+          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+          CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          EOL
 
       - name: Build Docker image
         run: |
