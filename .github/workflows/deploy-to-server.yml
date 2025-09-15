@@ -59,22 +59,19 @@ jobs:
             # Create network if it doesn't exist
             docker network create ab0-network || true
 
-            # Run new container with environment variables
+            # Run new container with environment variables (using single quotes)
             docker run -d \
               --name ab0-backend \
               --network ab0-network \
               -e RAILS_ENV=production \
-              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-              -e RAILS_MASTER_KEY="${{ secrets.RAILS_MASTER_KEY }}" \
-              -e POSTGRES_HOST="${{ secrets.POSTGRES_HOST }}" \
-              -e POSTGRES_USER="${{ secrets.POSTGRES_USER }}" \
-              -e POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}" \
-              -e POSTGRES_DB="${{ secrets.POSTGRES_DB }}" \
+              -e "DATABASE_URL=${DATABASE_URL}" \
+              -e "RAILS_MASTER_KEY=${RAILS_MASTER_KEY}" \
+              -e "POSTGRES_HOST=${POSTGRES_HOST}" \
+              -e "POSTGRES_USER=${POSTGRES_USER}" \
+              -e "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" \
+              -e "POSTGRES_DB=${POSTGRES_DB}" \
               -p 3001:3001 \
               ab0-backend:${{ github.sha }}
-
-            # Wait for container to start
-            sleep 10
 
             # Debug information
             echo "Container Status:"
