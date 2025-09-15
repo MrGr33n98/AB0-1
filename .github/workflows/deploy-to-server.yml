@@ -63,22 +63,54 @@ jobs:
 
             # Create network if it doesn't exist
             docker network create ab0-network || true
+            
+            # Ensure PostgreSQL is running
+            if ! docker ps | grep -q ab0-postgres; then
+              if docker ps -a | grep -q ab0-postgres; then
+                # Container exists but not running, start it
+                docker start ab0-postgres
+              else
+                # Container doesn't exist, create it
+                docker run -d \
+                  --name ab0-postgres \
+                  --network ab0-network \
+                  -e "POSTGRES_USER=${POSTGRES_USER}" \
+                  -e "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" \
+                  -e "POSTGRES_DB=${POSTGRES_DB}" \
+                  -e "POSTGRES_HOST_AUTH_METHOD=trust" \
+                  -p 5432:5432 \
+                  postgres:14
+              fi
+              
+              # Wait for PostgreSQL to be ready and create user
+              sleep 10
+              docker exec ab0-postgres psql -U postgres -c "CREATE USER ${POSTGRES_USER} WITH PASSWORD '${POSTGRES_PASSWORD}';" || true
+              docker exec ab0-postgres psql -U postgres -c "ALTER USER ${POSTGRES_USER} WITH SUPERUSER;" || true
+              docker exec ab0-postgres psql -U postgres -c "CREATE DATABASE ${POSTGRES_DB} OWNER ${POSTGRES_USER};" || true
+            fi
 
-            # Run new container with environment variables (using single quotes)
+            # Run backend container with correct database URL
             docker run -d \
               --name ab0-backend \
               --network ab0-network \
               -e RAILS_ENV=production \
-              -e "DATABASE_URL=${DATABASE_URL}" \
+              -e "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@ab0-postgres:5432/${POSTGRES_DB}" \
               -e "RAILS_MASTER_KEY=${RAILS_MASTER_KEY}" \
-              -e "POSTGRES_HOST=${POSTGRES_HOST}" \
+              -e "POSTGRES_HOST=ab0-postgres" \
               -e "POSTGRES_USER=${POSTGRES_USER}" \
               -e "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" \
               -e "POSTGRES_DB=${POSTGRES_DB}" \
               -e "CORS_ORIGINS=http://64.225.59.107:3000" \
               -e "JWT_SECRET=${JWT_SECRET}" \
-              -p 3001:3001 \
+              -p 0.0.0.0:3001:3001 \
               ab0-backend:${{ github.sha }}
+
+            # Additional debug information
+            echo "Network Settings:"
+            docker inspect ab0-backend | grep -A 20 "NetworkSettings"
+            
+            echo "Process Listening:"
+            docker exec ab0-backend netstat -tulpn | grep 3001
 
             # Debug information
             echo "Container Status:"
