@@ -36,3 +36,4 @@
 
 # Ignorar scripts locais
 /scripts/*
+.env.production
