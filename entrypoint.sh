@@ -1,20 +1,19 @@
 #!/bin/bash
 set -e
 
-# Remove a potentially pre-existing server.pid for Rails
+# Remove a potentially pre-existing server.pid
 rm -f /app/tmp/pids/server.pid
 
-# Wait for PostgreSQL to be ready
-until pg_isready -h "$POSTGRES_HOST" -p 5432 -U "$POSTGRES_USER"
-do
-  echo "Waiting for PostgreSQL to be ready..."
-  sleep 2
+# Wait for PostgreSQL
+until PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${POSTGRES_HOST}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c '\q'; do
+  echo "PostgreSQL is unavailable - sleeping"
+  sleep 1
 done
 
-echo "PostgreSQL is ready! Running migrations..."
+echo "PostgreSQL is up - executing command"
 
-# Run database migrations
-bundle exec rails db:migrate RAILS_ENV=production
+# Run migrations
+bundle exec rails db:migrate
 
-# Run the main process
+# Start the server
 exec "$@"
