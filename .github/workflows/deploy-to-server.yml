@@ -25,7 +25,7 @@ jobs:
           POSTGRES_USER=${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-          CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}
+          CORS_ORIGINS=http://64.225.59.107:3000
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           EOL
 
@@ -74,6 +74,8 @@ jobs:
               -e "POSTGRES_USER=${POSTGRES_USER}" \
               -e "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" \
               -e "POSTGRES_DB=${POSTGRES_DB}" \
+              -e "CORS_ORIGINS=http://64.225.59.107:3000" \
+              -e "JWT_SECRET=${JWT_SECRET}" \
               -p 3001:3001 \
               ab0-backend:${{ github.sha }}
 
