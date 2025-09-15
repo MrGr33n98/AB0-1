@@ -1,9 +1,10 @@
 FROM ruby:3.2.2
 
-# Install system dependencies
+# Install system dependencies including postgresql-client
 RUN apt-get update -qq && apt-get install -y \
     build-essential \
     libpq-dev \
+    postgresql-client \
     nodejs
 
 # Set working directory
