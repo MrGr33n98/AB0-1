@@ -35,8 +35,9 @@ jobs:
 
       - name: Save Docker image as tar
         run: |
-          docker save ab0-backend:${{ github.sha }} -o ab0-backend.tar
-          chmod 644 ab0-backend.tar
+          mkdir -p /tmp/docker-images
+          docker save ab0-backend:${{ github.sha }} -o /tmp/docker-images/ab0-backend.tar
+          chmod 644 /tmp/docker-images/ab0-backend.tar
 
       - name: Copy docker image to droplet
         uses: appleboy/scp-action@v0.1.7
