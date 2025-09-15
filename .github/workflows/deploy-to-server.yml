@@ -41,14 +41,12 @@ jobs:
             export POSTGRES_USER="${{ secrets.POSTGRES_USER }}"
             export POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}"
             export POSTGRES_DB="${{ secrets.POSTGRES_DB }}"
-            # remove quebras de linha no master key
             export RAILS_MASTER_KEY="$(echo "${{ secrets.RAILS_MASTER_KEY }}" | tr -d '\n\r')"
             export JWT_SECRET="${{ secrets.JWT_SECRET }}"
 
             docker load -i ~/images/ab0-backend.tar
 
             docker rm -f ab0-backend || true
-
             docker network create ab0-network || true
 
             if ! docker ps | grep -q ab0-postgres; then
@@ -77,19 +75,19 @@ jobs:
               -e RAILS_ENV=production \
               -e "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@ab0-postgres:5432/${POSTGRES_DB}" \
               -e "RAILS_MASTER_KEY=$RAILS_MASTER_KEY" \
+              -e "JWT_SECRET=$JWT_SECRET" \
               -e "POSTGRES_HOST=ab0-postgres" \
               -e "POSTGRES_USER=$POSTGRES_USER" \
               -e "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" \
               -e "POSTGRES_DB=$POSTGRES_DB" \
               -e "CORS_ORIGINS=http://64.225.59.107:3000" \
-              -e "JWT_SECRET=$JWT_SECRET" \
-              -p 0.0.0.0:3001:3001 \
+              -p 3001:3001 \
               ab0-backend:${{ github.sha }}
 
             echo "Network Settings:"
             docker inspect ab0-backend | grep -A 20 "NetworkSettings"
             echo "Process Listening:"
-            docker exec ab0-backend netstat -tulpn | grep 3001
+            docker exec ab0-backend netstat -tulpn | grep 3001 || true
             echo "Container Status:"
             docker ps | grep ab0-backend
             echo "Container Logs:"
