@@ -93,7 +93,7 @@ Rails.application.configure do
   
   # Configure host for URL generation (needed for Active Storage URLs)
   Rails.application.routes.default_url_options = {
-    host: ENV['APP_HOST'] || 'ab0-backend:3001',
+    host: ENV['APP_HOST'] || '64.225.59.107:3001',
     protocol: 'http'
   }
 
