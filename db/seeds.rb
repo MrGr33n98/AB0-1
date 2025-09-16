@@ -1,10 +1,10 @@
 
 # Create default admin user
-AdminUser.create!(
-  email: 'felipe@admin.com',
-  password: 'ZAbgbZeVAK+!5!',
-  password_confirmation: 'ZAbgbZeVAK+!5!'
-) if Rails.env.development? || Rails.env.production?
+AdminUser.find_or_create_by!(email: 'felipe@admin.com') do |admin|
+  admin.password = 'ZAbgbZeVAK+!5!'
+  admin.password_confirmation = 'ZAbgbZeVAK+!5!'
+  puts "Admin user created: #{admin.email}"
+end
 
 # Create companies
 companies = [
