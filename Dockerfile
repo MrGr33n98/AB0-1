@@ -20,6 +20,8 @@ COPY . .
 # Add a script to be executed every time the container starts
 COPY entrypoint.sh /usr/bin/
 RUN chmod +x /usr/bin/entrypoint.sh
+# Make sure your Dockerfile includes these steps
+RUN bundle exec rake assets:precompile
 ENTRYPOINT ["entrypoint.sh"]
 
 # Configure the main process to run when running the image
