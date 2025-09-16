@@ -14,12 +14,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Build Docker image
-        run: docker build -t ab0-backend:${{ github.sha }} .
+      - name: Build Docker image (with SHA and latest tags)
+        run: |
+          docker build -t ab0-backend:${{ github.sha }} -t ab0-backend:latest .
 
       - name: Save Docker image as tar
         run: |
-          docker save ab0-backend:${{ github.sha }} -o ab0-backend.tar
+          docker save ab0-backend:${{ github.sha }} ab0-backend:latest -o ab0-backend.tar
           chmod 644 ab0-backend.tar
 
       - name: Copy Docker image to VPS
@@ -64,10 +65,8 @@ jobs:
                   postgres:14
               fi
               sleep 10
-              # Remove existing user/database if they exist
               docker exec ab0-postgres psql -U postgres -c "DROP DATABASE IF EXISTS $POSTGRES_DB;" || true
               docker exec ab0-postgres psql -U postgres -c "DROP USER IF EXISTS $POSTGRES_USER;" || true
-              # Create new user and database
               docker exec ab0-postgres psql -U postgres -c "CREATE USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD' SUPERUSER;" || true
               docker exec ab0-postgres psql -U postgres -c "CREATE DATABASE $POSTGRES_DB OWNER $POSTGRES_USER;" || true
             fi
@@ -85,7 +84,7 @@ jobs:
               -e "POSTGRES_DB=$POSTGRES_DB" \
               -e "CORS_ORIGINS=http://64.225.59.107:3000" \
               -p 3001:3001 \
-              ab0-backend:${{ github.sha }}
+              ab0-backend:latest
 
             echo "Network Settings:"
             docker inspect ab0-backend | grep -A 20 "NetworkSettings"
