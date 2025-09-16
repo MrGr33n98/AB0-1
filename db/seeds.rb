@@ -3,7 +3,7 @@
 AdminUser.create!(
   email: 'felipe@admin.com',
   password: 'ZAbgbZeVAK+!5!',
-  password_confirmation: 'password'
+  password_confirmation: 'ZAbgbZeVAK+!5!'
 ) if Rails.env.development? || Rails.env.production?
 
 # Create companies
