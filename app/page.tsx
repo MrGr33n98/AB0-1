@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCompanies } from '@/hooks/useCompanies';
+import { useCompaniesSafe } from '@/hooks/useCompaniesSafe';
 import { useCategories } from '@/hooks/useCategories';
 import { reviewsApi } from '@/lib/api';
 
@@ -40,13 +40,13 @@ interface FAQ {
 }
 
 export default function Home() {
-  const { companies, loading: companiesLoading } = useCompanies();
+  const { companies, loading: companiesLoading } = useCompaniesSafe();
   const { categories, loading: categoriesLoading } = useCategories();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
 
-  // MOCK DE DADOS (usando useMemo para estabilidade)
-  const benefits: Benefit[] = useMemo(() => [
+  // Benefícios da plataforma
+  const benefits: Benefit[] = [
     {
       icon: Shield,
       title: 'Empresas Verificadas',
@@ -67,9 +67,10 @@ export default function Home() {
       title: 'Suporte Especializado',
       description: 'Nossa equipe está pronta para te guiar em cada etapa do processo.',
     },
-  ], []);
+  ];
 
-  const faqs: FAQ[] = useMemo(() => [
+  // Perguntas frequentes
+  const faqs: FAQ[] = [
     {
       question: 'Como funciona o Compare Solar?',
       answer: 'Nosso marketplace conecta você com as melhores empresas de energia solar. Você pode comparar preços, avaliar reviews e solicitar orçamentos gratuitos.',
@@ -86,26 +87,25 @@ export default function Home() {
       question: 'Posso cancelar um orçamento?',
       answer: 'Sim, você pode cancelar ou modificar solicitações de orçamento a qualquer momento através do seu painel.',
     },
-  ], []);
+  ];
 
-  // Lógica de reviews (com fallback para mock se a API falhar)
+  // Lógica de reviews
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        // Assume que reviewsApi.getAll() retorna um array de Review
         const data = await reviewsApi.getAll();
-        setReviews(data.slice(0, 6));
+        const formattedReviews = data.slice(0, 6).map(review => ({
+          id: review.id,
+          title: review.comment.split('.')[0] || 'Avaliação',
+          content: review.comment,
+          rating: review.rating,
+          user: { name: `Usuário ${review.user_id}` },
+          company: { name: `Empresa ${review.product_id}` }
+        }));
+        setReviews(formattedReviews);
       } catch (error) {
         console.error('Error fetching reviews:', error);
-        // Fallback para dados mockados em caso de erro
-        setReviews([
-          { id: 1, title: "Instalação impecável!", content: "Equipe super profissional e atenciosa.", rating: 5, user: { name: "John Doe" }, company: { name: "Solar Solutions" } },
-          { id: 2, title: "Economia garantida", content: "Minha conta de luz caiu drasticamente.", rating: 5, user: { name: "Jane Smith" }, company: { name: "Green Energy Co." } },
-          { id: 3, title: "Atendimento de primeira", content: "Tive algumas dúvidas e a equipe de suporte foi muito paciente e prestativa.", rating: 4, user: { name: "Peter Jones" }, company: { name: "Sun Power" } },
-          { id: 4, title: "Solução completa", content: "Encontrei tudo que precisava, do painel à instalação. Recomendo!", rating: 5, user: { name: "Ana Pires" }, company: { name: "Solar Solutions" } },
-          { id: 5, title: "Melhor custo-benefício", content: "O preço foi o melhor do mercado e a qualidade superou as expectativas.", rating: 4, user: { name: "Lucas Fernandes" }, company: { name: "Eco Energy" } },
-          { id: 6, title: "Rápido e eficiente", content: "Processo de orçamento e contratação foi muito ágil.", rating: 5, user: { name: "Mariana Costa" }, company: { name: "Green Power" } },
-        ]);
+        setReviews([]);
       } finally {
         setReviewsLoading(false);
       }

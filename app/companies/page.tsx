@@ -1,17 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Filter, MapPin, Star, Grid, List } from 'lucide-react';
 import CompanyCard from '@/components/CompanyCard';
-import { useCompanies } from '@/hooks/useCompanies';
+import { companiesApi, categoriesApi, type Company, type Category } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input'; // CORRIGIDO AQUI!
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CompaniesPage() {
-  const { companies, loading, error } = useCompanies();
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [companiesData, categoriesData] = await Promise.all([
+          companiesApi.getAll(),
+          categoriesApi.getAll()
+        ]);
+        setCompanies(companiesData);
+        setCategories(categoriesData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erro ao carregar dados');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('all');
   const [sortBy, setSortBy] = useState('name');

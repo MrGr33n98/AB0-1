@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Upload, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { adminApi } from '@/lib/api';
 
 export default function CategoryImporter() {
   const [uploading, setUploading] = useState(false);
@@ -27,16 +28,8 @@ export default function CategoryImporter() {
     formData.append('file', file);
 
     try {
-      const response = await fetch('http://localhost:3001/admin/categories/import', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Upload failed');
-      }
+      // Use the adminApi for importing categories
+      const data = await adminApi.importCategories(formData);
 
       setResult({
         success: data.message,

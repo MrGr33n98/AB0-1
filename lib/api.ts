@@ -103,22 +103,24 @@ export interface DashboardStats {
 }
 
 // Generic fetch function
-// Update the API base URL configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://64.225.59.107:3001/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
 export async function fetchApi<T>(endpoint: string, options: any = {}): Promise<T> {
+  // Garante que sempre tenha a barra inicial
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   const url = `${API_BASE_URL}${cleanEndpoint}`;
   
-  const defaultHeaders = {
+  const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
 
-  // Add authentication token if available
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    defaultHeaders['Authorization'] = `Bearer ${token}`;
+  // Token só se rodar no browser
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      defaultHeaders['Authorization'] = `Bearer ${token}`;
+    }
   }
 
   const response = await fetch(url, {
@@ -146,9 +148,7 @@ export const dashboardApi = {
 export const companiesApi = {
   getAll: (): Promise<Company[]> => fetchApi('/companies'),
   getById: (id: number): Promise<Company> => fetchApi(`/companies/${id}`),
-  create: (
-    company: Omit<Company, 'id' | 'created_at' | 'updated_at'>
-  ): Promise<Company> =>
+  create: (company: Omit<Company, 'id' | 'created_at' | 'updated_at'>): Promise<Company> =>
     fetchApi('/companies', {
       method: 'POST',
       body: JSON.stringify({ company }),
@@ -166,9 +166,7 @@ export const companiesApi = {
 export const productsApi = {
   getAll: (): Promise<Product[]> => fetchApi('/products'),
   getById: (id: number): Promise<Product> => fetchApi(`/products/${id}`),
-  create: (
-    product: Omit<Product, 'id' | 'created_at' | 'updated_at'>
-  ): Promise<Product> =>
+  create: (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product> =>
     fetchApi('/products', {
       method: 'POST',
       body: JSON.stringify({ product }),
@@ -182,13 +180,29 @@ export const productsApi = {
     fetchApi(`/products/${id}`, { method: 'DELETE' }),
 };
 
+// Categories API
+export const categoriesApi = {
+  getAll: (): Promise<Category[]> => fetchApi('/categories'),
+  getById: (id: number): Promise<Category> => fetchApi(`/categories/${id}`),
+  create: (category: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<Category> =>
+    fetchApi('/categories', {
+      method: 'POST',
+      body: JSON.stringify({ category }),
+    }),
+  update: (id: number, category: Partial<Category>): Promise<Category> =>
+    fetchApi(`/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ category }),
+    }),
+  delete: (id: number): Promise<void> =>
+    fetchApi(`/categories/${id}`, { method: 'DELETE' }),
+};
+
 // Leads API
 export const leadsApi = {
   getAll: (): Promise<Lead[]> => fetchApi('/leads'),
   getById: (id: number): Promise<Lead> => fetchApi(`/leads/${id}`),
-  create: (
-    lead: Omit<Lead, 'id' | 'created_at' | 'updated_at'>
-  ): Promise<Lead> =>
+  create: (lead: Omit<Lead, 'id' | 'created_at' | 'updated_at'>): Promise<Lead> =>
     fetchApi('/leads', {
       method: 'POST',
       body: JSON.stringify({ lead }),
@@ -206,9 +220,7 @@ export const leadsApi = {
 export const reviewsApi = {
   getAll: (): Promise<Review[]> => fetchApi('/reviews'),
   getById: (id: number): Promise<Review> => fetchApi(`/reviews/${id}`),
-  create: (
-    review: Omit<Review, 'id' | 'created_at' | 'updated_at'>
-  ): Promise<Review> =>
+  create: (review: Omit<Review, 'id' | 'created_at' | 'updated_at'>): Promise<Review> =>
     fetchApi('/reviews', {
       method: 'POST',
       body: JSON.stringify({ review }),
@@ -222,34 +234,11 @@ export const reviewsApi = {
     fetchApi(`/reviews/${id}`, { method: 'DELETE' }),
 };
 
-// Categories API
-export const categoriesApi = {
-  getAll: (): Promise<Category[]> => fetchApi('/categories'),
-  getById: (id: number): Promise<Category> =>
-    fetchApi<Category>(`/categories/${id}`),
-  create: (
-    category: Omit<Category, 'id' | 'created_at' | 'updated_at'>
-  ): Promise<Category> =>
-    fetchApi<Category>('/categories', {
-      method: 'POST',
-      body: JSON.stringify({ category }),
-    }),
-  update: (id: number, category: Partial<Category>): Promise<Category> =>
-    fetchApi<Category>(`/categories/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ category }),
-    }),
-  delete: (id: number): Promise<void> =>
-    fetchApi<void>(`/categories/${id}`, { method: 'DELETE' }),
-};
-
 // Plans API
 export const plansApi = {
   getAll: (): Promise<Plan[]> => fetchApi('/plans'),
   getById: (id: number): Promise<Plan> => fetchApi(`/plans/${id}`),
-  create: (
-    plan: Omit<Plan, 'id' | 'created_at' | 'updated_at'>
-  ): Promise<Plan> =>
+  create: (plan: Omit<Plan, 'id' | 'created_at' | 'updated_at'>): Promise<Plan> =>
     fetchApi('/plans', {
       method: 'POST',
       body: JSON.stringify({ plan }),
@@ -267,9 +256,7 @@ export const plansApi = {
 export const articlesApi = {
   getAll: (): Promise<Article[]> => fetchApi('/articles'),
   getById: (id: number): Promise<Article> => fetchApi(`/articles/${id}`),
-  create: (
-    article: Omit<Article, 'id' | 'created_at' | 'updated_at'>
-  ): Promise<Article> =>
+  create: (article: Omit<Article, 'id' | 'created_at' | 'updated_at'>): Promise<Article> =>
     fetchApi('/articles', {
       method: 'POST',
       body: JSON.stringify({ article }),
@@ -287,9 +274,7 @@ export const articlesApi = {
 export const badgesApi = {
   getAll: (): Promise<Badge[]> => fetchApi('/badges'),
   getById: (id: number): Promise<Badge> => fetchApi(`/badges/${id}`),
-  create: (
-    badge: Omit<Badge, 'id' | 'created_at' | 'updated_at'>
-  ): Promise<Badge> =>
+  create: (badge: Omit<Badge, 'id' | 'created_at' | 'updated_at'>): Promise<Badge> =>
     fetchApi('/badges', {
       method: 'POST',
       body: JSON.stringify({ badge }),
@@ -311,4 +296,13 @@ export const searchApi = {
     fetchApi(`/search/products?q=${encodeURIComponent(query)}`),
   articles: (query: string): Promise<Article[]> =>
     fetchApi(`/search/articles?q=${encodeURIComponent(query)}`),
+};
+
+// Admin API
+export const adminApi = {
+  importCategories: (formData: FormData): Promise<any> =>
+    fetchApi('/admin/categories/import', {
+      method: 'POST',
+      body: formData,
+    }),
 };

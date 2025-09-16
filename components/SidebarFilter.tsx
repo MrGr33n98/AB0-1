@@ -8,7 +8,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChevronDown, Search, Star } from 'lucide-react';
 
-// Dados mockados de todas as capitais e suas 5 maiores cidades
+interface SidebarFilterProps {
+  onFilterChange: (filterType: string, value: any) => void;
+  filters: {
+    searchTerm: string;
+    category: string | null;
+    state: string | null;
+    city: string | null;
+    rating: number | null;
+  };
+  locationsData?: Record<string, string[]>;
+}
+
+// Dados mockados de estados e cidades
 const mockStatesAndCities = {
   'AC': ['Rio Branco', 'Cruzeiro do Sul', 'Sena Madureira', 'Tarauacá', 'Feijó'],
   'AL': ['Maceió', 'Arapiraca', 'Rio Largo', 'Palmeira dos Índios', 'União dos Palmares'],
@@ -36,8 +48,10 @@ const mockStatesAndCities = {
   'SC': ['Florianópolis', 'Joinville', 'Blumenau', 'São José', 'Chapecó'],
   'SE': ['Aracaju', 'Nossa Senhora do Socorro', 'Lagarto', 'Itabaiana', 'Estância'],
   'SP': ['São Paulo', 'Guarulhos', 'Campinas', 'São Bernardo do Campo', 'Santo André'],
-  'TO': ['Palmas', 'Araguaína', 'Gurupi', 'Porto Nacional', 'Paraíso do Tocantins'],
+  'TO': ['Palmas', 'Araguaína', 'Gurupi', 'Porto Nacional', 'Paraíso do Tocantins']
 };
+
+// Componente genérico para renderizar uma seção de filtro expansível
 
 // Componente genérico para renderizar uma seção de filtro expansível
 const FilterSection = ({ title, children, isOpen, onToggle, className = '' }) => (
@@ -95,7 +109,7 @@ const RatingFilterButton = ({ active, children, onClick }) => (
 
 
 // Componente principal da barra lateral de filtros
-const SidebarFilter = ({ onFilterChange, filters }) => {
+const SidebarFilter = ({ onFilterChange, filters, locationsData = {} }: SidebarFilterProps) => {
   const { categories } = useCategories();
   const [openSection, setOpenSection] = useState<string | null>(null);
 
@@ -103,7 +117,7 @@ const SidebarFilter = ({ onFilterChange, filters }) => {
     setOpenSection(openSection === section ? null : section);
   };
   
-  const handleFilterClick = (filterType, value) => {
+  const handleFilterClick = (filterType: string, value: any) => {
     if (filters[filterType] === value) {
       onFilterChange(filterType, null);
     } else {
@@ -117,7 +131,7 @@ const SidebarFilter = ({ onFilterChange, filters }) => {
     { value: 3, label: '3 Estrelas ou mais' }
   ];
 
-  const availableCities = filters.state ? mockStatesAndCities[filters.state] : null;
+  const availableCities = filters.state ? locationsData[filters.state] : null;
 
   return (
     <div className="hidden lg:block w-72 bg-white rounded-2xl p-4 shadow-md border border-gray-100 space-y-4">
@@ -166,7 +180,7 @@ const SidebarFilter = ({ onFilterChange, filters }) => {
 
       {/* State Filter */}
       <FilterSection title="ESTADO" isOpen={openSection === 'states'} onToggle={() => toggleSection('states')}>
-        {Object.keys(mockStatesAndCities).map((state) => (
+        {Object.keys(locationsData).map((state) => (
           <button
             key={state}
             onClick={() => handleFilterClick('state', state)}

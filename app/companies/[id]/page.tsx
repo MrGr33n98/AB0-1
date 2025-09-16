@@ -4,13 +4,14 @@ import CompanyDetailClient from './CompanyDetailClient';
 import { companiesApi } from '@/lib/api';
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>; // ⬅️ agora params é uma Promise
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
-    const company = await companiesApi.getById(parseInt(params.id));
-    
+    const { id } = await params; // ⬅️ await aqui
+    const company = await companiesApi.getById(parseInt(id));
+
     if (!company) {
       return {
         title: 'Empresa não encontrada | Compare Solar',
@@ -20,14 +21,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: `${company.name} | Compare Solar`,
       description: `${company.description} - Localizada em ${company.address}. Telefone: ${company.phone}`,
-      keywords: `${company.name}, energia solar, painéis solares, instalação solar, ${company.address}`,
       openGraph: {
         title: `${company.name} - Empresa de Energia Solar`,
         description: `${company.description} - Localizada em ${company.address}. Telefone: ${company.phone}`,
         url: `https://www.comparesolar.com/companies/${company.id}`,
-        type: 'website',
-        siteName: 'Compare Solar',
-        locale: 'pt_BR',
       },
       twitter: {
         card: 'summary_large_image',
@@ -37,12 +34,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       alternates: {
         canonical: `https://www.comparesolar.com/companies/${company.id}`,
       },
-      robots: {
-        index: true,
-        follow: true,
-      },
     };
-  } catch (error) {
+  } catch {
     return {
       title: 'Empresa não encontrada | Compare Solar',
     };
@@ -51,14 +44,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CompanyDetailPage({ params }: Props) {
   try {
-    const company = await companiesApi.getById(parseInt(params.id));
-    
+    const { id } = await params; // ⬅️ await aqui também
+    const company = await companiesApi.getById(parseInt(id));
+
     if (!company) {
       notFound();
     }
 
     return <CompanyDetailClient company={company} />;
-  } catch (error) {
+  } catch {
     notFound();
   }
 }

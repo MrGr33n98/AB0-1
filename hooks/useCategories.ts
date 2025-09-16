@@ -10,10 +10,11 @@ export function useCategories() {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const data = await categoriesApi.getAll();
+        const data = await categoriesApi.getAll(); // 👈 agora usa categoriesApi
         setCategories(data);
       } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to fetch categories'));
+        setError(err instanceof Error ? err : new Error('Falha ao buscar categorias'));
+        console.error('Erro ao buscar categorias:', err);
       } finally {
         setLoading(false);
       }

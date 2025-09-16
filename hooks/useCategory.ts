@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Category, categoriesApi } from '@/lib/api';
+import { Category } from '@/lib/api';
+import { categoriesApiSafe } from '@/lib/api-client';
 
 export function useCategory(id: number) {
   const [category, setCategory] = useState<Category | null>(null);
@@ -12,10 +13,11 @@ export function useCategory(id: number) {
     const fetchCategory = async () => {
       try {
         setLoading(true);
-        const data = await categoriesApi.getById(id);
+        const data = await categoriesApiSafe.getById(id);
         setCategory(data);
       } catch (err) {
-        setError(err instanceof Error ? err : new Error(`Failed to fetch category ${id}`));
+        setError(err instanceof Error ? err : new Error(`Falha ao buscar categoria ${id}`));
+        console.error(`Erro ao buscar categoria ${id}:`, err);
       } finally {
         setLoading(false);
       }

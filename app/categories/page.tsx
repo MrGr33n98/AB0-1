@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCompanies } from '@/hooks/useCompanies';
+import { useCompaniesSafe } from '@/hooks/useCompaniesSafe';
 import { useCategories } from '@/hooks/useCategories';
 import CompanyCard from '@/components/CompanyCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,39 +20,35 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-// Dados mockados de todas as capitais e suas 5 maiores cidades
-const mockStatesAndCities = {
-  'AC': ['Rio Branco', 'Cruzeiro do Sul', 'Sena Madureira', 'Tarauacá', 'Feijó'],
-  'AL': ['Maceió', 'Arapiraca', 'Rio Largo', 'Palmeira dos Índios', 'União dos Palmares'],
-  'AM': ['Manaus', 'Parintins', 'Itacoatiara', 'Manacapuru', 'Coari'],
-  'AP': ['Macapá', 'Santana', 'Laranjal do Jari', 'Oiapoque', 'Porto Grande'],
-  'BA': ['Salvador', 'Feira de Santana', 'Vitória da Conquista', 'Camaçari', 'Juazeiro'],
-  'CE': ['Fortaleza', 'Caucaia', 'Juazeiro do Norte', 'Maracanaú', 'Sobral'],
-  'DF': ['Brasília', 'Ceilândia', 'Taguatinga', 'Gama', 'Samambaia'],
-  'ES': ['Vitória', 'Serra', 'Vila Velha', 'Cariacica', 'Linhares'],
-  'GO': ['Goiânia', 'Aparecida de Goiânia', 'Anápolis', 'Rio Verde', 'Luziânia'],
-  'MA': ['São Luís', 'Imperatriz', 'São José de Ribamar', 'Timon', 'Caxias'],
-  'MG': ['Belo Horizonte', 'Uberlândia', 'Contagem', 'Juiz de Fora', 'Betim'],
-  'MS': ['Campo Grande', 'Dourados', 'Três Lagoas', 'Corumbá', 'Ponta Porã'],
-  'MT': ['Cuiabá', 'Várzea Grande', 'Rondonópolis', 'Sinop', 'Tangará da Serra'],
-  'PA': ['Belém', 'Ananindeua', 'Santarém', 'Marabá', 'Castanhal'],
-  'PB': ['João Pessoa', 'Campina Grande', 'Santa Rita', 'Patos', 'Bayeux'],
-  'PE': ['Recife', 'Jaboatão dos Guararapes', 'Olinda', 'Caruaru', 'Petrolina'],
-  'PI': ['Teresina', 'Parnaíba', 'Picos', 'Piripiri', 'Floriano'],
-  'PR': ['Curitiba', 'Londrina', 'Maringá', 'Ponta Grossa', 'Cascavel'],
-  'RJ': ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu', 'Niterói'],
-  'RN': ['Natal', 'Mossoró', 'Parnamirim', 'São Gonçalo do Amarante', 'Macaíba'],
-  'RO': ['Porto Velho', 'Ji-Paraná', 'Ariquemes', 'Cacoal', 'Vilhena'],
-  'RR': ['Boa Vista', 'Rorainópolis', 'Caracaraí', 'Mucajaí', 'Pacaraima'],
-  'RS': ['Porto Alegre', 'Caxias do Sul', 'Canoas', 'Pelotas', 'Santa Maria'],
-  'SC': ['Florianópolis', 'Joinville', 'Blumenau', 'São José', 'Chapecó'],
-  'SE': ['Aracaju', 'Nossa Senhora do Socorro', 'Lagarto', 'Itabaiana', 'Estância'],
-  'SP': ['São Paulo', 'Guarulhos', 'Campinas', 'São Bernardo do Campo', 'Santo André'],
-  'TO': ['Palmas', 'Araguaína', 'Gurupi', 'Porto Nacional', 'Paraíso do Tocantins'],
+// Função para extrair estados e cidades únicos das empresas
+const extractLocations = (companies) => {
+  const locations = companies.reduce((acc, company) => {
+    if (company.address) {
+      const addressParts = company.address.split(',').map(part => part.trim());
+      const state = addressParts[addressParts.length - 1];
+      const city = addressParts[addressParts.length - 2];
+
+      if (state && city) {
+        if (!acc[state]) {
+          acc[state] = new Set();
+        }
+        acc[state].add(city);
+      }
+    }
+    return acc;
+  }, {});
+
+  // Converter Sets para arrays
+  return Object.fromEntries(
+    Object.entries(locations).map(([state, cities]) => [
+      state,
+      Array.from(cities).sort()
+    ])
+  );
 };
 
 export default function CompaniesPage() {
-  const { companies, loading } = useCompanies();
+  const { companies, loading } = useCompaniesSafe();
   const [filters, setFilters] = useState({
     searchTerm: '',
     category: null,
@@ -60,6 +56,9 @@ export default function CompaniesPage() {
     city: null,
     rating: null,
   });
+
+  // Extrair estados e cidades dos dados das empresas
+  const locationsData = useMemo(() => extractLocations(companies), [companies]);
 
   const handleFilterChange = (filterType, value) => {
     if (filterType === 'clearAll') {
@@ -86,23 +85,25 @@ export default function CompaniesPage() {
         }
       }
 
-      // Filtrar por estado e cidade
-      const companyAddressLower = company.address?.toLowerCase() || '';
-      if (filters.state) {
-        if (!companyAddressLower.includes(filters.state.toLowerCase())) {
+      // Filtrar por estado e cidade usando o endereço completo
+      if (company.address) {
+        const addressParts = company.address.split(',').map(part => part.trim());
+        const companyState = addressParts[addressParts.length - 1];
+        const companyCity = addressParts[addressParts.length - 2];
+
+        if (filters.state && companyState !== filters.state) {
           return false;
         }
-      }
-      if (filters.city) {
-        if (!companyAddressLower.includes(filters.city.toLowerCase())) {
+        if (filters.city && companyCity !== filters.city) {
           return false;
         }
+      } else if (filters.state || filters.city) {
+        return false;
       }
       
-      // Filtrar por avaliação (lógica mockada)
-      if (filters.rating) {
-        const mockRating = 4.5 + Math.random() * 0.5;
-        if (mockRating < filters.rating) {
+      // Filtrar por avaliação usando a propriedade real de rating
+      if (filters.rating && company.rating) {
+        if (company.rating < filters.rating) {
           return false;
         }
       }
