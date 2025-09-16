@@ -8,9 +8,9 @@ AdminUser.create!(
 
 # Create companies
 companies = [
-  { name: 'Tech Solutions', description: 'Empresa de soluções tecnológicas', website: 'https://techsolutions.example.com', phone: '(11) 1234-5678', address: 'Rua da Tecnologia, 123' },
-  { name: 'Digital Innovations', description: 'Inovações digitais para seu negócio', website: 'https://digitalinnovations.example.com', phone: '(11) 8765-4321', address: 'Avenida Digital, 456' },
-  { name: 'Smart Systems', description: 'Sistemas inteligentes para automação', website: 'https://smartsystems.example.com', phone: '(11) 2468-1357', address: 'Praça da Automação, 789' }
+  { name: 'Tech Solutions', description: 'Empresa de soluções tecnológicas', phone: '(11) 1234-5678', address: 'Rua da Tecnologia, 123', email: 'contact@techsolutions.com' },
+  { name: 'Digital Innovations', description: 'Inovações digitais para seu negócio', phone: '(11) 8765-4321', address: 'Avenida Digital, 456', email: 'info@digitalinnovations.com' },
+  { name: 'Smart Systems', description: 'Sistemas inteligentes para automação', phone: '(11) 2468-1357', address: 'Praça da Automação, 789', email: 'hello@smartsystems.com' }
 ]
 
 companies.each do |company_attrs|
