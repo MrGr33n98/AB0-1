@@ -25,6 +25,8 @@ WORKDIR /app
 
 COPY --from=builder /app ./
 
+# Expõe a porta do Next.js
 EXPOSE 3000
 
-CMD ["npm", "start"]
+# Força o Next.js a rodar no 0.0.0.0 (necessário para Docker/Nginx acessar)
+CMD ["npm", "run", "start", "--", "-p", "3000", "-H", "0.0.0.0"]

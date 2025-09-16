@@ -30,7 +30,7 @@ export default function Navbar() {
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between h-16">
         {/* Logo */}
         <Link href="/" className="flex-shrink-0">
-          <Image src="/images/logo.png" alt="Compare Solar Logo" width={120} height={32} className="h-8 w-auto" />
+          <Image src="/images/logo.png" alt="Compare Solar Logo" width={120} height={32} className="h-18 w-auto" />
         </Link>
 
         {/* Desktop Navigation Items (Central) */}
