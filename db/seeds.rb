@@ -1,8 +1,10 @@
 
-# Create admin user if in development environment
-if Rails.env.development?
-  AdminUser.create!(email: 'admin@example.com', password: 'password', password_confirmation: 'password') unless AdminUser.find_by(email: 'admin@example.com')
-end
+# Create default admin user
+AdminUser.create!(
+  email: 'felipe@admin.com',
+  password: 'ZAbgbZeVAK+!5!',
+  password_confirmation: 'password'
+) if Rails.env.development? || Rails.env.production?
 
 # Create companies
 companies = [

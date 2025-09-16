@@ -71,7 +71,15 @@ ActiveAdmin.setup do |config|
   #
   # This setting changes the method which Active Admin calls
   # within the application controller.
+  # Add this line near the top of the file, after the ActiveAdmin.setup do |config| line
   config.authentication_method = :authenticate_admin_user!
+  config.current_user_method = :current_admin_user
+  config.logout_link_path = :destroy_admin_user_session_path
+  config.batch_actions = true
+  config.comments = false
+  
+  # Make sure this line exists
+  config.site_title = "AB0-1 Admin"
 
   # == User Authorization
   #
