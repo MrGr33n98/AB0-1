@@ -1,10 +1,11 @@
 Rails.application.routes.draw do
-  # =============================================
-  # Authentication & Admin Routes
-  # =============================================
+  # Definir a página institucional como raiz
+  # root 'corporate#index'
+  
+  # Manter as rotas existentes para o admin
   devise_for :admin_users, ActiveAdmin::Devise.config
   ActiveAdmin.routes(self)
-
+  
   # =============================================
   # API Routes
   # =============================================
@@ -18,7 +19,7 @@ Rails.application.routes.draw do
       get 'dashboard/stats', to: 'dashboard#stats'
       
       # Resources
-      resources :categories
+      resources :categories, controller: 'categories_api'
       resources :companies
       resources :products
       resources :leads
@@ -45,7 +46,10 @@ Rails.application.routes.draw do
   # =============================================
   # Static Pages
   # =============================================
-  root 'pages#home'
+  root 'corporate#index'
+  get 'corporate', to: 'corporate#index', as: 'corporate'
+  get 'corporate/login', to: 'corporate#login', as: 'corporate_login'
+  # root 'pages#home'
   get 'home', to: 'pages#home'
   get 'about', to: 'pages#about'
   
