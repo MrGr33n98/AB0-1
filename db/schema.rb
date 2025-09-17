@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_09_16_012034) do
+ActiveRecord::Schema[7.0].define(version: 2025_09_17_023128) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -98,6 +98,15 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_16_012034) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["category_id"], name: "index_badges_on_category_id"
+  end
+
+  create_table "banners", force: :cascade do |t|
+    t.string "title"
+    t.string "image_url"
+    t.string "link"
+    t.boolean "active"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "campaign_reviews", force: :cascade do |t|

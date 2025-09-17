@@ -1,16 +1,20 @@
-
-# Create default admin user
+# ================================
+# Admin User
+# ================================
 AdminUser.find_or_create_by!(email: 'felipe@admin.com') do |admin|
   admin.password = 'ZAbgbZeVAK+!5!'
   admin.password_confirmation = 'ZAbgbZeVAK+!5!'
   puts "Admin user created: #{admin.email}"
 end
 
-# Create companies
+# ================================
+# Empresas de Energia Solar
+# ================================
 companies = [
-  { name: 'Tech Solutions', description: 'Empresa de soluções tecnológicas', phone: '(11) 1234-5678', address: 'Rua da Tecnologia, 123', email: 'contact@techsolutions.com' },
-  { name: 'Digital Innovations', description: 'Inovações digitais para seu negócio', phone: '(11) 8765-4321', address: 'Avenida Digital, 456', email: 'info@digitalinnovations.com' },
-  { name: 'Smart Systems', description: 'Sistemas inteligentes para automação', phone: '(11) 2468-1357', address: 'Praça da Automação, 789', email: 'hello@smartsystems.com' }
+  { name: 'BSol Energia Solar', description: 'Especialista em projetos residenciais e comerciais de energia solar.', phone: '(48) 3232-1111', address: 'Florianópolis, SC' },
+  { name: 'SunPower Brasil', description: 'Distribuidora de painéis solares de alta eficiência.', phone: '(11) 4000-2000', address: 'São Paulo, SP' },
+  { name: 'EcoVolt', description: 'Consultoria e instalação de sistemas fotovoltaicos.', phone: '(21) 3555-1212', address: 'Rio de Janeiro, RJ' },
+  { name: 'SolarMax', description: 'Especializada em sistemas on-grid e off-grid.', phone: '(31) 3222-9898', address: 'Belo Horizonte, MG' }
 ]
 
 companies.each do |company_attrs|
@@ -20,15 +24,16 @@ companies.each do |company_attrs|
   end
 end
 
-# Get all companies for reference
 all_companies = Company.all
 
-# Create categories
+# ================================
+# Categorias do Mercado Solar
+# ================================
 categories = [
-  { name: 'Software', seo_url: 'software', seo_title: 'Software', short_description: 'Soluções de software para empresas', description: 'Categoria que engloba todos os tipos de software empresarial', kind: 'product_category', status: 'active', featured: true },
-  { name: 'Hardware', seo_url: 'hardware', seo_title: 'Hardware', short_description: 'Equipamentos e dispositivos físicos', description: 'Categoria para todos os tipos de hardware e equipamentos tecnológicos', kind: 'product_category', status: 'active', featured: false },
-  { name: 'Serviços', seo_url: 'servicos', seo_title: 'Serviços de TI', short_description: 'Serviços de tecnologia', description: 'Serviços de consultoria, implementação e suporte em tecnologia', kind: 'service_category', status: 'active', featured: true },
-  { name: 'Cloud', seo_url: 'cloud', seo_title: 'Soluções em Cloud', short_description: 'Serviços de computação em nuvem', description: 'Soluções baseadas em nuvem para empresas de todos os tamanhos', kind: 'product_category', status: 'active', featured: true }
+  { name: 'Painéis Solares', seo_url: 'paineis-solares', seo_title: 'Painéis Solares', short_description: 'Placas fotovoltaicas de diferentes modelos.', description: 'Painéis solares monocristalinos e policristalinos para uso residencial, comercial e industrial.', kind: 'product_category', status: 'active', featured: true },
+  { name: 'Inversores Solares', seo_url: 'inversores', seo_title: 'Inversores', short_description: 'Inversores on-grid e off-grid.', description: 'Dispositivos para conversão da energia solar em corrente alternada.', kind: 'product_category', status: 'active', featured: true },
+  { name: 'Baterias de Armazenamento', seo_url: 'baterias', seo_title: 'Baterias Solares', short_description: 'Armazene sua energia solar.', description: 'Soluções de armazenamento de energia com baterias de lítio e chumbo-ácido.', kind: 'product_category', status: 'active', featured: false },
+  { name: 'Sistemas Off-Grid', seo_url: 'sistemas-off-grid', seo_title: 'Sistemas Off-Grid', short_description: 'Energia solar independente da rede elétrica.', description: 'Soluções completas para locais sem acesso à rede pública de energia.', kind: 'product_category', status: 'active', featured: false }
 ]
 
 categories.each do |category_attrs|
@@ -38,13 +43,14 @@ categories.each do |category_attrs|
   end
 end
 
-# Create products
+# ================================
+# Produtos de Energia Solar
+# ================================
 products = [
-  { name: 'Software ERP', description: 'Sistema completo de gestão empresarial', short_description: 'ERP completo', price: 1999.99, sku: 'ERP001', stock: 100, status: 'active', featured: true, company: all_companies.sample },
-  { name: 'CRM Avançado', description: 'Gerenciamento de relacionamento com clientes', short_description: 'CRM profissional', price: 1499.99, sku: 'CRM001', stock: 50, status: 'active', featured: true, company: all_companies.sample },
-  { name: 'Sistema de Vendas', description: 'Plataforma para gestão de vendas online', short_description: 'Vendas online', price: 999.99, sku: 'SALES001', stock: 75, status: 'active', featured: false, company: all_companies.sample },
-  { name: 'Automação de Marketing', description: 'Ferramenta para automação de campanhas de marketing', short_description: 'Marketing automation', price: 1299.99, sku: 'MKT001', stock: 30, status: 'active', featured: true, company: all_companies.sample },
-  { name: 'Gestão de Projetos', description: 'Software para gerenciamento de projetos e equipes', short_description: 'Project management', price: 899.99, sku: 'PROJ001', stock: 60, status: 'active', featured: false, company: all_companies.sample }
+  { name: 'Painel Solar 550W', description: 'Painel fotovoltaico monocristalino de alta eficiência.', short_description: 'Painel 550W Mono', price: 1200.00, sku: 'PS550M', stock: 200, status: 'active', featured: true, company: all_companies.sample },
+  { name: 'Inversor Solar 5kW', description: 'Inversor on-grid trifásico de 5kW.', short_description: 'Inversor 5kW On-Grid', price: 4500.00, sku: 'INV5000', stock: 50, status: 'active', featured: true, company: all_companies.sample },
+  { name: 'Bateria Solar 10kWh', description: 'Bateria de lítio para armazenamento de energia solar.', short_description: 'Bateria 10kWh', price: 15000.00, sku: 'BAT10K', stock: 30, status: 'active', featured: false, company: all_companies.sample },
+  { name: 'Kit Solar Off-Grid 2kWp', description: 'Sistema completo off-grid para residências em áreas remotas.', short_description: 'Kit Solar Off-Grid', price: 18000.00, sku: 'KIT2KW', stock: 10, status: 'active', featured: true, company: all_companies.sample }
 ]
 
 products.each do |product_attrs|
@@ -54,4 +60,20 @@ products.each do |product_attrs|
   end
 end
 
-puts "Seeds concluídos com sucesso!"
+# ================================
+# Banners
+# ================================
+banners = [
+  { title: 'Economize até 95% na conta de luz', image_url: 'https://www.avaliasolar.com.br/images/banner1.png', link: '/categorias/paineis-solares', active: true },
+  { title: 'Financiamento Solar Facilitado', image_url: 'https://www.avaliasolar.com.br/images/banner2.png', link: '/financiamento', active: true },
+  { title: 'Kit Off-Grid Completo', image_url: 'https://www.avaliasolar.com.br/images/banner3.png', link: '/categorias/sistemas-off-grid', active: true }
+]
+
+banners.each do |banner_attrs|
+  Banner.find_or_create_by!(title: banner_attrs[:title]) do |banner|
+    banner.assign_attributes(banner_attrs)
+    puts "Criado banner: #{banner.title}"
+  end
+end
+
+puts "Seeds concluídos com sucesso para o mercado solar!"
