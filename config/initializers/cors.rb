@@ -1,11 +1,9 @@
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    origins 'http://64.225.59.107:3000',
-            'http://localhost:3000',
-            'http://64.225.59.107:3001',
-            'http://localhost:3001',
-            'http://www.avaliasolar.com.br',
-            'https://www.avaliasolar.com.br'
+    origins 'https://www.avaliasolar.com.br',
+            'https://avaliasolar.com.br',
+            'https://api.avaliasolar.com.br',
+            'http://localhost:3000'  # manter para desenvolvimento local
 
     resource '*',
       headers: :any,
