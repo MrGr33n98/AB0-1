@@ -109,8 +109,10 @@ const RatingFilterButton = ({ active, children, onClick }) => (
 
 
 // Componente principal da barra lateral de filtros
+// Remove the mockStatesAndCities constant as we'll use real data
+
 const SidebarFilter = ({ onFilterChange, filters, locationsData = {} }: SidebarFilterProps) => {
-  const { categories } = useCategories();
+  const { categories, loading: categoriesLoading } = useCategories();
   const [openSection, setOpenSection] = useState<string | null>(null);
 
   const toggleSection = (section: string) => {
@@ -161,62 +163,70 @@ const SidebarFilter = ({ onFilterChange, filters, locationsData = {} }: SidebarF
         </div>
       </motion.div>
 
-      {/* Category Filter */}
-      <FilterSection title="CATEGORIAS" isOpen={openSection === 'categories'} onToggle={() => toggleSection('categories')}>
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => handleFilterClick('category', cat.name)}
-            className={`w-full text-left text-sm py-2 px-3 rounded-md transition-colors duration-200 ${
-              filters.category === cat.name
-                ? 'bg-orange-100 text-orange-600 font-semibold'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
+      {/* Updated Category Filter */}
+      <FilterSection 
+        title="CATEGORIAS" 
+        isOpen={openSection === 'categories'} 
+        onToggle={() => toggleSection('categories')}
+      >
+        {categoriesLoading ? (
+          <div className="py-2 px-3">
+            <span className="text-sm text-gray-500">Carregando categorias...</span>
+          </div>
+        ) : categories?.length > 0 ? (
+          categories.map((category) => (
+            <FilterButton
+              key={category.id}
+              active={filters.category === category.name}
+              onClick={() => handleFilterClick('category', category.name)}
+            >
+              {category.name}
+            </FilterButton>
+          ))
+        ) : (
+          <div className="py-2 px-3">
+            <span className="text-sm text-gray-500">Nenhuma categoria encontrada</span>
+          </div>
+        )}
+      </FilterSection>
+
+      {/* Updated State Filter */}
+      <FilterSection 
+        title="ESTADO" 
+        isOpen={openSection === 'states'} 
+        onToggle={() => toggleSection('states')}
+      >
+        {Object.keys(locationsData).sort().map((state) => (
+          <FilterButton
+            key={state}
+            active={filters.state === state}
+            onClick={() => handleFilterClick('state', state)}
           >
-            {cat.name}
-          </button>
+            {state}
+          </FilterButton>
         ))}
       </FilterSection>
 
-      {/* State Filter */}
-      <FilterSection title="ESTADO" isOpen={openSection === 'states'} onToggle={() => toggleSection('states')}>
-        {Object.keys(locationsData).map((state) => (
-          <button
-            key={state}
-            onClick={() => handleFilterClick('state', state)}
-            className={`w-full text-left text-sm py-2 px-3 rounded-md transition-colors duration-200 ${
-              filters.state === state
-                ? 'bg-orange-100 text-orange-600 font-semibold'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            {state}
-          </button>
-        ))}
-      </FilterSection>
-      
-      {/* City Filter */}
-      {filters.state && (
+      {/* Updated City Filter */}
+      {filters.state && locationsData[filters.state] && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          transition={{ duration: 0.3 }}
           className="space-y-1 overflow-hidden mt-4"
         >
-          <h4 className="font-semibold text-xs text-gray-700 mb-1">CIDADE ({filters.state})</h4>
-          {mockStatesAndCities[filters.state].map((city) => (
-            <button
+          <h4 className="font-semibold text-xs text-gray-700 mb-1">
+            CIDADE ({filters.state})
+          </h4>
+          {Array.from(locationsData[filters.state]).sort().map((city) => (
+            <FilterButton
               key={city}
+              active={filters.city === city}
               onClick={() => handleFilterClick('city', city)}
-              className={`w-full text-left text-sm py-2 px-3 rounded-md transition-colors duration-200 ${
-                filters.city === city
-                  ? 'bg-orange-100 text-orange-600 font-semibold'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
             >
               {city}
-            </button>
+            </FilterButton>
           ))}
         </motion.div>
       )}

@@ -2,9 +2,9 @@
 import { Category, Company } from './api';
 
 // Configuração da URL base da API
-// Garante que /api/v1 já venha do .env.local
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+// Garante que a URL base esteja formatada corretamente
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+console.log('🔌 API Base URL:', API_BASE_URL);
 
 /**
  * Função genérica de fetch com tratamento de erros e suporte SSR.
@@ -42,8 +42,8 @@ export async function fetchApiSafe<T>(
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `API error (${response.status})`);
+      const errorData = await response.json().catch(() => ({ error: `Erro de API (${response.status})` }));
+      throw new Error(errorData.error || `Erro de API (${response.status}): ${errorData.message || 'Sem detalhes'}`);
     }
 
     return response.json();
@@ -59,8 +59,15 @@ export async function fetchApiSafe<T>(
 
 // Empresas
 export const companiesApiSafe = {
-  getAll: async (): Promise<Company[]> => {
-    return fetchApiSafe<Company[]>('companies');
+  getAll: async (params?: { status?: string; featured?: boolean; category_id?: number; limit?: number }): Promise<Company[]> => {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.featured !== undefined) queryParams.append('featured', params.featured.toString());
+    if (params?.category_id) queryParams.append('category_id', params.category_id.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    
+    const url = `companies${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    return fetchApiSafe<Company[]>(url);
   },
   getById: async (id: number): Promise<Company> => {
     return fetchApiSafe<Company>(`companies/${id}`);
@@ -86,8 +93,14 @@ export const companiesApiSafe = {
 
 // Categorias
 export const categoriesApiSafe = {
-  getAll: async (): Promise<Category[]> => {
-    return fetchApiSafe<Category[]>('categories');
+  getAll: async (params?: { status?: string; featured?: boolean; limit?: number }): Promise<Category[]> => {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.featured !== undefined) queryParams.append('featured', params.featured.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+    const url = `categories${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    return fetchApiSafe<Category[]>(url);
   },
   getById: async (id: number): Promise<Category> => {
     return fetchApiSafe<Category>(`categories/${id}`);

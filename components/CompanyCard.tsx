@@ -2,100 +2,168 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Star, MapPin, MessageCircle, Phone, Globe } from 'lucide-react';
+import { Star, MapPin, MessageCircle, Phone, Globe, Clock, CreditCard, Facebook, Instagram, Twitter } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Company } from '@/lib/api';
+import { Card, CardContent } from '@/components/ui/card';
+import React from 'react';
 
 interface CompanyCardProps {
   company: Company;
   className?: string;
+  showCtas?: boolean;
+  utmParams?: {
+    source?: string;
+    medium?: string;
+    campaign?: string;
+  };
+}
+
+interface SocialLinks {
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
+  linkedin?: string;
+  youtube?: string;
+}
+
+interface CompanyCta {
+  key: string;
+  label: string;
+  type: string;
+  url: string;
+  icon?: string;
+  style: string;
+  priority: number;
+  analytics_event?: string;
 }
 
 export default function CompanyCard({ company, className = '' }: CompanyCardProps) {
-  const mockData = {
-    rating: 4.7,
-    reviewCount: 134,
-    isVerified: true,
-    isTopRated: true,
-  };
+  if (!company) {
+    return (
+      <Card className={`overflow-hidden h-full ${className}`}>
+        <CardContent className="p-0">
+          <div className="p-4">
+            <p className="text-gray-500">Company data not available</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <motion.div
-      whileHover={{ y: -6, scale: 1.01 }}
-      transition={{ duration: 0.25, ease: "easeInOut" }}
-      className={`bg-card rounded-2xl overflow-hidden shadow-md border border-border h-full flex flex-col hover:shadow-xl transition-all duration-300 ${className}`}
-    >
-      {/* Banner/Header Section */}
-      <div className="relative w-full h-32">
-        <img 
-          src={company.banner_url || "/images/compare-solar-v1.png"} 
-          alt={`${company.name} banner`}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.currentTarget.src = '/images/compare-solar-v1.png';
-          }}
-        />
-        {/* Overlay para sombreamento e desfoque */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent"></div> {/* Sombra na parte inferior */}
-        <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px]"></div> {/* Overlay levemente escuro com blur sutil */}
-      </div>
-
-      {/* Main Content */}
-      <div className="p-6 pt-0 relative flex flex-col">
-        {/* Company Logo */}
-        <div className="absolute -top-12 left-6">
-          <img
-            src={company.logo_url || `/images/logo.png`}
-            alt={`${company.name} logo`}
-            className="w-24 h-24 rounded-full border-4 border-background shadow-lg bg-background object-cover"
-            onError={(e) => {
-              e.currentTarget.src = '/images/logo.png';
+    <Link href={`/companies/${company.id}`}>
+      <Card className={`overflow-hidden h-full hover:shadow-lg transition-shadow ${className}`}>
+        <CardContent className="p-0">
+          <div 
+            className="h-32 bg-cover bg-center" 
+            style={{ 
+              backgroundImage: company.banner_url 
+                ? `url(${company.banner_url})` 
+                : 'url(/images/default-banner.jpg)' 
             }}
           />
-        </div>
+          <div className="p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center">
+                {company.logo_url ? (
+                  <img 
+                    src={company.logo_url} 
+                    alt={company.name} 
+                    className="w-12 h-12 rounded-full mr-3 border border-gray-200"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full mr-3 bg-gray-200 flex items-center justify-center">
+                    <span className="text-gray-500 font-semibold">
+                      {company.name?.charAt(0) || '?'}
+                    </span>
+                  </div>
+                )}
+                <h3 className="text-lg font-semibold">{company.name}</h3>
+              </div>
+              {company.rating && (
+                <div className="flex items-center">
+                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <span className="ml-1 text-sm font-medium">{company.rating}</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Location info */}
+            {(company.city || company.state) && (
+              <div className="flex items-center text-sm text-gray-500 mt-2">
+                <MapPin size={14} className="mr-1" />
+                {company.city && company.state 
+                  ? `${company.city} - ${company.state}` 
+                  : company.city || company.state}
+              </div>
+            )}
+            
+            <p className="text-gray-600 text-sm mt-2 line-clamp-2">
+              {company.description || 'No description available'}
+            </p>
+            
+            {/* Business Hours */}
+            {company.business_hours && (
+              <div className="flex items-center text-sm text-gray-500 mt-2">
+                <Clock size={14} className="mr-1" />
+                <span>{company.business_hours}</span>
+              </div>
+            )}
 
-        {/* Company Info */}
-        <div className="flex flex-col mt-16 text-left">
-          <Link href={`/companies/${company.id}`} className="block">
-            <h3 className="text-xl font-bold text-foreground leading-tight hover:text-primary transition-colors">
-              {company.name}
-            </h3>
-          </Link>
-          <p className="text-muted-foreground text-sm mb-2">By Felipe Henrique</p>
-          
-          {/* Rating */}
-          <div className="flex items-center text-sm mb-4">
-            <Star className="w-4 h-4 text-accent fill-current mr-1" />
-            <span className="font-bold text-foreground">{mockData.rating.toFixed(1)}</span>
-            <span className="ml-1 text-muted-foreground">({mockData.reviewCount} Reviews)</span>
-          </div>
+            {/* Payment Methods */}
+            {company.payment_methods && (
+              <div className="flex items-center text-sm text-gray-500 mt-2">
+                <CreditCard size={14} className="mr-1" />
+                <span>{company.payment_methods.join(', ')}</span>
+              </div>
+            )}
 
-          {/* Address */}
-          <div className="flex items-center text-sm text-muted-foreground mb-6">
-            <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
-            <span className="truncate">{company.address}</span>
+            {/* Total Reviews */}
+            {company.total_reviews > 0 && (
+              <div className="flex items-center text-sm text-gray-500 mt-2">
+                <MessageCircle size={14} className="mr-1" />
+                <span>{company.total_reviews} {company.total_reviews === 1 ? 'avaliação' : 'avaliações'}</span>
+              </div>
+            )}
+
+            {/* Social Links */}
+            {(company.social_links || company.website) && (
+              <div className="flex items-center gap-2 mt-2">
+                {company.website && (
+                  <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">
+                    <Globe size={14} />
+                  </a>
+                )}
+                {company.social_links?.facebook && (
+                  <a href={company.social_links.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">
+                    <Facebook size={14} />
+                  </a>
+                )}
+                {company.social_links?.instagram && (
+                  <a href={company.social_links.instagram} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">
+                    <Instagram size={14} />
+                  </a>
+                )}
+                {company.social_links?.twitter && (
+                  <a href={company.social_links.twitter} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">
+                    <Twitter size={14} />
+                  </a>
+                )}
+              </div>
+            )}
+
+            {company.category_name && (
+              <div className="mt-3">
+                <Badge variant="outline" className="text-xs">
+                  {company.category_name}
+                </Badge>
+              </div>
+            )}
           </div>
-        </div>
-        
-        {/* CTA Buttons */}
-        <div className="mt-auto flex flex-col space-y-3">
-          <Link href={`/companies/${company.id}`} className="w-full">
-            <Button className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold py-3 px-4 rounded-xl hover:from-primary/90 hover:to-accent/90 transition-all shadow-md">
-              Ver Perfil
-            </Button>
-          </Link>
-          <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold py-3 px-4 rounded-xl transition-all shadow-md"> 
-            Solicitar Orçamento
-          </Button>
-          <Button 
-            variant="outline"
-            className="w-full text-primary border-primary/20 hover:bg-primary/5 font-semibold py-3 px-4 rounded-xl transition-colors"
-          >
-            Avalie essa empresa
-          </Button>
-        </div>
-      </div>
-    </motion.div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }

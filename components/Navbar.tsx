@@ -17,6 +17,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Import the SearchBar component
+import SearchBar from '@/components/SearchBar';
+
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -134,3 +137,12 @@ export default function Navbar() {
     </header>
   );
 }
+
+// Inside your Navbar component
+// Replace the existing search input with:
+
+<div className="hidden md:block">
+  <SearchBar placeholder="Buscar empresas, produtos..." />
+</div>
+
+// For mobile view, you might want to add it to your mobile menu as well

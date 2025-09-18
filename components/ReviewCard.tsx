@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Star, ThumbsUp, User } from 'lucide-react';
+import { Star, ThumbsUp } from 'lucide-react';
 import { Review } from '@/lib/api';
 
 interface ReviewCardProps {
@@ -10,14 +10,14 @@ interface ReviewCardProps {
 }
 
 export default function ReviewCard({ review, className = "" }: ReviewCardProps) {
-  // Mock data for demo
-  const mockData = {
-    userName: 'João Silva',
-    userAvatar: `https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop&crop=face`,
-    date: '15 de Janeiro, 2025',
-    productName: 'Painel Solar Pro 500W',
-    helpful: Math.floor(Math.random() * 20) + 5,
-    verified: true,
+  // Format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
   };
 
   return (
@@ -30,27 +30,27 @@ export default function ReviewCard({ review, className = "" }: ReviewCardProps) 
       {/* Header */}
       <div className="flex items-start space-x-4 mb-4">
         {/* User Avatar */}
-        <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
-          <img
-            src={mockData.userAvatar}
-            alt={mockData.userName}
-            className="w-full h-full object-cover"
-          />
+        <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center">
+          <span className="text-gray-600 font-semibold">
+            {review.user_id ? `U${review.user_id}` : 'U'}
+          </span>
         </div>
 
         {/* User Info & Rating */}
         <div className="flex-1">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center space-x-2">
-              <h4 className="font-semibold text-gray-900">{mockData.userName}</h4>
-              {mockData.verified && (
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-xs text-green-600 ml-1">Verificado</span>
-                </div>
-              )}
+              <h4 className="font-semibold text-gray-900">
+                Usuário {review.user_id}
+              </h4>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-xs text-green-600 ml-1">Verificado</span>
+              </div>
             </div>
-            <span className="text-sm text-gray-500">{mockData.date}</span>
+            <span className="text-sm text-gray-500">
+              {formatDate(review.created_at)}
+            </span>
           </div>
 
           {/* Rating Stars */}
@@ -74,7 +74,9 @@ export default function ReviewCard({ review, className = "" }: ReviewCardProps) 
 
           {/* Product Name */}
           <p className="text-sm text-gray-600">
-            Para: <span className="font-medium text-gray-900">{mockData.productName}</span>
+            Para: <span className="font-medium text-gray-900">
+              Produto {review.product_id}
+            </span>
           </p>
         </div>
       </div>
@@ -90,7 +92,7 @@ export default function ReviewCard({ review, className = "" }: ReviewCardProps) 
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
         <button className="flex items-center space-x-2 text-gray-500 hover:text-gray-700 transition-colors">
           <ThumbsUp className="w-4 h-4" />
-          <span className="text-sm">Útil ({mockData.helpful})</span>
+          <span className="text-sm">Útil</span>
         </button>
         
         <div className="flex items-center space-x-4 text-sm text-gray-500">

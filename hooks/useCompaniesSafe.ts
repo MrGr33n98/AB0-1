@@ -3,7 +3,14 @@
 import { useState, useEffect } from 'react';
 import { companiesApiSafe, Company } from '@/lib/api-client';
 
-export function useCompaniesSafe() {
+interface UseCompaniesSafeParams {
+  status?: 'active' | 'inactive';
+  featured?: boolean;
+  category_id?: number;
+  limit?: number;
+}
+
+export function useCompaniesSafe(params?: UseCompaniesSafeParams) {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,10 +23,15 @@ export function useCompaniesSafe() {
     try {
       setLoading(true);
       setError(null);
-      const data = await companiesApiSafe.getAll();
+      const data = await companiesApiSafe.getAll({
+        ...params
+      });
+      
+      // Não filtra por status e featured se não estiverem definidos
       setCompanies(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch companies');
+      setCompanies([]);
     } finally {
       setLoading(false);
     }
