@@ -1,5 +1,9 @@
 class CompanySerializer < ActiveModel::Serializer
-  attributes :id, :name, :description, :website, :phone, :address, :created_at, :updated_at, :banner_url, :logo_url
+  include Rails.application.routes.url_helpers
+
+  attributes :id, :name, :description, :website, :phone,
+             :address, :created_at, :updated_at,
+             :banner_url, :logo_url
   
   def banner_url
     if object.banner.attached?

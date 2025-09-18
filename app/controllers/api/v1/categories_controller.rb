@@ -5,11 +5,36 @@ module Api
       before_action :set_category, only: [:show, :update, :destroy]
 
       def index
-        @categories = Category.all
-        render json: @categories
-      rescue => e
-        Rails.logger.error("Categories error: #{e.message}")
-        render json: { error: "Erro interno no servidor" }, status: :internal_server_error
+        begin
+          query = Category.all
+
+          # Filtrar por status
+          if params[:status].present?
+            query = query.where(status: params[:status])
+          end
+
+          # Filtrar por featured
+          if params[:featured].present?
+            featured = ActiveModel::Type::Boolean.new.cast(params[:featured])
+            query = query.where(featured: featured)
+          end
+
+          # Aplicar limite
+          if params[:limit].present?
+            query = query.limit(params[:limit].to_i)
+          end
+
+          @categories = query.includes(:companies)
+          render json: @categories, include: {
+            companies: { only: [:id, :name] }
+          }, except: [:created_at, :updated_at]
+        rescue ActiveRecord::RecordNotFound => e
+          Rails.logger.error("Categories not found: #{e.message}")
+          render json: { error: "Categorias não encontradas" }, status: :not_found
+        rescue StandardError => e
+          Rails.logger.error("Categories error: #{e.message}\n#{e.backtrace.join('\n')}")
+          render json: { error: "Erro interno no servidor" }, status: :internal_server_error
+        end
       end
 
       def show

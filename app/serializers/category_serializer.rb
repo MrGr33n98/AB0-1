@@ -10,6 +10,8 @@ class CategorySerializer < ActiveModel::Serializer
   has_many :products
 
   def banner_url
-    object.banner_url
+    if object.banner.attached?
+      Rails.application.routes.url_helpers.url_for(object.banner)
+    end
   end
 end
