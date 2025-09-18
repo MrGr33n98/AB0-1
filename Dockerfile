@@ -46,4 +46,5 @@ HEALTHCHECK --interval=30s --timeout=3s \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
 # Força o Next.js a rodar no 0.0.0.0 (necessário para Docker/Nginx acessar)
-CMD ["node", "server.js"]
+# Update the CMD to explicitly bind to all interfaces
+CMD ["npm", "run", "start", "--", "-p", "3000", "-H", "0.0.0.0"]

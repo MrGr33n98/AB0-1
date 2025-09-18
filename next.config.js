@@ -1,28 +1,27 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'standalone', // ✅ Gera a pasta .next/standalone no build (necessário pro Docker)
-
-  images: {
-    domains: ['www.avaliasolar.com.br'],
-    remotePatterns: [
+  output: 'standalone',
+  experimental: {
+    serverActions: true,
+  },
+  async headers() {
+    return [
       {
-        protocol: 'https',
-        hostname: 'www.avaliasolar.com.br',
-        pathname: '/images/**',
+        source: '/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+        ],
       },
-    ],
+    ]
   },
-
-  eslint: {
-    // ✅ Ignora erros do ESLint durante build (resolve o "a.getScope is not a function")
-    ignoreDuringBuilds: true,
+  webpack: (config) => {
+    config.watchOptions = {
+      poll: 1000,
+      aggregateTimeout: 300,
+    }
+    return config
   },
+}
 
-  typescript: {
-    // ✅ Ignora erros de TypeScript no build de produção
-    ignoreBuildErrors: true,
-  },
-};
-
-module.exports = nextConfig;
+module.exports = nextConfig
