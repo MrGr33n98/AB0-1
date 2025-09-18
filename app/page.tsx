@@ -10,7 +10,6 @@ import Script from 'next/script';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Componentes da UI
-import Hero from '@/components/Hero';
 import CategoryCard from '@/components/CategoryCard';
 import CompanyCard from '@/components/CompanyCard';
 import ReviewCard from '@/components/ReviewCard';
@@ -167,9 +166,6 @@ export default function Home() {
       />
       
       <div className="min-h-screen bg-background antialiased">
-        {/* Hero Section */}
-        <Hero />
-
         {/* Seção 1: Credibilidade e Proposta de Valor */}
         <section className="py-20 bg-card" id="beneficios" aria-labelledby="beneficios-heading">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
