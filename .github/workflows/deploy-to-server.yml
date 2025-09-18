@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to Server
+    name: Deploy Backend to VPS
     runs-on: ubuntu-latest
 
     steps:
@@ -16,7 +16,9 @@ jobs:
 
       - name: Build Docker image (with SHA and latest tags)
         run: |
-          docker build -t ab0-backend:${{ github.sha }} -t ab0-backend:latest .
+          docker build \
+            -t ab0-backend:${{ github.sha }} \
+            -t ab0-backend:latest .
 
       - name: Save Docker image as tar
         run: |
@@ -39,17 +41,24 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
           script: |
+            # Export secrets
             export POSTGRES_USER="${{ secrets.POSTGRES_USER }}"
             export POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}"
             export POSTGRES_DB="${{ secrets.POSTGRES_DB }}"
             export RAILS_MASTER_KEY="$(echo "${{ secrets.RAILS_MASTER_KEY }}" | tr -d '\n\r')"
             export JWT_SECRET="${{ secrets.JWT_SECRET }}"
+            export SECRET_KEY_BASE="$(echo "${{ secrets.SECRET_KEY_BASE }}" | tr -d '\n\r')"
 
+            # Load new Docker image
             docker load -i ~/images/ab0-backend.tar
 
+            # Remove old container if exists
             docker rm -f ab0-backend || true
+
+            # Ensure network exists
             docker network create ab0-network || true
 
+            # Ensure postgres container is running
             if ! docker ps | grep -q ab0-postgres; then
               if docker ps -a | grep -q ab0-postgres; then
                 docker start ab0-postgres
@@ -71,12 +80,15 @@ jobs:
               docker exec ab0-postgres psql -U postgres -c "CREATE DATABASE $POSTGRES_DB OWNER $POSTGRES_USER;" || true
             fi
 
+            # Run new backend container
             docker run -d \
               --name ab0-backend \
               --network ab0-network \
+              --restart unless-stopped \
               -e RAILS_ENV=production \
               -e "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@ab0-postgres:5432/${POSTGRES_DB}" \
               -e "RAILS_MASTER_KEY=$RAILS_MASTER_KEY" \
+              -e "SECRET_KEY_BASE=$SECRET_KEY_BASE" \
               -e "JWT_SECRET=$JWT_SECRET" \
               -e "POSTGRES_HOST=ab0-postgres" \
               -e "POSTGRES_USER=$POSTGRES_USER" \
@@ -86,15 +98,8 @@ jobs:
               -p 3001:3001 \
               ab0-backend:latest
 
-            echo "Network Settings:"
-            docker inspect ab0-backend | grep -A 20 "NetworkSettings"
-            echo "Process Listening:"
-            docker exec ab0-backend netstat -tulpn | grep 3001 || true
+            # Debug info
             echo "Container Status:"
             docker ps | grep ab0-backend
-            echo "Container Logs:"
+            echo "Last Logs:"
             docker logs --tail=50 ab0-backend
-            echo "Network Check:"
-            docker network inspect ab0-network | grep ab0-backend || true
-            echo "Port Check:"
-            ss -tulpn | grep 3001 || true
