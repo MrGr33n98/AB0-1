@@ -19,9 +19,10 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: [
-          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Origin', value: 'https://www.avaliasolar.com.br' },
           { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type' }
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
+          { key: 'Access-Control-Allow-Credentials', value: 'true' }
         ],
       },
     ]
@@ -33,6 +34,13 @@ const nextConfig = {
     }
     return config
   },
+  basePath: '',
+  assetPrefix: '',
+  images: {
+    domains: ['www.avaliasolar.com.br', 'api.avaliasolar.com.br'],
+    unoptimized: true
+  },
+  trailingSlash: false
 }
 
 module.exports = nextConfig
