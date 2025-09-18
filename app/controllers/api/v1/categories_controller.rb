@@ -1,7 +1,7 @@
-# app/controllers/api/v1/categories_api_controller.rb
+# app/controllers/api/v1/categories_controller.rb
 module Api
   module V1
-    class CategoriesApiController < Api::V1::BaseController
+    class CategoriesController < Api::V1::BaseController
       before_action :set_category, only: [:show, :update, :destroy]
 
       def index
@@ -89,7 +89,10 @@ module Api
       end
 
       def category_params
-        params.require(:category).permit(:name, :seo_url, :seo_title, :short_description, :description, :parent_id, :kind, :status, :featured)
+        params.require(:category).permit(
+          :name, :seo_url, :seo_title, :short_description,
+          :description, :parent_id, :kind, :status, :featured
+        )
       end
     end
   end
