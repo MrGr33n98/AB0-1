@@ -5,7 +5,7 @@ import CompanyDetailClient from './CompanyDetailClient';
 import { companiesApiSafe } from '@/lib/api-client';
 
 interface Props {
-  params: { id: string }; // ✅ Corrigido: objeto direto, não Promise
+  params: { id: string }; // ✅ Corrigido: objeto direto
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
