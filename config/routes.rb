@@ -15,8 +15,8 @@ Rails.application.routes.draw do
       get 'companies/cities',    to: 'companies#cities'
       get 'companies/locations', to: 'companies#locations' # Returns combined state/city data
 
-      # CRUDs gerenciados pelo ActiveAdmin
-      resources :categories, controller: 'categories_api'
+      # CRUDs
+      resources :categories   # ✅ Corrigido (antes estava controller: 'categories_api')
       resources :companies
       resources :products
       resources :leads
@@ -46,8 +46,8 @@ Rails.application.routes.draw do
   root 'corporate#index'
   get 'corporate',        to: 'corporate#index', as: 'corporate'
   get 'corporate/login',  to: 'corporate#login', as: 'corporate_login'
-  get 'home',            to: 'pages#home'
-  get 'about',           to: 'pages#about'
+  get 'home',             to: 'pages#home'
+  get 'about',            to: 'pages#about'
 
   resources :posts
 end
