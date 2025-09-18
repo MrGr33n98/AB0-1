@@ -14,29 +14,25 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Criar .env.production
-        run: |
-          echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" > .env.production
-          # adicione outras envs do frontend aqui se precisar
-          cat .env.production
-
       - name: Build Docker image
         run: |
-          docker build -t ab0-frontend:${{ github.sha }} .
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
+            -t ab0-frontend:${{ github.sha }} .
 
       - name: Save Docker image as tar
         run: |
           docker save ab0-frontend:${{ github.sha }} -o ab0-frontend.tar
           chmod 644 ab0-frontend.tar
 
-      - name: Copy docker image and env file to droplet
+      - name: Copy docker image to droplet
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
-          source: "ab0-frontend.tar,.env.production"
-          target: "~"
+          source: "ab0-frontend.tar"
+          target: "~/"
 
       - name: Load and Run docker container
         uses: appleboy/ssh-action@v1.0.3
@@ -58,10 +54,10 @@ jobs:
             # Remover container antigo
             docker rm -f ab0-frontend || true
 
-            # Rodar container na rede compartilhada
+            # Rodar container com env injetada
             docker run -d \
               --name ab0-frontend \
               --network ab0-network \
-              --env-file ~/.env.production \
+              -e NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
               -p 3000:3000 \
               ab0-frontend:${{ github.sha }}

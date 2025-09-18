@@ -14,7 +14,10 @@ COPY . .
 ENV NEXT_DISABLE_ESLINT=1
 ENV NEXT_DISABLE_TYPECHECK=1
 ENV SKIP_BUILD_VALIDATION=true
-ENV NEXT_PUBLIC_API_URL=https://api.avaliasolar.com.br/api/v1
+
+# O valor de NEXT_PUBLIC_API_URL vem do --build-arg passado no workflow
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 RUN npm run build
 
