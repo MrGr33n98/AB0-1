@@ -1,119 +1,132 @@
-# app/controllers/api/v1/companies_controller.rb
-module Api
-  module V1
-    class CompaniesController < BaseController
-      before_action :set_company, only: [:show, :update, :destroy]
+# app/models/company.rb
+class Company < ApplicationRecord
+  # Attachments
+  has_one_attached :banner
+  has_one_attached :logo
 
-      # GET /api/v1/companies
-      def index
-        Rails.logger.info("Starting companies#index with params: #{params.inspect}")
+  # Associations
+  has_and_belongs_to_many :categories
+  has_many :reviews, dependent: :destroy
 
-        @companies = Company.includes(:categories, :reviews)
-                            .order(created_at: :desc)
+  # =========================
+  # Validations
+  # =========================
+  validates :name, presence: true
+  # Usamos alias_attribute abaixo, então esta validação funciona sobre :about
+  validates :description, presence: true
 
-        # Filtros
-        @companies = @companies.where(status: params[:status]) if params[:status].present?
+  # Mantidas as validações originais
+  validates :state, :city, presence: false
+  validates :website, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
+                                message: 'must be a valid URL' }, allow_blank: true
+  validates :phone,   format: { with: /\A\([0-9]{2}\)\s[0-9]{4,5}-[0-9]{4}\z/,
+                                message: 'must be in format (XX) XXXX-XXXX or (XX) XXXXX-XXXX' }, allow_blank: true
+  validates :whatsapp,     format: { with: /\A\+?[0-9]{10,15}\z/,
+                                     message: 'must be a valid WhatsApp number' }, allow_blank: true
+  validates :email_public, format: { with: URI::MailTo::EMAIL_REGEXP,
+                                     message: 'must be a valid email' }, allow_blank: true
 
-        if params[:featured].present?
-          featured_value = ActiveModel::Type::Boolean.new.cast(params[:featured])
-          @companies = @companies.where(featured: featured_value)
-        end
+  # =========================
+  # Attribute aliases
+  # =========================
+  # Permite usar :description na UI e no código, persistindo em :about
+  alias_attribute :description, :about
 
-        if params[:category_id].present?
-          @companies = @companies.joins(:categories).where(categories: { id: params[:category_id] })
-        end
+  # =========================
+  # Scopes
+  # =========================
+  scope :by_state,        ->(state) { where(state: state) if state.present? }
+  scope :by_city,         ->(city)  { where(city: city)   if city.present? }
+  scope :featured,        ->        { where(featured: true) }
+  scope :verified,        ->        { where(verified: true) }
+  scope :by_rating,       ->        { order(rating_avg: :desc) }
+  scope :by_founded_year, ->        { order(founded_year: :asc) }
 
-        @companies = @companies.limit(params[:limit].to_i) if params[:limit].present?
+  # =========================
+  # Ransack (busca/filters)
+  # =========================
 
-        Rails.logger.info("Found #{@companies.size} companies")
+  # Whitelist de atributos pesquisáveis/filtráveis
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[
+      id name description website phone address state city
+      featured verified cnpj email_public instagram facebook linkedin
+      working_hours payment_methods certifications status
+      founded_year employees_count rating_avg rating_count
+      created_at updated_at
+    ]
+  end
 
-        render json: {
-          companies: @companies.map { |c| c.as_json(include_ctas: false) }
-        }
-      rescue => e
-        Rails.logger.error("Error in companies#index: #{e.message}\n#{e.backtrace.join("\n")}")
-        render json: { error: "Ocorreu um erro ao processar sua requisição" }, status: :internal_server_error
-      end
+  # Whitelist de associações navegáveis
+  def self.ransackable_associations(_auth_object = nil)
+    %w[categories reviews]
+  end
 
-      # GET /api/v1/companies/:id
-      def show
-        render json: { company: @company.as_json(include_ctas: true) }
-      end
+  # Mapeia o "attribute" virtual :description para a coluna real :about
+  ransacker :description do |parent|
+    parent.table[:about]
+  end
 
-      # POST /api/v1/companies
-      def create
-        @company = Company.new(company_params)
-        attach_files(@company)
+  # =========================
+  # Domain / API helpers
+  # =========================
+  def average_rating
+    rating_avg.present? ? rating_avg : reviews.average(:rating).to_f.round(1)
+  end
 
-        if @company.save
-          render json: { company: @company.as_json(include_ctas: true) }, status: :created
-        else
-          render json: { errors: @company.errors.full_messages }, status: :unprocessable_entity
-        end
-      end
+  def reviews_count
+    rating_count.present? ? rating_count : reviews.count
+  end
 
-      # PATCH/PUT /api/v1/companies/:id
-      def update
-        attach_files(@company)
+  # Anos de atividade com base em founded_year
+  def years_in_business
+    return nil unless founded_year.present?
+    Time.current.year - founded_year
+  end
 
-        if @company.update(company_params)
-          render json: { company: @company.as_json(include_ctas: true) }
-        else
-          render json: { errors: @company.errors.full_messages }, status: :unprocessable_entity
-        end
-      end
+  # Geração de CTAs conforme contexto
+  def build_ctas(context = 'detail', utm = {}, vars = {})
+    CompanyCtaBuilder.new(self, context, utm, vars).build_all_ctas
+  end
 
-      # DELETE /api/v1/companies/:id
-      def destroy
-        @company.destroy
-        head :no_content
-      end
+  # Retorna redes sociais disponíveis
+  def social_links
+    links = {}
+    links[:facebook]  = facebook_url  if respond_to?(:facebook_url)  && facebook_url.present?
+    links[:instagram] = instagram_url if respond_to?(:instagram_url) && instagram_url.present?
+    links[:linkedin]  = linkedin_url  if respond_to?(:linkedin_url)  && linkedin_url.present?
+    links[:youtube]   = youtube_url   if respond_to?(:youtube_url)   && youtube_url.present?
+    links.present? ? links : nil
+  end
 
-      # GET /api/v1/companies/states
-      def states
-        states = Company.distinct.pluck(:state).compact.sort
-        render json: { states: states }
-      end
+  # Serialização JSON amigável para API/Front
+  def as_json(options = {})
+    context = options.delete(:context) || 'detail'
+    utm     = options.delete(:utm)     || {}
+    vars    = options.delete(:vars)    || {}
 
-      # GET /api/v1/companies/cities
-      def cities
-        cities = if params[:state].present?
-          Company.where(state: params[:state]).distinct.pluck(:city).compact.sort
-        else
-          Company.distinct.pluck(:city).compact.sort
-        end
-        render json: { cities: cities }
-      end
+    methods = [:average_rating, :reviews_count, :years_in_business, :social_links]
+    methods << :ctas if options[:include_ctas]
 
-      # GET /api/v1/companies/locations
-      def locations
-        locations = Company.distinct.pluck(:state, :city).compact
-                          .map { |state, city| { state: state, city: city } }
-                          .sort_by { |loc| [loc[:state], loc[:city]] }
-        render json: { locations: locations }
-      end
+    json = super(options.merge(
+      methods: methods,
+      include: {
+        categories: { only: [:id, :name] }
+      }
+    ))
 
-      private
+    # URLs de imagens (requer default_url_options[:host] configurado p/ gerar URLs absolutas)
+    json.merge!(
+      banner_url: banner.attached? ? Rails.application.routes.url_helpers.url_for(banner) : nil,
+      logo_url:   logo.attached?   ? Rails.application.routes.url_helpers.url_for(logo)   : nil
+    )
 
-      def set_company
-        @company = Company.find(params[:id])
-      end
+    json[:ctas] = build_ctas(context, utm, vars) if options[:include_ctas]
+    json
+  end
 
-      def company_params
-        params.require(:company).permit(
-          :name, :description, :website, :phone, :address, :state, :city,
-          :featured, :status, :verified, :founded_year, :employees_count,
-          :cnpj, :email_public, :instagram, :facebook, :linkedin,
-          :working_hours, :payment_methods, :certifications,
-          category_ids: [] # permite associar várias categorias (HABTM)
-        )
-      end
-
-      # Upload de arquivos via multipart/form-data
-      def attach_files(company)
-        company.logo.attach(params[:logo]) if params[:logo].present?
-        company.banner.attach(params[:banner]) if params[:banner].present?
-      end
-    end
+  # Exposição simples de CTAs
+  def ctas
+    build_ctas
   end
 end
