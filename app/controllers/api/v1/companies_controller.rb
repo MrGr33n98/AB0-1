@@ -9,7 +9,7 @@ module Api
         begin
           Rails.logger.info("Starting companies#index with params: #{params.inspect}")
           
-          @companies = Company.includes(:categories, :reviews, :category)
+          @companies = Company.includes(:categories, :reviews)
                              .order(created_at: :desc)
           
           # Filtering with logging
@@ -44,9 +44,6 @@ module Api
                 categories: { 
                   only: [:id, :name, :description],
                   methods: [:companies_count]
-                },
-                category: {
-                  only: [:id, :name, :description]
                 }
               },
               methods: [:average_rating, :reviews_count, :social_links],
