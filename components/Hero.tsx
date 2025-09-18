@@ -48,14 +48,7 @@ export default function Hero() {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          {/* Logo pequeno acima do título */}
-          <div className="mb-8 flex justify-center">
-            <img
-              src="/images/logo.svg"
-              alt="Avalia Solar"
-              className="h-14 w-auto"
-            />
-          </div>
+          {/* Logo removido */}
 
           {/* Main Heading */}
           <motion.div
