@@ -31,9 +31,9 @@ module Api
         articles   = results[:articles].limit(per).offset((page - 1) * per)
 
         render json: {
-          companies:  companies.as_json(only: %i[id name description state city banner_url logo_url]),
+          companies:  companies.map { |c| CompanySerializer.new(c).as_json },
           products:   products.as_json(only: %i[id name description price company_id image_url]),
-          categories: categories.as_json(only: %i[id name short_description description]),
+          categories: categories.map { |c| CategorySerializer.new(c).as_json },
           articles:   articles.as_json(only: %i[id title content]),
           meta: {
             total_count: {

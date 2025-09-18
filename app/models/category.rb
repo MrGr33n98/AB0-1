@@ -28,4 +28,11 @@ class Category < ApplicationRecord
       except: [:created_at, :updated_at]
     ))
   end
+  
+  # URL helpers for banner attachment
+  def banner_url
+    if banner.attached?
+      Rails.application.routes.url_helpers.url_for(banner)
+    end
+  end
 end
