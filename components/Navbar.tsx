@@ -2,197 +2,207 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import {
-  Search,
-  Bell,
-  MessageSquare,
-  Briefcase,
-  LayoutGrid,
-  User,
-  Menu,
-  X,
-  LogIn,
-  LogOut,
-  UserPlus,
-  Shield
-} from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '@/contexts/AuthContext';
-
-// Import the SearchBar component
-import SearchBar from '@/components/SearchBar';
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  
-  const { user, logout, isAuthenticated } = useAuth();
 
-  const handleMenuItemClick = () => {
-    setIsMobileMenuOpen(false);
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      setIsMobileMenuOpen(false);
-    } catch (error) {
-      console.error('Error during logout:', error);
-    }
-  };
+  const navLinks = [
+    { href: '/companies', label: 'Empresas' },
+    { href: '/categories', label: 'Categorias' },
+    { href: '/products', label: 'Produtos' },
+    { href: '/plans', label: 'Planos' },
+    { href: '/reviews', label: 'Reviews' },
+    { href: '/dashboard', label: 'Dashboard' },
+  ];
 
   return (
-    <header className="sticky top-0 z-50 bg-background border-b border-border shadow-sm">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between h-16">
+    <motion.nav
+      className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm"
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
         {/* Logo */}
-        <Link href="/" className="flex-shrink-0">
-          <Image src="/images/logo.png" alt="Compare Solar Logo" width={120} height={32} className="h-18 w-auto" />
+        <Link href="/" className="flex items-center gap-2">
+          <img
+            src="/images/logo.svg"
+            alt="Avalia Solar"
+            className="h-8 w-auto"
+          />
+          <span className="font-bold text-lg text-primary">Avalia Solar</span>
         </Link>
 
-        {/* Desktop Navigation Items (Central) */}
-        <div className="hidden lg:flex items-center space-x-6 text-foreground">
-          {/* Itens com ícones */}
-          <Link href="/plano-profissional" className="flex items-center hover:text-primary transition-colors">
-            <Briefcase className="h-4 w-4 mr-1" /> Plano Profissional
+        {/* Desktop Menu */}
+        <div className="hidden md:flex items-center space-x-6">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-sm font-medium text-gray-700 hover:text-primary"
+            >
+              {link.label}
+            </Link>
+          ))}
+          <Link href="/login">
+            <Button variant="ghost">Login</Button>
           </Link>
-          <Link href="/meus-anuncios" className="flex items-center hover:text-primary transition-colors">
-            <LayoutGrid className="h-4 w-4 mr-1" /> Meus Anúncios
-          </Link>
-          <Link href="/chat" className="flex items-center hover:text-primary transition-colors">
-            <MessageSquare className="h-4 w-4 mr-1" /> Chat
-          </Link>
-          <Link href="/notifications" className="flex items-center hover:text-primary transition-colors">
-            <Bell className="h-4 w-4 mr-1" /> Notificações
-          </Link>
-          {/* Itens sem ícones, como links de texto simples */}
-          <Link href="/companies" className="hover:text-primary transition-colors">
-            Empresas
-          </Link>
-          <Link href="/categories" className="hover:text-primary transition-colors">
-            Categorias
+          <Link href="/register">
+            <Button className="bg-primary text-white">Registrar</Button>
           </Link>
         </div>
 
-        {/* Right Side Icons/Buttons */}
-        <div className="flex items-center space-x-4">
-          {/* Ícone de Busca */}
-          <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(!isSearchOpen)} className="text-muted-foreground hover:text-foreground">
-            <Search className="h-5 w-5" />
-          </Button>
-
-          {/* Barra de Busca Expansível (se isSearchOpen for true) */}
-          <motion.div
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: isSearchOpen ? '200px' : 0, opacity: isSearchOpen ? 1 : 0 }}
-            transition={{ duration: 0.3 }}
-            className="overflow-hidden"
+        {/* Mobile Menu Button */}
+        <div className="md:hidden">
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="text-gray-700 hover:text-primary"
           >
-            {isSearchOpen && (
-              <Input
-                type="text"
-                placeholder="Buscar..."
-                className="h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              />
-            )}
-          </motion.div>
-          
-          {/* Botão de Perfil/Login para desktop */}
-          {isAuthenticated ? (
-            <div className="hidden md:flex items-center space-x-2">
-              <Link href="/profile" passHref>
-                <Button variant="ghost" className="text-foreground hover:text-primary">
-                  <User className="h-5 w-5 mr-2" />
-                  <span className="hidden lg:inline">{user?.name || 'Meu Perfil'}</span>
-                </Button>
-              </Link>
-              <Button variant="ghost" size="icon" onClick={handleLogout} className="text-foreground hover:text-primary">
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </div>
-          ) : (
-            <div className="hidden md:flex items-center space-x-2">
-              <Link href="/login" passHref>
-                <Button variant="ghost" className="text-foreground hover:text-primary">
-                  <LogIn className="h-5 w-5 mr-2" />
-                  <span className="hidden lg:inline">Login</span>
-                </Button>
-              </Link>
-              <Link href="/register" passHref>
-                <Button variant="ghost" className="text-foreground hover:text-primary">
-                  <UserPlus className="h-5 w-5 mr-2" />
-                  <span className="hidden lg:inline">Registrar</span>
-                </Button>
-              </Link>
-            </div>
-          )}
-
-          {/* Botão para o menu mobile (Hamburger) */}
-          <Button variant="ghost" size="icon" className="lg:hidden text-foreground hover:text-primary" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </Button>
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
-      </nav>
+      </div>
 
-      {/* Mobile Menu (condicional) */}
+      {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="lg:hidden px-4 pt-2 pb-4 space-y-2 bg-background border-t border-border"
+            className="md:hidden bg-white border-t border-gray-200"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
           >
-            {/* Itens com ícones para mobile */}
-            <Link href="/plano-profissional" className="flex items-center px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleMenuItemClick}>
-              <Briefcase className="h-5 w-5 mr-2" /> Plano Profissional
-            </Link>
-            <Link href="/meus-anuncios" className="flex items-center px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleMenuItemClick}>
-              <LayoutGrid className="h-5 w-5 mr-2" /> Meus Anúncios
-            </Link>
-            <Link href="/chat" className="flex items-center px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleMenuItemClick}>
-              <MessageSquare className="h-5 w-5 mr-2" /> Chat
-            </Link>
-            <Link href="/notifications" className="flex items-center px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleMenuItemClick}>
-              <Bell className="h-5 w-5 mr-2" /> Notificações
-            </Link>
-            {/* Itens sem ícones para mobile */}
-            <Link href="/companies" className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleMenuItemClick}>
-              Empresas
-            </Link>
-            <Link href="/categories" className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleMenuItemClick}>
-              Categorias
-            </Link>
-            
-            {/* Menu de autenticação para mobile */}
-            {isAuthenticated ? (
-              <>
-                <Link href="/profile" className="flex items-center px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleMenuItemClick}>
-                  <User className="h-5 w-5 mr-2" /> {user?.name || 'Meu Perfil'}
-                </Link>
-                <button 
-                  className="flex items-center px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted w-full text-left"
-                  onClick={handleLogout}
+            <div className="px-4 py-4 space-y-4">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="block text-sm font-medium text-gray-700 hover:text-primary"
                 >
-                  <LogOut className="h-5 w-5 mr-2" /> Sair
-                </button>
-              </>
-            ) : (
-              <>
-                <Link href="/login" className="flex items-center px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleMenuItemClick}>
-                  <LogIn className="h-5 w-5 mr-2" /> Login
+                  {link.label}
                 </Link>
-                <Link href="/register" className="flex items-center px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleMenuItemClick}>
-                  <UserPlus className="h-5 w-5 mr-2" /> Registrar
-                </Link>
-              </>
-            )}
+              ))}
+              <Link href="/login">
+                <Button variant="ghost" className="w-full">
+                  Login
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button className="w-full bg-primary text-white">
+                  Registrar
+                </Button>
+              </Link>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </header>
+    </motion.nav>
+  );
+}
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { Menu, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { motion, AnimatePresence } from 'framer-motion';
+
+export default function Navbar() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const navLinks = [
+    { href: '/companies', label: 'Empresas' },
+    { href: '/categories', label: 'Categorias' },
+    { href: '/products', label: 'Produtos' },
+    { href: '/plans', label: 'Planos' },
+    { href: '/reviews', label: 'Reviews' },
+    { href: '/dashboard', label: 'Dashboard' },
+  ];
+
+  return (
+    <motion.nav
+      className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm"
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2">
+          <img
+            src="/images/logo.svg"
+            alt="Avalia Solar"
+            className="h-8 w-auto"
+          />
+          <span className="font-bold text-lg text-primary">Avalia Solar</span>
+        </Link>
+
+        {/* Desktop Menu */}
+        <div className="hidden md:flex items-center space-x-6">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-sm font-medium text-gray-700 hover:text-primary"
+            >
+              {link.label}
+            </Link>
+          ))}
+          <Link href="/login">
+            <Button variant="ghost">Login</Button>
+          </Link>
+          <Link href="/register">
+            <Button className="bg-primary text-white">Registrar</Button>
+          </Link>
+        </div>
+
+        {/* Mobile Menu Button */}
+        <div className="md:hidden">
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="text-gray-700 hover:text-primary"
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            className="md:hidden bg-white border-t border-gray-200"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <div className="px-4 py-4 space-y-4">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="block text-sm font-medium text-gray-700 hover:text-primary"
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <Link href="/login">
+                <Button variant="ghost" className="w-full">
+                  Login
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button className="w-full bg-primary text-white">
+                  Registrar
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.nav>
   );
 }
