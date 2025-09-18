@@ -207,7 +207,7 @@ export interface City {
 // =======================
 // Axios Config
 // =======================
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://64.225.59.107:3001/api/v1';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -414,3 +414,5 @@ export const api = {
     method: 'DELETE',
   }),
 };
+
+// Remove the duplicate API configuration at the bottom of the file
