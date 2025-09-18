@@ -26,26 +26,31 @@ class CompanyCtaBuilder
   # Constrói todos os CTAs disponíveis para a empresa
   # @return [Array<Hash>] Lista de CTAs formatados
   def build_all_ctas
-    ctas = []
-    
-    # Adiciona CTAs do JSON se disponível
-    if @company.ctas_json.present? && @company.ctas_json['buttons'].is_a?(Array)
-      @company.ctas_json['buttons'].each do |button|
-        next unless button['enabled']
-        next if button['conditions'] && !meets_conditions?(button['conditions'])
-        
-        ctas << build_cta_from_json(button)
+    begin
+      ctas = []
+      
+      # Adiciona CTAs do JSON se disponível
+      if @company.ctas_json.present? && @company.ctas_json['buttons'].is_a?(Array)
+        @company.ctas_json['buttons'].each do |button|
+          next unless button['enabled']
+          next if button['conditions'] && !meets_conditions?(button['conditions'])
+          
+          ctas << build_cta_from_json(button)
+        end
       end
+      
+      # Adiciona CTAs primário e secundário legados se não houver CTAs do JSON
+      if ctas.empty?
+        ctas << build_primary_cta if @company.cta_primary_label.present?
+        ctas << build_secondary_cta if @company.cta_secondary_label.present?
+      end
+      
+      # Ordena por prioridade
+      ctas.sort_by { |cta| cta[:priority] || 999 }
+    rescue => e
+      Rails.logger.error("Error building CTAs: #{e.message}")
+      []
     end
-    
-    # Adiciona CTAs primário e secundário legados se não houver CTAs do JSON
-    if ctas.empty?
-      ctas << build_primary_cta if @company.cta_primary_label.present?
-      ctas << build_secondary_cta if @company.cta_secondary_label.present?
-    end
-    
-    # Ordena por prioridade
-    ctas.sort_by { |cta| cta[:priority] || 999 }
   end
 
   # Constrói o CTA primário

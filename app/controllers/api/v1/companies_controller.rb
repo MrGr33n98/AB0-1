@@ -28,8 +28,16 @@ module Api
 
           Rails.logger.info("Found #{@companies.size} companies")
 
+          begin
+            companies_json = @companies.map { |c| c.as_json(include_ctas: false) }
+          rescue => e
+            Rails.logger.error("Error serializing companies: #{e.message}\n#{e.backtrace.join("\n")}")
+            render json: { error: "Ocorreu um erro ao processar sua requisição" }, status: :internal_server_error
+            return
+          end
+
           render json: {
-            companies: @companies.map { |c| c.as_json(include_ctas: false) }
+            companies: companies_json
           }
         rescue => e
           Rails.logger.error("Error in companies#index: #{e.message}\n#{e.backtrace.join("\n")}")

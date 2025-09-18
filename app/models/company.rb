@@ -116,9 +116,23 @@ class Company < ApplicationRecord
     ))
 
     # URLs de imagens (requer default_url_options[:host] configurado p/ gerar URLs absolutas)
+    begin
+      banner_url = banner.attached? ? Rails.application.routes.url_helpers.url_for(banner) : nil
+    rescue => e
+      Rails.logger.error("Error generating banner URL: #{e.message}")
+      banner_url = nil
+    end
+    
+    begin
+      logo_url = logo.attached? ? Rails.application.routes.url_helpers.url_for(logo) : nil
+    rescue => e
+      Rails.logger.error("Error generating logo URL: #{e.message}")
+      logo_url = nil
+    end
+    
     json.merge!(
-      banner_url: banner.attached? ? Rails.application.routes.url_helpers.url_for(banner) : nil,
-      logo_url:   logo.attached?   ? Rails.application.routes.url_helpers.url_for(logo)   : nil
+      banner_url: banner_url,
+      logo_url: logo_url
     )
 
     json[:ctas] = build_ctas(context, utm, vars) if options[:include_ctas]

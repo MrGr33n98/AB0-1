@@ -31,8 +31,13 @@ class Category < ApplicationRecord
   
   # URL helpers for banner attachment
   def banner_url
-    if banner.attached?
-      Rails.application.routes.url_helpers.url_for(banner)
+    begin
+      if banner.attached?
+        Rails.application.routes.url_helpers.url_for(banner)
+      end
+    rescue => e
+      Rails.logger.error("Error generating category banner URL: #{e.message}")
+      nil
     end
   end
 end

@@ -90,9 +90,9 @@ Rails.application.configure do
   
   # Configure host for URL generation (needed for Active Storage URLs)
   Rails.application.routes.default_url_options = {
-    host: ENV['APP_HOST'] || '64.225.59.107',
+    host: ENV['APP_HOST'] || 'api.avaliasolar.com.br',
     port: 3001,
-    protocol: 'http'
+    protocol: 'https'
   }
 
   # Allow all hosts in production for ActiveAdmin
