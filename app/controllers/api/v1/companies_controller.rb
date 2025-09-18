@@ -39,7 +39,7 @@ module Api
           Rails.logger.info("Found #{@companies.size} companies")
 
           render json: { 
-            "companies": @companies.as_json(
+            companies: @companies.as_json(
               include: { 
                 categories: { 
                   only: [:id, :name, :description],
@@ -55,10 +55,10 @@ module Api
           }
         rescue ActiveRecord::RecordNotFound => e
           Rails.logger.error("Companies not found: #{e.message}")
-          render json: { "error": "Empresas não encontradas" }, status: :not_found
+          render json: { error: "Empresas não encontradas" }, status: :not_found
         rescue StandardError => e
           Rails.logger.error("Error in companies#index: #{e.message}\n#{e.backtrace.join("\n")}")
-          render json: { "error": "Ocorreu um erro ao processar sua requisição" }, status: :internal_server_error
+          render json: { error: "Ocorreu um erro ao processar sua requisição" }, status: :internal_server_error
         end
       end
 
