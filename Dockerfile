@@ -22,7 +22,16 @@ COPY entrypoint.sh /usr/bin/
 RUN chmod +x /usr/bin/entrypoint.sh
 
 # Prepara assets
-RUN bundle exec rake assets:precompile
+# Set up environment variables
+ENV RAILS_ENV=production
+ENV NODE_ENV=production
+ENV BUNDLE_WITHOUT="development:test"
+
+# Install dependencies and precompile assets
+RUN bundle config set --local without 'development test' && \
+    bundle install && \
+    bundle exec rake assets:clobber && \
+    bundle exec rake assets:precompile
 
 ENTRYPOINT ["entrypoint.sh"]
 
