@@ -52,6 +52,9 @@ jobs:
             # Load new Docker image
             docker load -i ~/images/ab0-backend.tar
 
+            # 🧹 Clean up old images (keep only 2 most recent)
+            docker images "ab0-backend" --format "{{.ID}}" | tail -n +3 | xargs -r docker rmi -f || true
+
             # Remove old container if exists
             docker rm -f ab0-backend || true
 

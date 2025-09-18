@@ -22,25 +22,21 @@ COPY . .
 COPY entrypoint.sh /usr/bin/
 RUN chmod +x /usr/bin/entrypoint.sh
 
-# Prepara assets
-# Set up environment variables
-# Set Rails environment
-ENV RAILS_ENV=production
-ENV NODE_ENV=production
-ENV BUNDLE_WITHOUT="development:test"
-ENV SECRET_KEY_BASE=temporary_key_for_precompile
+# Variáveis de ambiente padrão
+ENV RAILS_ENV=production \
+    NODE_ENV=production \
+    BUNDLE_WITHOUT="development:test"
 
-# Create storage directory for Active Storage
+# Cria diretório temporário para Active Storage
 RUN mkdir -p tmp/storage
 
-# Clear and precompile assets
-RUN bundle exec rake assets:clobber || true && \
-    bundle exec rake assets:precompile
+# ⚡ Precompile assets usando chave dummy só no build
+RUN SECRET_KEY_BASE=dummy_key bundle exec rake assets:clobber assets:precompile
 
 ENTRYPOINT ["entrypoint.sh"]
 
 # Expõe a porta do Rails
 EXPOSE 3001
 
-# Força o servidor Rails a rodar no 0.0.0.0
+# Comando padrão do container
 CMD ["rails", "server", "-b", "0.0.0.0", "-p", "3001"]
