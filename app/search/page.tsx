@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { searchApi } from '@/lib/api';
+import { searchApi, Company, Product, Category, Article } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,19 +10,18 @@ import { Search, X } from 'lucide-react';
 import CompanyCard from '@/components/CompanyCard';
 import ProductCard from '@/components/ProductCard';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Suspense } from "react";
 
-export default function SearchPage() {
+function SearchPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const query = searchParams.get('q') || '';
 
   const [searchTerm, setSearchTerm] = useState(query);
   const [results, setResults] = useState<{
-    companies: any[];
-    products: any[];
-    categories: any[];
-    articles: any[];
+    companies: Company[];
+    products: Product[];
+    categories: Category[];
+    articles: Article[];
   }>({
     companies: [],
     products: [],
@@ -49,7 +48,14 @@ export default function SearchPage() {
       setError(null);
 
       const searchResults = await searchApi.all(term);
-      setResults(searchResults);
+
+      // Garantir arrays sempre válidos
+      setResults({
+        companies: searchResults.companies ?? [],
+        products: searchResults.products ?? [],
+        categories: searchResults.categories ?? [],
+        articles: searchResults.articles ?? []
+      });
     } catch (err: any) {
       console.error('Search error:', err);
       setError(err.message || 'Erro ao realizar a busca');
@@ -220,7 +226,9 @@ export default function SearchPage() {
                   {results.articles.map((article) => (
                     <div key={article.id} className="bg-white p-6 rounded-lg shadow-md">
                       <h3 className="text-xl font-semibold mb-2">{article.title}</h3>
-                      <p className="text-gray-600 mb-4 line-clamp-3">{article.content}</p>
+                      <p className="text-gray-600 mb-4 line-clamp-3">
+                        {article.content ? article.content.toString() : 'Sem conteúdo disponível'}
+                      </p>
                       <Button
                         variant="outline"
                         onClick={() => router.push(`/articles/${article.id}`)}
@@ -239,7 +247,7 @@ export default function SearchPage() {
   );
 }
 
-export default function SearchPageWrapper() {
+export default function Page() {
   return (
     <Suspense fallback={<div className="p-10 text-center">Carregando busca...</div>}>
       <SearchPage />
