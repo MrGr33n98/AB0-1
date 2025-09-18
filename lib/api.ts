@@ -383,32 +383,4 @@ export const adminApi = {
 };
 
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.avaliasolar.com.br/api/v1';
-
-export const api = {
-  async fetch(endpoint: string, options: RequestInit = {}) {
-    try {
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`[${response.status}] ${response.statusText} em ${API_URL}${endpoint}`);
-      }
-
-      return response.json();
-    } catch (error) {
-      console.error(`❌ Falha ao acessar ${API_URL}${endpoint}:`, error);
-      throw error;
-    }
-  },
-
-  getAll: (endpoint: string, params = {}) => {
-    const queryString = new URLSearchParams(params).toString();
-    return api.fetch(`${endpoint}?${queryString}`);
-  },
-};
+// End of API endpoints
