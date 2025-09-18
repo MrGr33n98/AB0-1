@@ -7,18 +7,36 @@ module Api
       # GET /api/v1/companies
       def index
         begin
-          @companies = Company.includes(:categories, :reviews).order(created_at: :desc)
+          Rails.logger.info("Starting companies#index with params: #{params.inspect}")
           
-          # Filtering
-          @companies = @companies.where("status = ?", params[:status]) if params[:status].present?
+          @companies = Company.includes(:categories, :reviews, :category)
+                             .order(created_at: :desc)
+          
+          # Filtering with logging
+          if params[:status].present?
+            Rails.logger.info("Filtering by status: #{params[:status]}")
+            @companies = @companies.where(status: params[:status])
+          end
+
           if params[:featured].present?
             featured_value = ActiveModel::Type::Boolean.new.cast(params[:featured])
-            @companies = @companies.where("featured = ?", featured_value)
+            Rails.logger.info("Filtering by featured: #{featured_value}")
+            @companies = @companies.where(featured: featured_value)
           end
-          @companies = @companies.where("category_id = ?", params[:category_id]) if params[:category_id].present?
+
+          if params[:category_id].present?
+            Rails.logger.info("Filtering by category_id: #{params[:category_id]}")
+            @companies = @companies.where(category_id: params[:category_id])
+          end
 
           # Limiting
-          @companies = @companies.limit(params[:limit].to_i) if params[:limit].present?
+          if params[:limit].present?
+            limit = params[:limit].to_i
+            Rails.logger.info("Limiting results to: #{limit}")
+            @companies = @companies.limit(limit)
+          end
+
+          Rails.logger.info("Found #{@companies.size} companies")
 
           render json: { 
             "companies": @companies.as_json(
@@ -26,6 +44,9 @@ module Api
                 categories: { 
                   only: [:id, :name, :description],
                   methods: [:companies_count]
+                },
+                category: {
+                  only: [:id, :name, :description]
                 }
               },
               methods: [:average_rating, :reviews_count, :social_links],
