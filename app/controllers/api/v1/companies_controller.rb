@@ -8,52 +8,30 @@ module Api
       def index
         begin
           Rails.logger.info("Starting companies#index with params: #{params.inspect}")
-          
+
           @companies = Company.includes(:categories, :reviews)
-                             .order(created_at: :desc)
-          
-          # Filtering with logging
-          if params[:status].present?
-            Rails.logger.info("Filtering by status: #{params[:status]}")
-            @companies = @companies.where(status: params[:status])
-          end
+                              .order(created_at: :desc)
+
+          # Filtering
+          @companies = @companies.where(status: params[:status]) if params[:status].present?
 
           if params[:featured].present?
             featured_value = ActiveModel::Type::Boolean.new.cast(params[:featured])
-            Rails.logger.info("Filtering by featured: #{featured_value}")
             @companies = @companies.where(featured: featured_value)
           end
 
           if params[:category_id].present?
-            Rails.logger.info("Filtering by category_id: #{params[:category_id]}")
-            @companies = @companies.where(category_id: params[:category_id])
+            @companies = @companies.joins(:categories).where(categories: { id: params[:category_id] })
           end
 
-          # Limiting
-          if params[:limit].present?
-            limit = params[:limit].to_i
-            Rails.logger.info("Limiting results to: #{limit}")
-            @companies = @companies.limit(limit)
-          end
+          @companies = @companies.limit(params[:limit].to_i) if params[:limit].present?
 
           Rails.logger.info("Found #{@companies.size} companies")
 
-          render json: { 
-            companies: @companies.as_json(
-              include: { 
-                categories: { 
-                  only: [:id, :name, :description],
-                  methods: [:companies_count]
-                }
-              },
-              methods: [:average_rating, :reviews_count, :social_links],
-              except: [:created_at, :updated_at]
-            )
+          render json: {
+            companies: @companies.map { |c| c.as_json(include_ctas: false) }
           }
-        rescue ActiveRecord::RecordNotFound => e
-          Rails.logger.error("Companies not found: #{e.message}")
-          render json: { error: "Empresas não encontradas" }, status: :not_found
-        rescue StandardError => e
+        rescue => e
           Rails.logger.error("Error in companies#index: #{e.message}\n#{e.backtrace.join("\n")}")
           render json: { error: "Ocorreu um erro ao processar sua requisição" }, status: :internal_server_error
         end
@@ -61,14 +39,14 @@ module Api
 
       # GET /api/v1/companies/:id
       def show
-        render json: { company: @company }
+        render json: { company: @company.as_json(include_ctas: true) }
       end
 
       # POST /api/v1/companies
       def create
         @company = Company.new(company_params)
         if @company.save
-          render json: { company: @company }, status: :created
+          render json: { company: @company.as_json(include_ctas: true) }, status: :created
         else
           render json: { errors: @company.errors.full_messages }, status: :unprocessable_entity
         end
@@ -77,7 +55,7 @@ module Api
       # PATCH/PUT /api/v1/companies/:id
       def update
         if @company.update(company_params)
-          render json: { company: @company }
+          render json: { company: @company.as_json(include_ctas: true) }
         else
           render json: { errors: @company.errors.full_messages }, status: :unprocessable_entity
         end
@@ -122,8 +100,11 @@ module Api
       def company_params
         params.require(:company).permit(
           :name, :description, :website, :phone, :address, :state, :city,
-          :logo_url, :banner_url, :featured, :status, :category_id
-          # Add other permitted params as needed
+          :featured, :status, :verified, :founded_year, :employees_count,
+          :cnpj, :email_public, :instagram, :facebook, :linkedin,
+          :working_hours, :payment_methods, :certifications
+          # OBS: logo e banner são ActiveStorage → precisam ser enviados como arquivos
+          # via multipart/form-data e tratados em attachers, não como :logo_url ou :banner_url
         )
       end
     end
