@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Star, Shield, Zap, Users, TrendingUp, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,13 +17,7 @@ const SearchBar = ({ placeholder }: SearchBarProps) => {
   return (
     <div className="relative">
       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <svg
-          className="h-5 w-5 text-muted-foreground"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
+        <svg className="h-5 w-5 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       </div>
@@ -38,10 +32,17 @@ const SearchBar = ({ placeholder }: SearchBarProps) => {
   );
 };
 
+interface StatData {
+  icon: React.ElementType;
+  value: string;
+  label: string;
+}
+
 export default function Hero() {
   const { stats, loading } = useDashboard();
   const { isAuthenticated } = useAuth();
 
+  // Default values while loading
   const statsData = [
     {
       icon: Users,
@@ -67,12 +68,22 @@ export default function Hero() {
 
   return (
     <section className="relative bg-white py-16 lg:py-24 overflow-hidden">
+      {/* Background Pattern */}
       <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+
+      {/* Background Decorations */}
       <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-br from-primary-light to-accent rounded-full opacity-20 blur-3xl"></div>
       <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-br from-accent to-primary-light rounded-full opacity-20 blur-3xl"></div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
+          {/* Logo section */}
+          <div className="mb-8">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground">
+              Avaliar<span className="text-accent">Solar</span>
+            </h1>
+          </div>
+          
           {/* Main Heading */}
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -103,14 +114,16 @@ export default function Hero() {
             <div className="relative">
               <SearchBar placeholder="Busque empresas, produtos ou serviços..." />
               <div className="mt-4 flex flex-wrap justify-center gap-2">
-                {['Painel Solar', 'Inversor', 'Bateria', 'Instalação'].map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-3 py-1 text-sm bg-card rounded-full text-muted-foreground border border-border hover:border-accent-dark cursor-pointer transition-colors"
-                  >
-                    {tag}
-                  </span>
-                ))}
+                {['Painel Solar', 'Inversor', 'Bateria', 'Instalação'].map(
+                  (tag) => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 text-sm bg-card rounded-full text-muted-foreground border border-border hover:border-accent-dark cursor-pointer transition-colors"
+                    >
+                      {tag}
+                    </span>
+                  )
+                )}
               </div>
             </div>
           </motion.div>
@@ -178,7 +191,9 @@ export default function Hero() {
                     <stat.icon className="h-6 w-6 text-primary-foreground" />
                   </div>
                 </div>
-                <div className="text-2xl md:text-3xl font-bold text-foreground">{stat.value}</div>
+                <div className="text-2xl md:text-3xl font-bold text-foreground">
+                  {stat.value}
+                </div>
                 <div className="text-sm text-muted-foreground">{stat.label}</div>
               </div>
             ))}

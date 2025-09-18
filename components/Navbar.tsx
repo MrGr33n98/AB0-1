@@ -30,13 +30,13 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/images/logo.svg"
+            src="/images/logo.png"
             alt="Avalia Solar"
             width={32}
             height={32}
             className="h-8 w-auto"
+            priority
           />
-          <span className="font-bold text-lg text-primary">Avalia Solar</span>
         </Link>
 
         {/* Desktop Menu */}
