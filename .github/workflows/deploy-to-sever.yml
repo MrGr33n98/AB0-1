@@ -18,6 +18,7 @@ jobs:
         run: |
           docker build \
             --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
+            --build-arg NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }} \
             -t ab0-frontend:${{ github.sha }} .
 
       - name: Save Docker image as tar
@@ -41,23 +42,33 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
           script: |
-            # Criar rede se não existir
+            # Create network if not exists
             docker network create ab0-network || true
 
-            # Mover imagem para diretório images
+            # Move image to images directory
             mkdir -p ~/images
             mv ~/ab0-frontend.tar ~/images/
 
-            # Carregar nova imagem
+            # Load new image
             docker load -i ~/images/ab0-frontend.tar
 
-            # Remover container antigo
+            # Remove old container
             docker rm -f ab0-frontend || true
 
-            # Rodar container com env injetada
+            # Run container with proper networking
             docker run -d \
               --name ab0-frontend \
               --network ab0-network \
+              --restart unless-stopped \
               -e NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
+              -e NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }} \
+              -e NODE_ENV=production \
               -p 3000:3000 \
               ab0-frontend:${{ github.sha }}
+
+            # Wait for container to be ready
+            sleep 10
+
+            # Check container status
+            docker ps | grep ab0-frontend
+            docker logs ab0-frontend --tail=20
