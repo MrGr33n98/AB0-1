@@ -7,15 +7,13 @@
 
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    origins 'https://www.avaliasolar.com.br',
-            'https://avaliasolar.com.br',
-            'https://api.avaliasolar.com.br',
-            'http://localhost:3000',
-            'http://localhost:3001'
+    origins 'https://www.avaliasolar.com.br', 'https://avaliasolar.com.br', 'https://api.avaliasolar.com.br', 'http://localhost:3000', 'http://localhost:3001'
 
     resource '/api/v1/*',
-      headers: :any,
+      headers: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+      expose: ['access-token', 'expiry', 'token-type', 'uid', 'client'],
       methods: [:get, :post, :put, :patch, :delete, :options, :head],
+      max_age: 0,
       credentials: true
   end
 end

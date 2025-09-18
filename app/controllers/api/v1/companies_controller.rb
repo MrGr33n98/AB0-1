@@ -6,20 +6,39 @@ module Api
 
       # GET /api/v1/companies
       def index
-        @companies = Company.order(created_at: :desc)
-        
-        # Filtering
-        @companies = @companies.where(status: params[:status]) if params[:status].present?
-        if params[:featured].present?
-          featured_value = ActiveModel::Type::Boolean.new.cast(params[:featured])
-          @companies = @companies.where(featured: featured_value)
+        begin
+          @companies = Company.includes(:categories, :reviews).order(created_at: :desc)
+          
+          # Filtering
+          @companies = @companies.where("status = ?", params[:status]) if params[:status].present?
+          if params[:featured].present?
+            featured_value = ActiveModel::Type::Boolean.new.cast(params[:featured])
+            @companies = @companies.where("featured = ?", featured_value)
+          end
+          @companies = @companies.where("category_id = ?", params[:category_id]) if params[:category_id].present?
+
+          # Limiting
+          @companies = @companies.limit(params[:limit].to_i) if params[:limit].present?
+
+          render json: { 
+            "companies": @companies.as_json(
+              include: { 
+                categories: { 
+                  only: [:id, :name, :description],
+                  methods: [:companies_count]
+                }
+              },
+              methods: [:average_rating, :reviews_count, :social_links],
+              except: [:created_at, :updated_at]
+            )
+          }
+        rescue ActiveRecord::RecordNotFound => e
+          Rails.logger.error("Companies not found: #{e.message}")
+          render json: { "error": "Empresas não encontradas" }, status: :not_found
+        rescue StandardError => e
+          Rails.logger.error("Error in companies#index: #{e.message}\n#{e.backtrace.join("\n")}")
+          render json: { "error": "Ocorreu um erro ao processar sua requisição" }, status: :internal_server_error
         end
-        @companies = @companies.where(category_id: params[:category_id]) if params[:category_id].present?
-
-        # Limiting
-        @companies = @companies.limit(params[:limit].to_i) if params[:limit].present?
-
-        render json: { companies: @companies }
       end
 
       # GET /api/v1/companies/:id
