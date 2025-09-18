@@ -4,7 +4,7 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install -g npm@latest && npm ci --legacy-peer-deps
+RUN npm install -g npm@10.2.4 && npm ci --legacy-peer-deps
 
 COPY . .
 
