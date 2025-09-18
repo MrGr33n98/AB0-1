@@ -56,11 +56,12 @@ export default function CompanyCard({ company, className = '' }: CompanyCardProp
       <Link href={`/companies/${company.id}`}>
         <CardContent className="p-0">
           <div 
-            className="h-32 bg-cover bg-center" 
+            className="h-32 bg-cover bg-center relative overflow-hidden" 
             style={{ 
-              backgroundImage: company.banner_url 
+              backgroundImage: company.banner_url && company.banner_url.trim()
                 ? `url(${company.banner_url})` 
-                : 'url(/images/default-banner.jpg)' 
+                : 'url(/images/default-banner.jpg)',
+              backgroundColor: '#f3f4f6'
             }}
           />
           <div className="p-4">
