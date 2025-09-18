@@ -3,8 +3,8 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install -g npm@10.2.4 && npm ci --legacy-peer-deps
+COPY package*.json package-lock.json ./
+RUN npm install -g npm@10.2.4 && npm install --legacy-peer-deps
 
 COPY . .
 
