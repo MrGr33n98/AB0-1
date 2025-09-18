@@ -6,35 +6,33 @@ module Api
 
       # GET /api/v1/companies
       def index
-        begin
-          Rails.logger.info("Starting companies#index with params: #{params.inspect}")
+        Rails.logger.info("Starting companies#index with params: #{params.inspect}")
 
-          @companies = Company.includes(:categories, :reviews)
-                              .order(created_at: :desc)
+        @companies = Company.includes(:categories, :reviews)
+                            .order(created_at: :desc)
 
-          # Filtros
-          @companies = @companies.where(status: params[:status]) if params[:status].present?
+        # Filtros
+        @companies = @companies.where(status: params[:status]) if params[:status].present?
 
-          if params[:featured].present?
-            featured_value = ActiveModel::Type::Boolean.new.cast(params[:featured])
-            @companies = @companies.where(featured: featured_value)
-          end
-
-          if params[:category_id].present?
-            @companies = @companies.joins(:categories).where(categories: { id: params[:category_id] })
-          end
-
-          @companies = @companies.limit(params[:limit].to_i) if params[:limit].present?
-
-          Rails.logger.info("Found #{@companies.size} companies")
-
-          render json: {
-            companies: @companies.map { |c| c.as_json(include_ctas: false) }
-          }
-        rescue => e
-          Rails.logger.error("Error in companies#index: #{e.message}\n#{e.backtrace.join("\n")}")
-          render json: { error: "Ocorreu um erro ao processar sua requisição" }, status: :internal_server_error
+        if params[:featured].present?
+          featured_value = ActiveModel::Type::Boolean.new.cast(params[:featured])
+          @companies = @companies.where(featured: featured_value)
         end
+
+        if params[:category_id].present?
+          @companies = @companies.joins(:categories).where(categories: { id: params[:category_id] })
+        end
+
+        @companies = @companies.limit(params[:limit].to_i) if params[:limit].present?
+
+        Rails.logger.info("Found #{@companies.size} companies")
+
+        render json: {
+          companies: @companies.map { |c| c.as_json(include_ctas: false) }
+        }
+      rescue => e
+        Rails.logger.error("Error in companies#index: #{e.message}\n#{e.backtrace.join("\n")}")
+        render json: { error: "Ocorreu um erro ao processar sua requisição" }, status: :internal_server_error
       end
 
       # GET /api/v1/companies/:id
@@ -45,7 +43,6 @@ module Api
       # POST /api/v1/companies
       def create
         @company = Company.new(company_params)
-
         attach_files(@company)
 
         if @company.save
@@ -91,8 +88,8 @@ module Api
       # GET /api/v1/companies/locations
       def locations
         locations = Company.distinct.pluck(:state, :city).compact
-          .map { |state, city| { state: state, city: city } }
-          .sort_by { |loc| [loc[:state], loc[:city]] }
+                          .map { |state, city| { state: state, city: city } }
+                          .sort_by { |loc| [loc[:state], loc[:city]] }
         render json: { locations: locations }
       end
 
@@ -107,11 +104,12 @@ module Api
           :name, :description, :website, :phone, :address, :state, :city,
           :featured, :status, :verified, :founded_year, :employees_count,
           :cnpj, :email_public, :instagram, :facebook, :linkedin,
-          :working_hours, :payment_methods, :certifications
+          :working_hours, :payment_methods, :certifications,
+          category_ids: [] # permite associar várias categorias (HABTM)
         )
       end
 
-      # Permite upload de arquivos via multipart/form-data
+      # Upload de arquivos via multipart/form-data
       def attach_files(company)
         company.logo.attach(params[:logo]) if params[:logo].present?
         company.banner.attach(params[:banner]) if params[:banner].present?
