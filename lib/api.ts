@@ -379,3 +379,38 @@ export const adminApi = {
   importCategories: (formData: FormData) =>
     fetchApi('/admin/categories/import', { method: 'POST', body: formData }),
 };
+
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://64.225.59.107:3001/api/v1';
+
+export const api = {
+  async fetch(endpoint: string, options: RequestInit = {}) {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  },
+
+  getAll: (endpoint: string) => api.fetch(endpoint),
+  getOne: (endpoint: string, id: string) => api.fetch(`${endpoint}/${id}`),
+  create: (endpoint: string, data: any) => api.fetch(endpoint, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  update: (endpoint: string, id: string, data: any) => api.fetch(`${endpoint}/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+  delete: (endpoint: string, id: string) => api.fetch(`${endpoint}/${id}`, {
+    method: 'DELETE',
+  }),
+};
