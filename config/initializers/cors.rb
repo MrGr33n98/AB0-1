@@ -7,14 +7,15 @@
 
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    # WARNING: Allowing all origins is not secure for production.
-    # Please restrict this to your frontend domain in production.
-    # Example: origins 'https://www.yourfrontend.com'
-    origins '*'
+    origins 'https://www.avaliasolar.com.br',
+            'https://avaliasolar.com.br',
+            'https://api.avaliasolar.com.br',
+            'http://localhost:3000',
+            'http://localhost:3001'
 
     resource '/api/v1/*',
       headers: :any,
       methods: [:get, :post, :put, :patch, :delete, :options, :head],
-      credentials: false # Credentials should be false if origins is '*'
+      credentials: true
   end
 end
