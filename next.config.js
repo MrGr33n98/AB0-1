@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: 'standalone', // ✅ Gera a pasta .next/standalone no build (necessário pro Docker)
+
   images: {
     domains: ['www.avaliasolar.com.br'],
     remotePatterns: [
@@ -11,10 +13,12 @@ const nextConfig = {
       },
     ],
   },
+
   eslint: {
     // ✅ Ignora erros do ESLint durante build (resolve o "a.getScope is not a function")
     ignoreDuringBuilds: true,
   },
+
   typescript: {
     // ✅ Ignora erros de TypeScript no build de produção
     ignoreBuildErrors: true,
