@@ -10,6 +10,7 @@ import { Search, X } from 'lucide-react';
 import CompanyCard from '@/components/CompanyCard';
 import ProductCard from '@/components/ProductCard';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Suspense } from "react";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -235,5 +236,13 @@ export default function SearchPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function SearchPageWrapper() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center">Carregando busca...</div>}>
+      <SearchPage />
+    </Suspense>
   );
 }
