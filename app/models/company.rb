@@ -1,17 +1,132 @@
+# app/models/company.rb
 class Company < ApplicationRecord
-  has_many :products
-  has_and_belongs_to_many :categories, join_table: 'categories_companies'
+  # Attachments
   has_one_attached :banner
-  has_one_attached :logo  # Add logo attachment
-  
+  has_one_attached :logo
+
+  # Associations
+  has_and_belongs_to_many :categories
+  has_many :reviews, dependent: :destroy
+
+  # =========================
+  # Validations
+  # =========================
   validates :name, presence: true
-  
-  # Update ransackable_attributes and ransackable_associations
-  def self.ransackable_attributes(auth_object = nil)
-    ["address", "created_at", "description", "id", "name", "phone", "updated_at", "website"]
+  # Usamos alias_attribute abaixo, então esta validação funciona sobre :about
+  validates :description, presence: true
+
+  # Mantidas as validações originais
+  validates :state, :city, presence: false
+  validates :website, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
+                                message: 'must be a valid URL' }, allow_blank: true
+  validates :phone,   format: { with: /\A\([0-9]{2}\)\s[0-9]{4,5}-[0-9]{4}\z/,
+                                message: 'must be in format (XX) XXXX-XXXX or (XX) XXXXX-XXXX' }, allow_blank: true
+  validates :whatsapp,     format: { with: /\A\+?[0-9]{10,15}\z/,
+                                     message: 'must be a valid WhatsApp number' }, allow_blank: true
+  validates :email_public, format: { with: URI::MailTo::EMAIL_REGEXP,
+                                     message: 'must be a valid email' }, allow_blank: true
+
+  # =========================
+  # Attribute aliases
+  # =========================
+  # Permite usar :description na UI e no código, persistindo em :about
+  alias_attribute :description, :about
+
+  # =========================
+  # Scopes
+  # =========================
+  scope :by_state,        ->(state) { where(state: state) if state.present? }
+  scope :by_city,         ->(city)  { where(city: city)   if city.present? }
+  scope :featured,        ->        { where(featured: true) }
+  scope :verified,        ->        { where(verified: true) }
+  scope :by_rating,       ->        { order(rating_avg: :desc) }
+  scope :by_founded_year, ->        { order(founded_year: :asc) }
+
+  # =========================
+  # Ransack (busca/filters)
+  # =========================
+
+  # Whitelist de atributos pesquisáveis/filtráveis
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[
+      id name description website phone address state city
+      featured verified cnpj email_public instagram facebook linkedin
+      working_hours payment_methods certifications status
+      founded_year employees_count rating_avg rating_count
+      created_at updated_at
+    ]
   end
 
-  def self.ransackable_associations(auth_object = nil)
-    ["products", "categories", "banner_attachment", "banner_blob", "logo_attachment", "logo_blob"]  # Add logo associations
+  # Whitelist de associações navegáveis
+  def self.ransackable_associations(_auth_object = nil)
+    %w[categories reviews]
+  end
+
+  # Mapeia o "attribute" virtual :description para a coluna real :about
+  ransacker :description do |parent|
+    parent.table[:about]
+  end
+
+  # =========================
+  # Domain / API helpers
+  # =========================
+  def average_rating
+    rating_avg.present? ? rating_avg : reviews.average(:rating).to_f.round(1)
+  end
+
+  def reviews_count
+    rating_count.present? ? rating_count : reviews.count
+  end
+
+  # Anos de atividade com base em founded_year
+  def years_in_business
+    return nil unless founded_year.present?
+    Time.current.year - founded_year
+  end
+
+  # Geração de CTAs conforme contexto
+  def build_ctas(context = 'detail', utm = {}, vars = {})
+    CompanyCtaBuilder.new(self, context, utm, vars).build_all_ctas
+  end
+
+  # Retorna redes sociais disponíveis
+  def social_links
+    links = {}
+    links[:facebook]  = facebook_url  if respond_to?(:facebook_url)  && facebook_url.present?
+    links[:instagram] = instagram_url if respond_to?(:instagram_url) && instagram_url.present?
+    links[:linkedin]  = linkedin_url  if respond_to?(:linkedin_url)  && linkedin_url.present?
+    links[:youtube]   = youtube_url   if respond_to?(:youtube_url)   && youtube_url.present?
+    links.present? ? links : nil
+  end
+
+  # Serialização JSON amigável para API/Front
+  def as_json(options = {})
+    context = options.delete(:context) || 'detail'
+    utm     = options.delete(:utm)     || {}
+    vars    = options.delete(:vars)    || {}
+
+    methods = [:average_rating, :reviews_count, :years_in_business, :social_links]
+    methods << :ctas if options[:include_ctas]
+
+    json = super(options.merge(
+      methods: methods,
+      include: {
+        categories: { only: [:id, :name] }
+      }
+    ))
+
+    # URLs de imagens (requer default_url_options[:host] configurado p/ gerar URLs absolutas)
+    json.merge!(
+      banner_url: banner.attached? ? Rails.application.routes.url_helpers.url_for(banner) : nil,
+      logo_url:   logo.attached?   ? Rails.application.routes.url_helpers.url_for(logo)   : nil
+    )
+
+    json[:ctas] = build_ctas(context, utm, vars) if options[:include_ctas]
+    json
+  end
+
+  # Exposição simples de CTAs
+  def ctas
+    build_ctas
   end
 end

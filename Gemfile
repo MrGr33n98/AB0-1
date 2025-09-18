@@ -85,4 +85,4 @@ gem "jwt", "~> 3.1"
 gem "active_model_serializers", "~> 0.10.15"
 
 # Add this line to your Gemfile
-gem 'rack-cors'
+gem 'rack-cors', require: 'rack/cors'

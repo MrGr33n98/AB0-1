@@ -26,22 +26,68 @@ end
 
 all_companies = Company.all
 
-# ================================
-# Categorias do Mercado Solar
-# ================================
-categories = [
-  { name: 'Painéis Solares', seo_url: 'paineis-solares', seo_title: 'Painéis Solares', short_description: 'Placas fotovoltaicas de diferentes modelos.', description: 'Painéis solares monocristalinos e policristalinos para uso residencial, comercial e industrial.', kind: 'product_category', status: 'active', featured: true },
-  { name: 'Inversores Solares', seo_url: 'inversores', seo_title: 'Inversores', short_description: 'Inversores on-grid e off-grid.', description: 'Dispositivos para conversão da energia solar em corrente alternada.', kind: 'product_category', status: 'active', featured: true },
-  { name: 'Baterias de Armazenamento', seo_url: 'baterias', seo_title: 'Baterias Solares', short_description: 'Armazene sua energia solar.', description: 'Soluções de armazenamento de energia com baterias de lítio e chumbo-ácido.', kind: 'product_category', status: 'active', featured: false },
-  { name: 'Sistemas Off-Grid', seo_url: 'sistemas-off-grid', seo_title: 'Sistemas Off-Grid', short_description: 'Energia solar independente da rede elétrica.', description: 'Soluções completas para locais sem acesso à rede pública de energia.', kind: 'product_category', status: 'active', featured: false }
+# Criando categorias iniciais
+
+categories_data = [
+  {
+    name: 'Painéis Solares',
+    seo_url: 'paineis-solares',
+    seo_title: 'Painéis Solares | Compare Solar',
+    short_description: 'Categoria dedicada a todos os tipos de módulos fotovoltaicos, incluindo monocristalinos e policristalinos.',
+    description: 'Explore nossa seleção completa de painéis solares de alta eficiência. Encontre os melhores módulos fotovoltaicos para sua instalação, com opções monocristalinas e policristalinas dos principais fabricantes.',
+    kind: 'main',
+    status: 'active',
+    featured: true
+  },
+  {
+    name: 'Inversores Solares',
+    seo_url: 'inversores-solares',
+    seo_title: 'Inversores Solares | Compare Solar',
+    short_description: 'Dispositivos para conversão da energia solar em corrente alternada.',
+    description: 'Conheça nossa linha de inversores solares de alta qualidade. Encontre o inversor ideal para seu sistema fotovoltaico, com opções monofásicas e trifásicas das melhores marcas.',
+    kind: 'main',
+    status: 'active',
+    featured: true
+  },
+  {
+    name: 'Baterias de Armazenamento',
+    seo_url: 'baterias-armazenamento',
+    seo_title: 'Baterias de Armazenamento | Compare Solar',
+    short_description: 'Soluções de armazenamento de energia com baterias de lítio e outras tecnologias.',
+    description: 'Descubra as melhores opções em baterias para armazenamento de energia solar. Compare diferentes tecnologias e capacidades para encontrar a solução ideal para seu sistema.',
+    kind: 'main',
+    status: 'active',
+    featured: true
+  },
+  {
+    name: 'Sistemas Off-Grid',
+    seo_url: 'sistemas-off-grid',
+    seo_title: 'Sistemas Off-Grid | Compare Solar',
+    short_description: 'Soluções completas para locais sem acesso à rede pública de energia.',
+    description: 'Encontre sistemas solares completos para independência energética. Ideal para locais remotos ou sem acesso à rede elétrica, com soluções personalizadas para suas necessidades.',
+    kind: 'main',
+    status: 'active',
+    featured: true
+  },
+  {
+    name: 'Hardware',
+    seo_url: 'hardware',
+    seo_title: 'Hardware Solar | Compare Solar',
+    short_description: 'Categoria para todos os tipos de hardware e equipamentos complementares.',
+    description: 'Todos os componentes necessários para sua instalação solar, incluindo estruturas de montagem, cabos, conectores e equipamentos de proteção.',
+    kind: 'main',
+    status: 'active',
+    featured: true
+  }
 ]
 
-categories.each do |category_attrs|
-  Category.find_or_create_by!(name: category_attrs[:name]) do |category|
-    category.assign_attributes(category_attrs)
-    puts "Criada categoria: #{category.name}"
+categories_data.each do |category_data|
+  Category.find_or_create_by!(name: category_data[:name]) do |category|
+    category.assign_attributes(category_data)
   end
 end
+
+puts "Categorias criadas com sucesso!"
 
 # ================================
 # Produtos de Energia Solar

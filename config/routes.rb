@@ -1,27 +1,21 @@
 Rails.application.routes.draw do
-  # Definir a página institucional como raiz
-  # root 'corporate#index'
-  
-  # Manter as rotas existentes para o admin
   devise_for :admin_users, ActiveAdmin::Devise.config
   ActiveAdmin.routes(self)
-  
-  # =============================================
-  # API Routes
-  # =============================================
+
   namespace :api do
     namespace :v1 do
-      # Banners
+      # Banners / Auth / Dashboard
       resources :banners, only: [:index]
-      
-      # Authentication
-      post 'auth/login', to: 'authentication#login'
+      post 'auth/login',    to: 'authentication#login'
       post 'auth/register', to: 'authentication#register'
-      
-      # Dashboard
-      get 'dashboard/stats', to: 'dashboard#stats'
-      
-      # Resources
+      get  'dashboard/stats', to: 'dashboard#stats'
+
+      # Location data endpoints
+      get 'companies/states',    to: 'companies#states'
+      get 'companies/cities',    to: 'companies#cities'
+      get 'companies/locations', to: 'companies#locations' # Returns combined state/city data
+
+      # CRUDs gerenciados pelo ActiveAdmin
       resources :categories, controller: 'categories_api'
       resources :companies
       resources :products
@@ -31,11 +25,13 @@ Rails.application.routes.draw do
       resources :articles
       resources :plans
       resources :users, only: [:show, :update]
-      
-      # Search
-      get 'search/companies'
-      get 'search/products'
-      get 'search/articles'
+
+      # Search endpoints (o front consome estes)
+      get 'search/all',       to: 'search#all'
+      get 'search/suggest',   to: 'search#suggest'
+      get 'search/companies', to: 'search#companies'
+      get 'search/products',  to: 'search#products'
+      get 'search/articles',  to: 'search#articles'
     end
   end
 
@@ -46,18 +42,12 @@ Rails.application.routes.draw do
   get 'users/profile'
   get 'u/:id', to: 'users#profile', as: 'user'
 
-  # =============================================
-  # Static Pages
-  # =============================================
+  # Páginas públicas
   root 'corporate#index'
-  get 'corporate', to: 'corporate#index', as: 'corporate'
-  get 'corporate/login', to: 'corporate#login', as: 'corporate_login'
-  # root 'pages#home'
-  get 'home', to: 'pages#home'
-  get 'about', to: 'pages#about'
-  
-  # =============================================
-  # Blog Posts
-  # =============================================
+  get 'corporate',        to: 'corporate#index', as: 'corporate'
+  get 'corporate/login',  to: 'corporate#login', as: 'corporate_login'
+  get 'home',            to: 'pages#home'
+  get 'about',           to: 'pages#about'
+
   resources :posts
 end

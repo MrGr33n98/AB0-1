@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_09_17_023128) do
+ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -174,12 +174,66 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_17_023128) do
 
   create_table "companies", force: :cascade do |t|
     t.string "name"
-    t.text "description"
-    t.string "website"
-    t.string "phone"
-    t.text "address"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "state"
+    t.string "city"
+    t.boolean "featured", default: false
+    t.boolean "verified", default: false
+    t.decimal "rating_cache", precision: 3, scale: 1
+    t.integer "reviews_count", default: 0
+    t.string "cnpj"
+    t.string "email"
+    t.string "instagram"
+    t.string "facebook"
+    t.string "linkedin"
+    t.string "working_hours"
+    t.string "payment_methods"
+    t.string "status", default: "active"
+    t.text "certifications"
+    t.string "cta_primary_label"
+    t.string "cta_primary_type"
+    t.string "cta_primary_url"
+    t.string "cta_secondary_label"
+    t.string "cta_secondary_type"
+    t.string "cta_secondary_url"
+    t.text "cta_whatsapp_template"
+    t.string "cta_utm_source"
+    t.string "cta_utm_medium"
+    t.string "cta_utm_campaign"
+    t.json "ctas_json", default: {}
+    t.integer "founded_year"
+    t.integer "employees_count"
+    t.decimal "rating_avg", precision: 3, scale: 2, default: "0.0"
+    t.integer "rating_count", default: 0
+    t.text "awards"
+    t.text "partner_brands"
+    t.text "coverage_states"
+    t.text "coverage_cities"
+    t.decimal "latitude", precision: 10, scale: 6
+    t.decimal "longitude", precision: 10, scale: 6
+    t.integer "minimum_ticket"
+    t.integer "maximum_ticket"
+    t.text "financing_options"
+    t.string "response_time_sla"
+    t.text "languages"
+    t.string "email_public"
+    t.string "whatsapp"
+    t.string "phone_alt"
+    t.string "facebook_url"
+    t.string "instagram_url"
+    t.string "linkedin_url"
+    t.string "youtube_url"
+    t.text "highlights"
+    t.text "about"
+    t.text "media_gallery"
+    t.string "phone"
+    t.string "website"
+    t.string "address"
+    t.index ["city"], name: "index_companies_on_city"
+    t.index ["founded_year"], name: "index_companies_on_founded_year"
+    t.index ["rating_avg"], name: "index_companies_on_rating_avg"
+    t.index ["state"], name: "index_companies_on_state"
   end
 
   create_table "contents", force: :cascade do |t|
@@ -310,7 +364,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_17_023128) do
     t.string "name"
     t.text "description"
     t.decimal "price"
-    t.integer "company_id", null: false
+    t.integer "company_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "short_description"
@@ -324,13 +378,16 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_17_023128) do
   end
 
   create_table "reviews", force: :cascade do |t|
-    t.integer "rating"
+    t.decimal "rating", precision: 2, scale: 1
     t.text "comment"
     t.integer "user_id", null: false
-    t.integer "product_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["product_id"], name: "index_reviews_on_product_id"
+    t.integer "company_id", null: false
+    t.boolean "verified", default: false
+    t.boolean "featured", default: false
+    t.index ["company_id", "user_id"], name: "index_reviews_on_company_id_and_user_id", unique: true
+    t.index ["company_id"], name: "index_reviews_on_company_id"
     t.index ["user_id"], name: "index_reviews_on_user_id"
   end
 
@@ -400,7 +457,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_17_023128) do
   add_foreign_key "product_accesses", "products"
   add_foreign_key "product_accesses", "users"
   add_foreign_key "products", "companies"
-  add_foreign_key "reviews", "products"
+  add_foreign_key "reviews", "companies"
   add_foreign_key "reviews", "users"
   add_foreign_key "sponsored_plans", "categories"
   add_foreign_key "sponsored_plans", "plans"

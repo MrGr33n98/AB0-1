@@ -1,91 +1,137 @@
 ActiveAdmin.register Company do
-  # Your existing permit_params
-  permit_params :name, :description, :website, :phone, :address, :banner, :logo, category_ids: []
-  
-  # Explicitly define filters to avoid the error
-  filter :name
-  filter :description
-  filter :website
-  filter :phone
-  filter :address
-  filter :created_at
-  # Remove the automatic categories filter that's causing the error
-  remove_filter :categories
-  
+  permit_params :name, :description, :website, :phone, :address, 
+                :state, :city, :banner, :logo, :featured, :verified,
+                :cnpj, :email, :whatsapp, :instagram, :facebook,
+                :linkedin, :working_hours, :payment_methods,
+                :certifications, :status, :founded_year, :employees_count,
+                :awards, :partner_brands, :coverage_states, :coverage_cities,
+                :latitude, :longitude, :minimum_ticket, :maximum_ticket,
+                :financing_options, :response_time_sla, :languages,
+                :email_public, :phone_alt, :facebook_url, :instagram_url,
+                :linkedin_url, :youtube_url, :highlights, :about,
+                :media_gallery, category_ids: []
+
   form do |f|
-    f.inputs do
+    f.inputs "Basic Information" do
       f.input :name
       f.input :description
-      f.input :website
+      f.input :about
+      f.input :highlights
+      f.input :status, as: :select, collection: %w[active inactive pending blocked]
+      f.input :featured
+      f.input :verified
+    end
+
+    f.inputs "Contact & Location" do
+      f.input :email
+      f.input :email_public
       f.input :phone
+      f.input :phone_alt
+      f.input :whatsapp
       f.input :address
-      
-      # Add banner upload field
-      f.input :banner, as: :file, hint: f.object.banner.attached? ? 
-        image_tag(url_for(f.object.banner), style: 'max-width:300px;max-height:200px') : 
-        content_tag(:span, "No banner uploaded yet")
-      
-      # Add logo upload field
-      f.input :logo, as: :file, hint: f.object.logo.attached? ? 
-        image_tag(url_for(f.object.logo), style: 'max-width:150px;max-height:150px') : 
-        content_tag(:span, "No logo uploaded yet")
-      
-      # Add categories checkbox
+      f.input :state
+      f.input :city
+      f.input :latitude
+      f.input :longitude
+    end
+
+    f.inputs "Business Details" do
+      f.input :cnpj
+      f.input :founded_year
+      f.input :employees_count
+      f.input :working_hours
+      f.input :payment_methods
+      f.input :minimum_ticket
+      f.input :maximum_ticket
+      f.input :financing_options
+      f.input :response_time_sla
+      f.input :languages
+    end
+
+    f.inputs "Coverage & Certifications" do
+      f.input :coverage_states
+      f.input :coverage_cities
+      f.input :certifications
+      f.input :awards
+      f.input :partner_brands
+    end
+
+    f.inputs "Social Media" do
+      f.input :website
+      f.input :facebook_url
+      f.input :instagram_url
+      f.input :linkedin_url
+      f.input :youtube_url
+    end
+
+    f.inputs "Media" do
+      f.input :banner, as: :file
+      f.input :logo, as: :file
+      f.input :media_gallery
+    end
+
+    f.inputs "Categories" do
       f.input :categories, as: :check_boxes
     end
+
     f.actions
   end
-  
-  # Update your index view to match actual attributes
-  index do
-    selectable_column
-    id_column
-    column :name
-    column :website
-    column :phone
-    column :created_at
-    column "Banner" do |company|
-      company.banner.attached? ? image_tag(url_for(company.banner), style: 'max-width:100px;max-height:70px') : "No banner"
-    end
-    column "Logo" do |company|
-      company.logo.attached? ? image_tag(url_for(company.logo), style: 'max-width:50px;max-height:50px') : "No logo"
-    end
-    actions
-  end
-  
-  # Update your show view to match actual attributes
+
   show do
     attributes_table do
       row :name
       row :description
+      row :cnpj
+      row :email
       row :website
       row :phone
+      row :whatsapp
       row :address
-      row :created_at
-      row :updated_at
-      
-      # Add banner display
-      row :banner do |company|
-        if company.banner.attached?
-          image_tag url_for(company.banner), style: 'max-width:300px;max-height:200px'
-        else
-          "No banner uploaded"
-        end
-      end
-      
-      # Add logo display
-      row :logo do |company|
-        if company.logo.attached?
-          image_tag url_for(company.logo), style: 'max-width:150px;max-height:150px'
-        else
-          "No logo uploaded"
-        end
-      end
-      
-      # Add categories display
+      row :state
+      row :city
+      row :instagram
+      row :facebook
+      row :linkedin
+      row :working_hours
+      row :payment_methods
+      row :certifications
+      row :featured
+      row :verified
+      row :status
+      row :average_rating
+      row :reviews_count
       row :categories do |company|
-        company.categories.map(&:name).join(", ")
+        company.categories.pluck(:name).join(", ")
+      end
+      row :banner do |company|
+        image_tag url_for(company.banner) if company.banner.attached?
+      end
+      row :logo do |company|
+        image_tag url_for(company.logo) if company.logo.attached?
       end
     end
+  end
+
+  filter :name
+  filter :description
+  filter :state
+  filter :city
+  filter :featured
+  filter :verified
+  filter :status
+  filter :created_at
+  filter :categories
+
+  index do
+    selectable_column
+    id_column
+    column :name
+    column :state
+    column :city
+    column :featured
+    column :verified
+    column :status
+    column :created_at
+    actions
   end
 end
