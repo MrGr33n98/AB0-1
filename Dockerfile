@@ -23,14 +23,22 @@ RUN chmod +x /usr/bin/entrypoint.sh
 
 # Prepara assets
 # Set up environment variables
+# Set Rails environment
 ENV RAILS_ENV=production
 ENV NODE_ENV=production
 ENV BUNDLE_WITHOUT="development:test"
+ENV SECRET_KEY_BASE=temporary_key_for_precompile
 
-# Install dependencies and precompile assets
-RUN bundle config set --local without 'development test' && \
-    bundle install && \
-    bundle exec rake assets:clobber && \
+# Install dependencies
+RUN bundle config set --local deployment 'true' && \
+    bundle config set --local without 'development test' && \
+    bundle install --jobs 4 --retry 3
+
+# Create storage directory for Active Storage
+RUN mkdir -p tmp/storage
+
+# Clear and precompile assets
+RUN bundle exec rake assets:clobber || true && \
     bundle exec rake assets:precompile
 
 ENTRYPOINT ["entrypoint.sh"]
