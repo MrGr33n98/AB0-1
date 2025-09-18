@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Star, ThumbsUp } from 'lucide-react';
+import { Star, ThumbsUp, User } from 'lucide-react';
 import { Review } from '@/lib/api';
 
 interface ReviewCardProps {
@@ -31,9 +31,7 @@ export default function ReviewCard({ review, className = "" }: ReviewCardProps) 
       <div className="flex items-start space-x-4 mb-4">
         {/* User Avatar */}
         <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center">
-          <span className="text-gray-600 font-semibold">
-            {review.user_id ? `U${review.user_id}` : 'U'}
-          </span>
+          <User className="h-6 w-6 text-gray-600" />
         </div>
 
         {/* User Info & Rating */}
@@ -71,13 +69,6 @@ export default function ReviewCard({ review, className = "" }: ReviewCardProps) 
               {review.rating}/5
             </span>
           </div>
-
-          {/* Product Name */}
-          <p className="text-sm text-gray-600">
-            Para: <span className="font-medium text-gray-900">
-              Produto {review.product_id}
-            </span>
-          </p>
         </div>
       </div>
 

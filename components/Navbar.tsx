@@ -7,15 +7,20 @@ import {
   Search,
   Bell,
   MessageSquare,
-  Briefcase, // Para "Plano Profissional"
-  LayoutGrid, // Para "Meus Anúncios" (usando como Dashboard/Grid de anúncios)
+  Briefcase,
+  LayoutGrid,
   User,
-  Menu, // Ícone de menu para mobile
-  X // Ícone de fechar para mobile
+  Menu,
+  X,
+  LogIn,
+  LogOut,
+  UserPlus,
+  Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Import the SearchBar component
 import SearchBar from '@/components/SearchBar';
@@ -23,9 +28,20 @@ import SearchBar from '@/components/SearchBar';
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  
+  const { user, logout, isAuthenticated } = useAuth();
 
   const handleMenuItemClick = () => {
     setIsMobileMenuOpen(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setIsMobileMenuOpen(false);
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   return (
@@ -51,11 +67,11 @@ export default function Navbar() {
           <Link href="/notifications" className="flex items-center hover:text-primary transition-colors">
             <Bell className="h-4 w-4 mr-1" /> Notificações
           </Link>
-          {/* Itens sem ícones, como links de texto simples (como você tinha antes) */}
-          <Link href="/companies" className="hover:text-primary transition-colors"> {/* Endpoint alterado para /companies */}
+          {/* Itens sem ícones, como links de texto simples */}
+          <Link href="/companies" className="hover:text-primary transition-colors">
             Empresas
           </Link>
-          <Link href="/categories" className="hover:text-primary transition-colors"> {/* Endpoint alterado para /categories */}
+          <Link href="/categories" className="hover:text-primary transition-colors">
             Categorias
           </Link>
         </div>
@@ -84,12 +100,34 @@ export default function Navbar() {
           </motion.div>
           
           {/* Botão de Perfil/Login para desktop */}
-          <Link href="/profile" passHref>
-            <Button variant="ghost" className="hidden md:inline-flex text-foreground hover:text-primary">
-              <User className="h-5 w-5 mr-2" />
-              <span>Perfil</span>
-            </Button>
-          </Link>
+          {isAuthenticated ? (
+            <div className="hidden md:flex items-center space-x-2">
+              <Link href="/profile" passHref>
+                <Button variant="ghost" className="text-foreground hover:text-primary">
+                  <User className="h-5 w-5 mr-2" />
+                  <span className="hidden lg:inline">{user?.name || 'Meu Perfil'}</span>
+                </Button>
+              </Link>
+              <Button variant="ghost" size="icon" onClick={handleLogout} className="text-foreground hover:text-primary">
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
+          ) : (
+            <div className="hidden md:flex items-center space-x-2">
+              <Link href="/login" passHref>
+                <Button variant="ghost" className="text-foreground hover:text-primary">
+                  <LogIn className="h-5 w-5 mr-2" />
+                  <span className="hidden lg:inline">Login</span>
+                </Button>
+              </Link>
+              <Link href="/register" passHref>
+                <Button variant="ghost" className="text-foreground hover:text-primary">
+                  <UserPlus className="h-5 w-5 mr-2" />
+                  <span className="hidden lg:inline">Registrar</span>
+                </Button>
+              </Link>
+            </div>
+          )}
 
           {/* Botão para o menu mobile (Hamburger) */}
           <Button variant="ghost" size="icon" className="lg:hidden text-foreground hover:text-primary" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
@@ -128,21 +166,33 @@ export default function Navbar() {
             <Link href="/categories" className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleMenuItemClick}>
               Categorias
             </Link>
-            <Link href="/profile" className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleMenuItemClick}>
-              <User className="h-5 w-5 mr-2" /> Perfil
-            </Link>
+            
+            {/* Menu de autenticação para mobile */}
+            {isAuthenticated ? (
+              <>
+                <Link href="/profile" className="flex items-center px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleMenuItemClick}>
+                  <User className="h-5 w-5 mr-2" /> {user?.name || 'Meu Perfil'}
+                </Link>
+                <button 
+                  className="flex items-center px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted w-full text-left"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-5 w-5 mr-2" /> Sair
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="flex items-center px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleMenuItemClick}>
+                  <LogIn className="h-5 w-5 mr-2" /> Login
+                </Link>
+                <Link href="/register" className="flex items-center px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-muted" onClick={handleMenuItemClick}>
+                  <UserPlus className="h-5 w-5 mr-2" /> Registrar
+                </Link>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
     </header>
   );
 }
-
-// Inside your Navbar component
-// Replace the existing search input with:
-
-<div className="hidden md:block">
-  <SearchBar placeholder="Buscar empresas, produtos..." />
-</div>
-
-// For mobile view, you might want to add it to your mobile menu as well

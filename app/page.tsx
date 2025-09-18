@@ -4,9 +4,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCompaniesSafe } from '@/hooks/useCompaniesSafe';
 import { useCategories } from '@/hooks/useCategories';
-import { reviewsApi } from '@/lib/api';
+import { reviewsApiSafe } from '@/lib/api-client';
 import Head from 'next/head';
 import Script from 'next/script';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Componentes da UI
 import Hero from '@/components/Hero';
@@ -42,10 +43,11 @@ interface FAQ {
 }
 
 export default function Home() {
-  const { companies, loading: companiesLoading, error: companiesError } = useCompaniesSafe();
-  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
+  const { companies, loading: companiesLoading } = useCompaniesSafe();
+  const { categories, loading: categoriesLoading } = useCategories();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
 
   // Benefícios da plataforma
   const benefits: Benefit[] = [
@@ -95,19 +97,20 @@ export default function Home() {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const data = await reviewsApi.getAll();
-        const formattedReviews = data.slice(0, 6).map(review => ({
+        const data = await reviewsApiSafe.getAll({ limit: 6 });
+        // The backend now returns user and product names, so we can simplify this.
+        const formattedReviews = data.map(review => ({
           id: review.id,
           title: review.comment.split('.')[0] || 'Avaliação',
           content: review.comment,
           rating: review.rating,
-          user: { name: `Usuário ${review.user_id}` },
-          company: { name: `Empresa ${review.product_id}` }
+          user: { name: review.user?.name || 'Usuário anônimo' },
+          company: { name: review.product?.name || 'Produto/Serviço' } // Assuming product name is the company name here
         }));
         setReviews(formattedReviews);
       } catch (error) {
         console.error('Error fetching reviews:', error);
-        setReviews([]);
+        setReviews([]); // Set to empty array on error
       } finally {
         setReviewsLoading(false);
       }
@@ -117,7 +120,7 @@ export default function Home() {
 
   // Usando as empresas já filtradas pelo hook useCompaniesSafe
   const featuredCompanies = useMemo(() => 
-    companies.slice(0, 6),
+    companies.filter(company => company.featured).slice(0, 6),
     [companies]
   );
   const featuredCategories = useMemo(() => 
@@ -317,10 +320,6 @@ export default function Home() {
                 {[...Array(6)].map((_, i) => (
                   <Skeleton key={i} className="h-96 rounded-2xl bg-muted" />
                 ))}
-              </div>
-            ) : companiesError ? (
-              <div className="text-center py-12">
-                <p className="text-red-500">Erro ao carregar empresas: {companiesError}</p>
               </div>
             ) : (
               <motion.div

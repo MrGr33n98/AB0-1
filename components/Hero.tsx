@@ -1,15 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Star, Shield, Zap, Users, TrendingUp } from 'lucide-react';
+import { Search, Star, Shield, Zap, Users, TrendingUp, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import SearchBar from './SearchBar';
 import { useDashboard } from '@/hooks/useDashboard';
+import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 export default function Hero() {
   const { stats, loading } = useDashboard();
+  const { isAuthenticated } = useAuth();
   
   // Default values while loading
   const statsData = [
@@ -59,7 +62,7 @@ export default function Hero() {
                 Melhor Empresa Solar
               </span>
             </h1>
-            <p className="max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground leading-relaxed">
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               Conecte-se com as melhores empresas de energia solar do Brasil. 
               Compare preços, avaliações e encontre a solução perfeita para sua casa ou empresa.
             </p>
@@ -94,20 +97,48 @@ export default function Hero() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="mt-10 flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <Button 
-              size="lg"
-              className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground px-8 py-3 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              <Zap className="mr-2 h-5 w-5" />
-              Solicitar Orçamento Grátis
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg"
-              className="border-2 border-primary text-primary hover:bg-primary-light hover:text-primary-foreground px-8 py-3 rounded-xl text-lg font-semibold transition-all duration-300"
-            >
-              Ver Empresas Verificadas
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <Button 
+                  size="lg"
+                  className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground px-8 py-3 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  <Zap className="mr-2 h-5 w-5" />
+                  Solicitar Orçamento Grátis
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  className="border-2 border-primary text-primary hover:bg-primary-light hover:text-primary-foreground px-8 py-3 rounded-xl text-lg font-semibold transition-all duration-300"
+                >
+                  Ver Empresas Verificadas
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  size="lg"
+                  className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground px-8 py-3 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                  asChild
+                >
+                  <Link href="/register">
+                    <UserPlus className="mr-2 h-5 w-5" />
+                    Começar Agora
+                  </Link>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  className="border-2 border-primary text-primary hover:bg-primary-light hover:text-primary-foreground px-8 py-3 rounded-xl text-lg font-semibold transition-all duration-300"
+                  asChild
+                >
+                  <Link href="/login">
+                    <LogIn className="mr-2 h-5 w-5" />
+                    Já tenho conta
+                  </Link>
+                </Button>
+              </>
+            )}
           </motion.div>
 
           {/* Stats */}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Filter, MapPin, Star, Grid, List } from 'lucide-react';
+import { Filter, MapPin, Grid, List } from 'lucide-react';
 import CompanyCard from '@/components/CompanyCard';
 import { companiesApi, categoriesApi, type Company, type Category } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -23,8 +23,9 @@ export default function CompaniesPage() {
           companiesApi.getAll(),
           categoriesApi.getAll()
         ]);
-        setCompanies(companiesData);
-        setCategories(categoriesData);
+
+        setCompanies(companiesData || []);
+        setCategories(categoriesData || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erro ao carregar dados');
       } finally {
@@ -34,6 +35,7 @@ export default function CompaniesPage() {
 
     fetchData();
   }, []);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('all');
   const [sortBy, setSortBy] = useState('name');
@@ -42,10 +44,14 @@ export default function CompaniesPage() {
   // Filter and sort companies
   const filteredCompanies = companies
     .filter(company => {
-      const matchesSearch = (company.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-                          (company.description?.toLowerCase() || '').includes(searchTerm.toLowerCase());
-      const matchesLocation = locationFilter === 'all' || 
-                            (company.address?.toLowerCase() || '').includes(locationFilter.toLowerCase());
+      const matchesSearch =
+        (company.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (company.description?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+
+      const matchesLocation =
+        locationFilter === 'all' ||
+        (company.address?.toLowerCase() || '').includes(locationFilter.toLowerCase());
+
       return matchesSearch && matchesLocation;
     })
     .sort((a, b) => {
@@ -60,9 +66,9 @@ export default function CompaniesPage() {
     });
 
   // Extract unique locations for filter
-  const locations = Array.from(new Set(
-    companies.map(c => c.address?.split(',')[0]).filter(Boolean)
-  ));
+  const locations = Array.from(
+    new Set(companies.map(c => c.address?.split(',')[0]).filter(Boolean))
+  );
 
   if (error) {
     return (
@@ -70,7 +76,11 @@ export default function CompaniesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-6 text-center">
             <p className="text-destructive">Erro ao carregar empresas: {error}</p>
-            <Button className="mt-4" onClick={() => window.location.reload()} variant="outline">
+            <Button
+              className="mt-4"
+              onClick={() => window.location.reload()}
+              variant="outline"
+            >
               Tentar Novamente
             </Button>
           </div>
@@ -94,14 +104,15 @@ export default function CompaniesPage() {
               Encontre a Melhor Empresa Solar
             </h1>
             <p className="text-xl mb-8 max-w-3xl mx-auto">
-              Compare empresas verificadas, veja avaliações reais e solicite orçamentos gratuitos
+              Compare empresas verificadas, veja avaliações reais e solicite
+              orçamentos gratuitos
             </p>
             <div className="max-w-2xl mx-auto">
               <Input
                 type="search"
                 placeholder="Buscar empresas por nome ou descrição..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="h-12 text-base bg-card text-foreground border-input placeholder:text-muted-foreground focus-visible:ring-ring"
               />
             </div>
@@ -145,14 +156,15 @@ export default function CompaniesPage() {
             {/* Results count and view mode */}
             <div className="flex items-center space-x-4">
               <span className="text-sm text-muted-foreground">
-                {filteredCompanies.length} {filteredCompanies.length === 1 ? 'empresa' : 'empresas'}
+                {filteredCompanies.length}{' '}
+                {filteredCompanies.length === 1 ? 'empresa' : 'empresas'}
               </span>
-              
+
               <div className="flex bg-muted rounded-lg p-1">
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`p-2 rounded-md transition-colors ${
-                    viewMode === 'grid' 
+                    viewMode === 'grid'
                       ? 'bg-background shadow-sm text-primary'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
@@ -162,7 +174,7 @@ export default function CompaniesPage() {
                 <button
                   onClick={() => setViewMode('list')}
                   className={`p-2 rounded-md transition-colors ${
-                    viewMode === 'list' 
+                    viewMode === 'list'
                       ? 'bg-background shadow-sm text-primary'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
@@ -179,11 +191,13 @@ export default function CompaniesPage() {
       <section className="py-12 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {loading ? (
-            <div className={`grid gap-6 ${
-              viewMode === 'grid' 
-                ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-                : 'grid-cols-1'
-            }`}>
+            <div
+              className={`grid gap-6 ${
+                viewMode === 'grid'
+                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                  : 'grid-cols-1'
+              }`}
+            >
               {[...Array(9)].map((_, i) => (
                 <Skeleton key={i} className="h-80 rounded-xl bg-muted" />
               ))}
@@ -191,8 +205,8 @@ export default function CompaniesPage() {
           ) : filteredCompanies.length > 0 ? (
             <motion.div
               className={`grid gap-6 ${
-                viewMode === 'grid' 
-                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
+                viewMode === 'grid'
+                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
                   : 'grid-cols-1 max-w-4xl mx-auto'
               }`}
               layout
@@ -218,7 +232,8 @@ export default function CompaniesPage() {
                 Nenhuma empresa encontrada
               </h3>
               <p className="text-muted-foreground mb-6">
-                Tente ajustar os filtros ou termos de busca para encontrar empresas.
+                Tente ajustar os filtros ou termos de busca para encontrar
+                empresas.
               </p>
               <Button
                 onClick={() => {

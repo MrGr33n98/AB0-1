@@ -12,7 +12,6 @@ import {
   Award, 
   Users, 
   Calendar,
-  ExternalLink,
   MessageCircle,
   ChevronsRight,
   ArrowLeft
@@ -20,7 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Company, productsApi, reviewsApi, Product, Review } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
 import ReviewCard from '@/components/ReviewCard';
@@ -50,7 +49,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
       'Manutenção e Suporte',
       'Consultoria Energética',
     ],
-    certifications: ['ANEEL', 'CREA', 'ISO 9001'], // exemplo estático, pode vir da API
+    certifications: ['ANEEL', 'CREA', 'ISO 9001'],
     stats: [
       { label: 'Produtos', value: `${products.length}+`, icon: Award },
       { label: 'Avaliações', value: `${reviews.length}`, icon: Users },
@@ -62,15 +61,13 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
   useEffect(() => {
     const fetchCompanyData = async () => {
       try {
-        const allProducts = await productsApi.getAll();
-        const companyProducts = allProducts.filter(p => p.company_id === company.id);
-        setProducts(companyProducts);
-        
-        const allReviews = await reviewsApi.getAll();
-        const companyReviews = allReviews.filter(r => 
-          companyProducts.some(p => p.id === r.product_id)
-        );
-        setReviews(companyReviews);
+        const [companyProducts, companyReviews] = await Promise.all([
+          productsApi.getAll({ company_id: company.id }),
+          reviewsApi.getAll({ company_id: company.id })
+        ]);
+
+        setProducts(companyProducts || []);
+        setReviews(companyReviews || []);
       } catch (error) {
         console.error('Error fetching company data:', error);
       } finally {
@@ -242,8 +239,17 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                   {/* Reviews */}
                   <TabsContent value="reviews">
                     <Card>
-                      <CardHeader>
+                      <CardHeader className="flex justify-between items-center">
                         <CardTitle>Avaliações dos Clientes</CardTitle>
+                        <Button
+                          size="sm"
+                          className="bg-primary text-primary-foreground hover:bg-primary/90"
+                          onClick={() => {
+                            console.log("Abrir formulário de avaliação para empresa", company.id);
+                          }}
+                        >
+                          + Deixar Avaliação
+                        </Button>
                       </CardHeader>
                       <CardContent>
                         {reviewsLoading ? (
@@ -259,7 +265,17 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                             ))}
                           </div>
                         ) : (
-                          <p className="text-muted-foreground">Nenhuma avaliação ainda.</p>
+                          <div className="flex flex-col items-center text-center space-y-4">
+                            <p className="text-muted-foreground">Nenhuma avaliação ainda.</p>
+                            <Button
+                              className="bg-primary text-primary-foreground hover:bg-primary/90"
+                              onClick={() => {
+                                console.log("Abrir formulário de avaliação para empresa", company.id);
+                              }}
+                            >
+                              Seja o primeiro a avaliar
+                            </Button>
+                          </div>
                         )}
                       </CardContent>
                     </Card>

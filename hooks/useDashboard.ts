@@ -3,8 +3,17 @@
 import { useState, useEffect } from 'react';
 import { dashboardApi, DashboardStats } from '@/lib/api';
 
+export interface ExtendedDashboardStats extends DashboardStats {
+  active_campaigns?: number;
+  monthly_revenue?: number;
+  leads_count?: number;
+  reviews_count?: number;
+  products_count?: number;
+  companies_count?: number;
+}
+
 export function useDashboard() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [stats, setStats] = useState<ExtendedDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +26,20 @@ export function useDashboard() {
       setLoading(true);
       setError(null);
       const data = await dashboardApi.getStats();
-      setStats(data);
+      
+      // Extend the data with additional calculated fields if needed
+      const extendedData: ExtendedDashboardStats = {
+        ...data,
+        // Ensure all fields are present even if API doesn't return them
+        companies_count: data.companies_count ?? 0,
+        products_count: data.products_count ?? 0,
+        leads_count: data.leads_count ?? 0,
+        reviews_count: data.reviews_count ?? 0,
+        active_campaigns: data.active_campaigns ?? 0,
+        monthly_revenue: data.monthly_revenue ?? 0,
+      };
+      
+      setStats(extendedData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch dashboard stats');
     } finally {

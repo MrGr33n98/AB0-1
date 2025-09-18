@@ -1,26 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { ThemeProvider } from 'next-themes';
+import { AuthProvider } from '@/contexts/AuthContext';
 
-interface ClientBodyProps {
+export default function ClientBody({
+  children,
+}: {
   children: React.ReactNode;
-  className?: string;
-}
-
-export default function ClientBody({ children, className }: ClientBodyProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
-
+}) {
   return (
-    <div className={className}>
-      {children}
-    </div>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <AuthProvider>
+        {children}
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

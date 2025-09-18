@@ -1,7 +1,9 @@
 // Move the axios import to the top of the file
 import axios from 'axios';
 
+// =======================
 // API Response Types
+// =======================
 export interface Company {
   id: number;
   name: string;
@@ -23,7 +25,6 @@ export interface Company {
   category_id?: number;
   status?: 'active' | 'inactive';
   featured?: boolean;
-  // Campos adicionados na migração
   founded_year?: number;
   employees_count?: number;
   rating_avg?: number;
@@ -50,7 +51,6 @@ export interface Company {
   highlights?: string;
   about?: string;
   media_gallery?: string;
-  // Campos de CTAs
   cta_primary_label?: string;
   cta_primary_type?: string;
   cta_primary_url?: string;
@@ -111,6 +111,9 @@ export interface Review {
   product_id: number;
   created_at: string;
   updated_at: string;
+  user?: { id: number; name: string };
+  product?: { id: number; name: string };
+  company?: { name: string };
 }
 
 export interface Category {
@@ -171,316 +174,20 @@ export interface DashboardStats {
   monthly_revenue: number;
 }
 
-// Generic fetch function
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-
-// Create axios instance
-export const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add request interceptor for authentication if needed
-api.interceptors.request.use((config) => {
-  // You can add auth token here if needed
-  return config;
-});
-
-export async function fetchApi<T>(endpoint: string, options: any = {}): Promise<T> {
-  // Garante que sempre tenha a barra inicial e codifica caracteres especiais
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const url = encodeURI(`${API_BASE_URL}${cleanEndpoint}`);
-  
-  const defaultHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  };
-
-  // Token só se rodar no browser
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      defaultHeaders['Authorization'] = `Bearer ${token}`;
-    }
-  }
-
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `API error (${response.status})`);
-  }
-
-  return response.json();
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: 'user' | 'admin' | 'company';
+  created_at: string;
+  updated_at: string;
 }
 
-// Dashboard API
-export const dashboardApi = {
-  getStats: (): Promise<DashboardStats> => fetchApi('/dashboard/stats'),
-};
+export interface AuthResponse {
+  user: User;
+  token: string;
+}
 
-// Companies API
-export const companiesApi = {
-  getAll: (params?: { status?: 'active' | 'inactive'; featured?: boolean; category_id?: number; limit?: number }): Promise<Company[]> => {
-    let url = '/companies';
-    if (params) {
-      const queryParams = new URLSearchParams();
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) queryParams.append(key, value.toString());
-      });
-      if (queryParams.toString()) {
-        url += `?${queryParams.toString()}`;
-      }
-    }
-    return fetchApi(url);
-  },
-  getById: (id: number): Promise<Company> => fetchApi(`/companies/${id}`),
-  getReviews: (id: number, params?: { page?: number; per_page?: number }): Promise<{ reviews: Review[]; meta: { total_count: number; page: number; per_page: number; total_pages: number } }> => {
-    let url = `/companies/${id}/reviews`;
-    if (params) {
-      const queryParams = new URLSearchParams();
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) queryParams.append(key, value.toString());
-      });
-      if (queryParams.toString()) {
-        url += `?${queryParams.toString()}`;
-      }
-    }
-    return fetchApi(url);
-  },
-  getProducts: (id: number, params?: { page?: number; per_page?: number }): Promise<{ products: Product[]; meta: { total_count: number; page: number; per_page: number; total_pages: number } }> => {
-    let url = `/companies/${id}/products`;
-    if (params) {
-      const queryParams = new URLSearchParams();
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) queryParams.append(key, value.toString());
-      });
-      if (queryParams.toString()) {
-        url += `?${queryParams.toString()}`;
-      }
-    }
-    return fetchApi(url);
-  },
-  create: (company: Omit<Company, 'id' | 'created_at' | 'updated_at'>): Promise<Company> =>
-    fetchApi('/companies', {
-      method: 'POST',
-      body: JSON.stringify({ company }),
-    }),
-  update: (id: number, company: Partial<Company>): Promise<Company> =>
-    fetchApi(`/companies/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ company }),
-    }),
-  delete: (id: number): Promise<void> =>
-    fetchApi(`/companies/${id}`, { method: 'DELETE' }),
-  search: (query: string, filters?: {
-    state?: string;
-    city?: string;
-    category_id?: number;
-    sort?: 'rating' | 'name' | 'created_at';
-    page?: number;
-    per_page?: number;
-  }): Promise<{ companies: Company[]; meta: { total_count: number; page: number; per_page: number; total_pages: number } }> => {
-    let url = `/companies/search?q=${encodeURIComponent(query)}`;
-    
-    if (filters) {
-      const queryParams = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined) queryParams.append(key, value.toString());
-      });
-      if (queryParams.toString()) {
-        url += `&${queryParams.toString()}`;
-      }
-    }
-    
-    return fetchApi(url);
-  },
-};
-
-// Products API
-export const productsApi = {
-  getAll: (params?: { category_id?: number; company_id?: number; featured?: boolean; limit?: number; page?: number; per_page?: number }): Promise<{ products: Product[]; meta: { total_count: number; page: number; per_page: number; total_pages: number } }> => {
-    let url = '/products';
-    if (params) {
-      const queryParams = new URLSearchParams();
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) queryParams.append(key, value.toString());
-      });
-      if (queryParams.toString()) {
-        url += `?${queryParams.toString()}`;
-      }
-    }
-    return fetchApi(url);
-  },
-  getById: (id: number): Promise<Product> => fetchApi(`/products/${id}`),
-  getReviews: (id: number, params?: { page?: number; per_page?: number }): Promise<{ reviews: Review[]; meta: { total_count: number; page: number; per_page: number; total_pages: number } }> => {
-    let url = `/products/${id}/reviews`;
-    if (params) {
-      const queryParams = new URLSearchParams();
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) queryParams.append(key, value.toString());
-      });
-      if (queryParams.toString()) {
-        url += `?${queryParams.toString()}`;
-      }
-    }
-    return fetchApi(url);
-  },
-  create: (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product> =>
-    fetchApi('/products', {
-      method: 'POST',
-      body: JSON.stringify({ product }),
-    }),
-  update: (id: number, product: Partial<Product>): Promise<Product> =>
-    fetchApi(`/products/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ product }),
-    }),
-  delete: (id: number): Promise<void> =>
-    fetchApi(`/products/${id}`, { method: 'DELETE' }),
-  search: (query: string, filters?: {
-    category_id?: number;
-    company_id?: number;
-    sort?: 'price' | 'name' | 'created_at';
-    page?: number;
-    per_page?: number;
-  }): Promise<{ products: Product[]; meta: { total_count: number; page: number; per_page: number; total_pages: number } }> => {
-    let url = `/products/search?q=${encodeURIComponent(query)}`;
-    
-    if (filters) {
-      const queryParams = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined) queryParams.append(key, value.toString());
-      });
-      if (queryParams.toString()) {
-        url += `&${queryParams.toString()}`;
-      }
-    }
-    
-    return fetchApi(url);
-  },
-};
-
-// Categories API
-export const categoriesApi = {
-  getAll: (): Promise<Category[]> => fetchApi('/categories'),
-  getById: (id: number): Promise<Category> => fetchApi(`/categories/${id}`),
-  create: (category: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<Category> =>
-    fetchApi('/categories', {
-      method: 'POST',
-      body: JSON.stringify({ category }),
-    }),
-  update: (id: number, category: Partial<Category>): Promise<Category> =>
-    fetchApi(`/categories/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ category }),
-    }),
-  delete: (id: number): Promise<void> =>
-    fetchApi(`/categories/${id}`, { method: 'DELETE' }),
-  search: (query: string): Promise<Category[]> =>
-    fetchApi(`/api/categories/search?q=${encodeURIComponent(query)}`),
-};
-
-// Leads API
-export const leadsApi = {
-  getAll: (): Promise<Lead[]> => fetchApi('/leads'),
-  getById: (id: number): Promise<Lead> => fetchApi(`/leads/${id}`),
-  create: (lead: Omit<Lead, 'id' | 'created_at' | 'updated_at'>): Promise<Lead> =>
-    fetchApi('/leads', {
-      method: 'POST',
-      body: JSON.stringify({ lead }),
-    }),
-  update: (id: number, lead: Partial<Lead>): Promise<Lead> =>
-    fetchApi(`/leads/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ lead }),
-    }),
-  delete: (id: number): Promise<void> =>
-    fetchApi(`/leads/${id}`, { method: 'DELETE' }),
-};
-
-// Reviews API
-export const reviewsApi = {
-  getAll: (): Promise<Review[]> => fetchApi('/reviews'),
-  getById: (id: number): Promise<Review> => fetchApi(`/reviews/${id}`),
-  create: (review: Omit<Review, 'id' | 'created_at' | 'updated_at'>): Promise<Review> =>
-    fetchApi('/reviews', {
-      method: 'POST',
-      body: JSON.stringify({ review }),
-    }),
-  update: (id: number, review: Partial<Review>): Promise<Review> =>
-    fetchApi(`/reviews/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ review }),
-    }),
-  delete: (id: number): Promise<void> =>
-    fetchApi(`/reviews/${id}`, { method: 'DELETE' }),
-};
-
-// Plans API
-export const plansApi = {
-  getAll: (): Promise<Plan[]> => fetchApi('/plans'),
-  getById: (id: number): Promise<Plan> => fetchApi(`/plans/${id}`),
-  create: (plan: Omit<Plan, 'id' | 'created_at' | 'updated_at'>): Promise<Plan> =>
-    fetchApi('/plans', {
-      method: 'POST',
-      body: JSON.stringify({ plan }),
-    }),
-  update: (id: number, plan: Partial<Plan>): Promise<Plan> =>
-    fetchApi(`/plans/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ plan }),
-    }),
-  delete: (id: number): Promise<void> =>
-    fetchApi(`/plans/${id}`, { method: 'DELETE' }),
-};
-
-// Articles API
-export const articlesApi = {
-  getAll: (): Promise<Article[]> => fetchApi('/articles'),
-  getById: (id: number): Promise<Article> => fetchApi(`/articles/${id}`),
-  create: (article: Omit<Article, 'id' | 'created_at' | 'updated_at'>): Promise<Article> =>
-    fetchApi('/articles', {
-      method: 'POST',
-      body: JSON.stringify({ article }),
-    }),
-  update: (id: number, article: Partial<Article>): Promise<Article> =>
-    fetchApi(`/articles/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ article }),
-    }),
-  delete: (id: number): Promise<void> =>
-    fetchApi(`/articles/${id}`, { method: 'DELETE' }),
-};
-
-// Badges API
-export const badgesApi = {
-  getAll: (): Promise<Badge[]> => fetchApi('/badges'),
-  getById: (id: number): Promise<Badge> => fetchApi(`/badges/${id}`),
-  create: (badge: Omit<Badge, 'id' | 'created_at' | 'updated_at'>): Promise<Badge> =>
-    fetchApi('/badges', {
-      method: 'POST',
-      body: JSON.stringify({ badge }),
-    }),
-  update: (id: number, badge: Partial<Badge>): Promise<Badge> =>
-    fetchApi(`/badges/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ badge }),
-    }),
-  delete: (id: number): Promise<void> =>
-    fetchApi(`/badges/${id}`, { method: 'DELETE' }),
-};
-
-// Search API
-// Add these interfaces with the existing interfaces
 export interface State {
   id: number;
   name: string;
@@ -497,93 +204,178 @@ export interface City {
   updated_at: string;
 }
 
+// =======================
+// Axios Config
+// =======================
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+
+export const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+api.interceptors.request.use((config) => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+// =======================
+// Generic fetch wrapper
+// =======================
+export async function fetchApi<T>(endpoint: string, options: any = {}): Promise<T> {
+  try {
+    const cleanEndpoint = endpoint.replace(/^\/+/, '');
+    const response = await api.request<T>({
+      url: cleanEndpoint,
+      method: options.method || 'GET',
+      data: options.body ? (options.body instanceof FormData ? options.body : JSON.parse(options.body)) : undefined,
+      headers: { ...options.headers },
+      params: options.params,
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('API error:', error);
+    if (error.response) {
+      throw new Error(error.response.data?.error || `API error (${error.response.status})`);
+    }
+    throw new Error(error.message || 'Unknown API error');
+  }
+}
+
+// =======================
+// API Endpoints
+// =======================
+export const dashboardApi = {
+  getStats: (): Promise<DashboardStats> => fetchApi('/dashboard/stats'),
+};
+
+export const companiesApi = {
+  getAll: (params?: any): Promise<Company[]> => fetchApi('/companies', { params }),
+  getById: (id: number): Promise<Company> => fetchApi(`/companies/${id}`),
+  getReviews: (id: number, params?: any) => fetchApi(`/companies/${id}/reviews`, { params }),
+  getProducts: (id: number, params?: any) => fetchApi(`/companies/${id}/products`, { params }),
+  create: (company: Partial<Company>) => fetchApi('/companies', { method: 'POST', body: JSON.stringify({ company }) }),
+  update: (id: number, company: Partial<Company>) => fetchApi(`/companies/${id}`, { method: 'PUT', body: JSON.stringify({ company }) }),
+  delete: (id: number) => fetchApi(`/companies/${id}`, { method: 'DELETE' }),
+  search: (query: string, filters?: any) => fetchApi(`/companies/search?q=${encodeURIComponent(query)}`, { params: filters }),
+};
+
+export const productsApi = {
+  getAll: (params?: any) => fetchApi('/products', { params }),
+  getById: (id: number) => fetchApi(`/products/${id}`),
+  getReviews: (id: number, params?: any) => fetchApi(`/products/${id}/reviews`, { params }),
+  create: (product: Partial<Product>) => fetchApi('/products', { method: 'POST', body: JSON.stringify({ product }) }),
+  update: (id: number, product: Partial<Product>) => fetchApi(`/products/${id}`, { method: 'PUT', body: JSON.stringify({ product }) }),
+  delete: (id: number) => fetchApi(`/products/${id}`, { method: 'DELETE' }),
+  search: (query: string, filters?: any) => fetchApi(`/products/search?q=${encodeURIComponent(query)}`, { params: filters }),
+};
+
+export const categoriesApi = {
+  getAll: () => fetchApi('/categories'),
+  getById: (id: number) => fetchApi(`/categories/${id}`),
+  create: (category: Partial<Category>) => fetchApi('/categories', { method: 'POST', body: JSON.stringify({ category }) }),
+  update: (id: number, category: Partial<Category>) => fetchApi(`/categories/${id}`, { method: 'PUT', body: JSON.stringify({ category }) }),
+  delete: (id: number) => fetchApi(`/categories/${id}`, { method: 'DELETE' }),
+  search: (query: string) => fetchApi(`/categories/search?q=${encodeURIComponent(query)}`),
+};
+
+export const leadsApi = {
+  getAll: () => fetchApi('/leads'),
+  getById: (id: number) => fetchApi(`/leads/${id}`),
+  create: (lead: Partial<Lead>) => fetchApi('/leads', { method: 'POST', body: JSON.stringify({ lead }) }),
+  update: (id: number, lead: Partial<Lead>) => fetchApi(`/leads/${id}`, { method: 'PUT', body: JSON.stringify({ lead }) }),
+  delete: (id: number) => fetchApi(`/leads/${id}`, { method: 'DELETE' }),
+};
+
+export const reviewsApi = {
+  getAll: () => fetchApi('/reviews'),
+  getById: (id: number) => fetchApi(`/reviews/${id}`),
+  create: (review: Partial<Review>) => fetchApi('/reviews', { method: 'POST', body: JSON.stringify({ review }) }),
+  update: (id: number, review: Partial<Review>) => fetchApi(`/reviews/${id}`, { method: 'PUT', body: JSON.stringify({ review }) }),
+  delete: (id: number) => fetchApi(`/reviews/${id}`, { method: 'DELETE' }),
+};
+
+export const plansApi = {
+  getAll: () => fetchApi('/plans'),
+  getById: (id: number) => fetchApi(`/plans/${id}`),
+  create: (plan: Partial<Plan>) => fetchApi('/plans', { method: 'POST', body: JSON.stringify({ plan }) }),
+  update: (id: number, plan: Partial<Plan>) => fetchApi(`/plans/${id}`, { method: 'PUT', body: JSON.stringify({ plan }) }),
+  delete: (id: number) => fetchApi(`/plans/${id}`, { method: 'DELETE' }),
+};
+
+export const articlesApi = {
+  getAll: () => fetchApi('/articles'),
+  getById: (id: number) => fetchApi(`/articles/${id}`),
+  create: (article: Partial<Article>) => fetchApi('/articles', { method: 'POST', body: JSON.stringify({ article }) }),
+  update: (id: number, article: Partial<Article>) => fetchApi(`/articles/${id}`, { method: 'PUT', body: JSON.stringify({ article }) }),
+  delete: (id: number) => fetchApi(`/articles/${id}`, { method: 'DELETE' }),
+};
+
+export const badgesApi = {
+  getAll: () => fetchApi('/badges'),
+  getById: (id: number) => fetchApi(`/badges/${id}`),
+  create: (badge: Partial<Badge>) => fetchApi('/badges', { method: 'POST', body: JSON.stringify({ badge }) }),
+  update: (id: number, badge: Partial<Badge>) => fetchApi(`/badges/${id}`, { method: 'PUT', body: JSON.stringify({ badge }) }),
+  delete: (id: number) => fetchApi(`/badges/${id}`, { method: 'DELETE' }),
+};
+
+export const usersApi = {
+  getAll: () => fetchApi('/users'),
+  getById: (id: number) => fetchApi(`/users/${id}`),
+  create: (user: Partial<User>) => fetchApi('/users', { method: 'POST', body: JSON.stringify({ user }) }),
+  update: (id: number, user: Partial<User>) => fetchApi(`/users/${id}`, { method: 'PUT', body: JSON.stringify({ user }) }),
+  delete: (id: number) => fetchApi(`/users/${id}`, { method: 'DELETE' }),
+};
+
+export const authApi = {
+  login: async (email: string, password: string): Promise<AuthResponse> =>
+    fetchApi('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  register: async (userData: { name: string; email: string; password: string }): Promise<AuthResponse> =>
+    fetchApi('/auth/register', { method: 'POST', body: JSON.stringify(userData) }),
+  logout: async (): Promise<void> => {
+    if (typeof window !== 'undefined') localStorage.removeItem('auth_token');
+    try {
+      await fetchApi('/auth/logout', { method: 'POST' });
+    } catch (error) {
+      console.warn('Logout endpoint error:', error);
+    }
+  },
+  me: (): Promise<User> => fetchApi('/auth/me'),
+};
+
 export const statesApi = {
-  getAll: (): Promise<State[]> => fetchApi('/states'),
-  getById: (id: number): Promise<State> => fetchApi(`/states/${id}`),
-  getCities: (id: number): Promise<City[]> => fetchApi(`/states/${id}/cities`),
+  getAll: () => fetchApi('/states'),
+  getById: (id: number) => fetchApi(`/states/${id}`),
+  getCities: (id: number) => fetchApi(`/states/${id}/cities`),
 };
 
 export const citiesApi = {
-  getAll: (): Promise<City[]> => fetchApi('/cities'),
-  getById: (id: number): Promise<City> => fetchApi(`/cities/${id}`),
-  getByState: (stateId: number): Promise<City[]> => fetchApi(`/states/${stateId}/cities`),
+  getAll: () => fetchApi('/cities'),
+  getById: (id: number) => fetchApi(`/cities/${id}`),
+  getByState: (stateId: number) => fetchApi(`/states/${stateId}/cities`),
 };
 
-// Search API
 export const searchApi = {
-  all: async (query: string, filters?: {
-    state?: string;
-    city?: string;
-    category?: string;
-    sort?: 'rating' | 'name' | 'created_at';
-    page?: number;
-    per_page?: number;
-  }): Promise<{
-    companies: Company[];
-    products: Product[];
-    categories: Category[];
-    articles: Article[];
-    meta: {
-      total_count: number;
-      page: number;
-      per_page: number;
-      total_pages: number;
-    }
-  }> => {
+  all: async (query: string, filters?: any) => {
     try {
-      let url = `/search/all?q=${encodeURIComponent(query)}`;
-      
-      if (filters) {
-        const queryParams = new URLSearchParams();
-        Object.entries(filters).forEach(([key, value]) => {
-          if (value) queryParams.append(key, value.toString());
-        });
-        url += `&${queryParams.toString()}`;
-      }
-      
-      return await fetchApi(url);
+      return await fetchApi(`/search/all?q=${encodeURIComponent(query)}`, { params: filters });
     } catch (error) {
       console.error('Search error:', error);
-      return {
-        companies: [],
-        products: [],
-        categories: [],
-        articles: [],
-        meta: {
-          total_count: 0,
-          page: 1,
-          per_page: 10,
-          total_pages: 0
-        }
-      };
+      return { companies: [], products: [], categories: [], articles: [], meta: { total_count: 0, page: 1, per_page: 10, total_pages: 0 } };
     }
   },
-
-  suggest: async (query: string): Promise<{
-    companies: Pick<Company, 'id' | 'name' | 'city' | 'state'>[];
-    products: Pick<Product, 'id' | 'name'>[];
-    categories: Pick<Category, 'id' | 'name'>[];
-    articles: Pick<Article, 'id' | 'title'>[];
-  }> => {
+  suggest: async (query: string) => {
     try {
       return await fetchApi(`/search/suggest?q=${encodeURIComponent(query)}`);
     } catch (error) {
       console.error('Suggestion error:', error);
-      return {
-        companies: [],
-        products: [],
-        categories: [],
-        articles: []
-      };
+      return { companies: [], products: [], categories: [], articles: [] };
     }
-  }
+  },
 };
 
-// Admin API
 export const adminApi = {
-  importCategories: (formData: FormData): Promise<any> =>
-    fetchApi('/admin/categories/import', {
-      method: 'POST',
-      body: formData,
-    }),
+  importCategories: (formData: FormData) =>
+    fetchApi('/admin/categories/import', { method: 'POST', body: formData }),
 };

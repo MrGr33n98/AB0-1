@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { Star, MapPin, MessageCircle, Phone, Globe, Clock, CreditCard, Facebook, Instagram, Twitter } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -53,8 +52,8 @@ export default function CompanyCard({ company, className = '' }: CompanyCardProp
   }
 
   return (
-    <Link href={`/companies/${company.id}`}>
-      <Card className={`overflow-hidden h-full hover:shadow-lg transition-shadow ${className}`}>
+    <Card className={`overflow-hidden h-full hover:shadow-lg transition-shadow ${className}`}>
+      <Link href={`/companies/${company.id}`}>
         <CardContent className="p-0">
           <div 
             className="h-32 bg-cover bg-center" 
@@ -163,7 +162,16 @@ export default function CompanyCard({ company, className = '' }: CompanyCardProp
             )}
           </div>
         </CardContent>
-      </Card>
-    </Link>
+      </Link>
+      {/* Botão para deixar avaliação */}
+      <div className="px-4 pb-4">
+        <Button variant="outline" size="sm" className="w-full" asChild>
+          <Link href={`/companies/${company.id}/review`}>
+            <MessageCircle className="mr-2 h-4 w-4" />
+            Deixar Avaliação
+          </Link>
+        </Button>
+      </div>
+    </Card>
   );
 }
