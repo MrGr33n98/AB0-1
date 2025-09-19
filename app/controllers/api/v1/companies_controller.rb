@@ -6,13 +6,13 @@ module Api
 
       # GET /api/v1/companies
       def index
-        begin
-          Rails.logger.info("Starting companies#index with params: #{params.inspect}")
+        Rails.logger.info("Starting companies#index with params: #{params.inspect}")
 
+        begin
           @companies = Company.includes(:categories, :reviews)
                               .order(created_at: :desc)
 
-          # Filtering
+          # Filtros
           @companies = @companies.where(status: params[:status]) if params[:status].present?
 
           if params[:featured].present?
@@ -28,20 +28,15 @@ module Api
 
           Rails.logger.info("Found #{@companies.size} companies")
 
-          begin
-            companies_json = @companies.map { |c| c.as_json(include_ctas: false) }
-          rescue => e
-            Rails.logger.error("Error serializing companies: #{e.message}\n#{e.backtrace.join("\n")}")
-            render json: { error: "Ocorreu um erro ao processar sua requisição" }, status: :internal_server_error
-            return
+          # Serialização com fallback para array vazio
+          companies_json = Array(@companies).map do |c|
+            c.as_json(include_ctas: false)
           end
 
-          render json: {
-            companies: companies_json
-          }
+          render json: { companies: companies_json }
         rescue => e
           Rails.logger.error("Error in companies#index: #{e.message}\n#{e.backtrace.join("\n")}")
-          render json: { error: "Ocorreu um erro ao processar sua requisição" }, status: :internal_server_error
+          render json: { companies: [] }, status: :internal_server_error
         end
       end
 
@@ -111,8 +106,6 @@ module Api
           :featured, :status, :verified, :founded_year, :employees_count,
           :cnpj, :email_public, :instagram, :facebook, :linkedin,
           :working_hours, :payment_methods, :certifications
-          # OBS: logo e banner são ActiveStorage → precisam ser enviados como arquivos
-          # via multipart/form-data e tratados em attachers, não como :logo_url ou :banner_url
         )
       end
     end
