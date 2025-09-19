@@ -11,31 +11,6 @@ import React from 'react';
 interface CompanyCardProps {
   company: Company;
   className?: string;
-  showCtas?: boolean;
-  utmParams?: {
-    source?: string;
-    medium?: string;
-    campaign?: string;
-  };
-}
-
-interface SocialLinks {
-  facebook?: string;
-  instagram?: string;
-  twitter?: string;
-  linkedin?: string;
-  youtube?: string;
-}
-
-interface CompanyCta {
-  key: string;
-  label: string;
-  type: string;
-  url: string;
-  icon?: string;
-  style: string;
-  priority: number;
-  analytics_event?: string;
 }
 
 export default function CompanyCard({ company, className = '' }: CompanyCardProps) {
@@ -50,6 +25,15 @@ export default function CompanyCard({ company, className = '' }: CompanyCardProp
       </Card>
     );
   }
+
+  const rating = company.average_rating || company.rating_avg || '0.0';
+  const totalReviews = company.reviews_count || company.rating_count || 0;
+  const workingHours = company.working_hours || company.business_hours;
+  const paymentMethods = Array.isArray(company.payment_methods)
+    ? company.payment_methods.join(', ')
+    : company.payment_methods || '';
+
+  const firstCategory = company.categories?.[0]?.name || null;
 
   return (
     <Card className={`overflow-hidden h-full hover:shadow-lg transition-shadow ${className}`}>
@@ -82,15 +66,14 @@ export default function CompanyCard({ company, className = '' }: CompanyCardProp
                 )}
                 <h3 className="text-lg font-semibold">{company.name}</h3>
               </div>
-              {company.rating && (
+              {rating && (
                 <div className="flex items-center">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="ml-1 text-sm font-medium">{company.rating}</span>
+                  <span className="ml-1 text-sm font-medium">{rating}</span>
                 </div>
               )}
             </div>
             
-            {/* Location info */}
             {(company.city || company.state) && (
               <div className="flex items-center text-sm text-gray-500 mt-2">
                 <MapPin size={14} className="mr-1" />
@@ -104,49 +87,45 @@ export default function CompanyCard({ company, className = '' }: CompanyCardProp
               {company.description || 'No description available'}
             </p>
             
-            {/* Business Hours */}
-            {company.business_hours && (
+            {workingHours && (
               <div className="flex items-center text-sm text-gray-500 mt-2">
                 <Clock size={14} className="mr-1" />
-                <span>{company.business_hours}</span>
+                <span>{workingHours}</span>
               </div>
             )}
 
-            {/* Payment Methods */}
-            {company.payment_methods && (
+            {paymentMethods && (
               <div className="flex items-center text-sm text-gray-500 mt-2">
                 <CreditCard size={14} className="mr-1" />
-                <span>{company.payment_methods.join(', ')}</span>
+                <span>{paymentMethods}</span>
               </div>
             )}
 
-            {/* Total Reviews */}
-            {company.total_reviews > 0 && (
+            {totalReviews > 0 && (
               <div className="flex items-center text-sm text-gray-500 mt-2">
                 <MessageCircle size={14} className="mr-1" />
-                <span>{company.total_reviews} {company.total_reviews === 1 ? 'avaliação' : 'avaliações'}</span>
+                <span>{totalReviews} {totalReviews === 1 ? 'avaliação' : 'avaliações'}</span>
               </div>
             )}
 
-            {/* Social Links */}
-            {(company.social_links || company.website) && (
+            {company.social_links && (
               <div className="flex items-center gap-2 mt-2">
                 {company.website && (
                   <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">
                     <Globe size={14} />
                   </a>
                 )}
-                {company.social_links?.facebook && (
+                {company.social_links.facebook && (
                   <a href={company.social_links.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">
                     <Facebook size={14} />
                   </a>
                 )}
-                {company.social_links?.instagram && (
+                {company.social_links.instagram && (
                   <a href={company.social_links.instagram} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">
                     <Instagram size={14} />
                   </a>
                 )}
-                {company.social_links?.twitter && (
+                {company.social_links.twitter && (
                   <a href={company.social_links.twitter} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">
                     <Twitter size={14} />
                   </a>
@@ -154,17 +133,16 @@ export default function CompanyCard({ company, className = '' }: CompanyCardProp
               </div>
             )}
 
-            {company.category_name && (
+            {firstCategory && (
               <div className="mt-3">
                 <Badge variant="outline" className="text-xs">
-                  {company.category_name}
+                  {firstCategory}
                 </Badge>
               </div>
             )}
           </div>
         </CardContent>
       </Link>
-      {/* Botão para deixar avaliação */}
       <div className="px-4 pb-4">
         <Button variant="outline" size="sm" className="w-full" asChild>
           <Link href={`/companies/${company.id}/review`}>
