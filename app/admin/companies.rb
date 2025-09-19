@@ -1,8 +1,9 @@
+# app/admin/companies.rb
 ActiveAdmin.register Company do
-  permit_params :name, :description, :website, :phone, :address, 
+  permit_params :name, :website, :phone, :address,
                 :state, :city, :banner, :logo, :featured, :verified,
-                :cnpj, :email, :whatsapp, :instagram, :facebook,
-                :linkedin, :working_hours, :payment_methods,
+                :cnpj, :email, :whatsapp,
+                :working_hours, :payment_methods,
                 :certifications, :status, :founded_year, :employees_count,
                 :awards, :partner_brands, :coverage_states, :coverage_cities,
                 :latitude, :longitude, :minimum_ticket, :maximum_ticket,
@@ -14,7 +15,6 @@ ActiveAdmin.register Company do
   form do |f|
     f.inputs "Basic Information" do
       f.input :name
-      f.input :description
       f.input :about
       f.input :highlights
       f.input :status, as: :select, collection: %w[active inactive pending blocked]
@@ -80,7 +80,6 @@ ActiveAdmin.register Company do
   show do
     attributes_table do
       row :name
-      row :description
       row :cnpj
       row :email
       row :website
@@ -89,9 +88,6 @@ ActiveAdmin.register Company do
       row :address
       row :state
       row :city
-      row :instagram
-      row :facebook
-      row :linkedin
       row :working_hours
       row :payment_methods
       row :certifications
@@ -113,7 +109,6 @@ ActiveAdmin.register Company do
   end
 
   filter :name
-  filter :description
   filter :state
   filter :city
   filter :featured
