@@ -1,0 +1,70 @@
+# ============================================
+# Geral
+# ============================================
+.DS_Store
+*.pem
+*.log
+*.pid
+*.tsbuildinfo
+
+# Logs e temporários
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+/tmp/pids/*
+!/tmp/pids/
+!/tmp/pids/.keep
+/tmp/storage/*
+!/tmp/storage/
+!/tmp/storage/.keep
+
+# Env files (sensíveis)
+.env
+.env*.local
+.env.production
+.env.development
+.env.test
+
+# Docker
+*.tar
+
+# ============================================
+# Rails (backend)
+# ============================================
+/.bundle
+/db/*.sqlite3
+/db/*.sqlite3-*
+/storage/*
+!/storage/.keep
+/public/assets
+/config/master.key
+/scripts/*
+
+# ============================================
+# Node / Next.js (frontend)
+# ============================================
+/node_modules
+/.pnp
+.pnp.js
+/coverage
+/.next/
+/out/
+/build
+.next
+.next/cache
+.vercel
+next-env.d.ts
+
+# ============================================
+# Pastas de backup (evitar commits gigantes)
+# ============================================
+AB0-1-back-backup/
+AB0-1-front-backup/
+
+# ============================================
+# Debug
+# ============================================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

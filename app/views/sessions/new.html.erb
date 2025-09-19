@@ -1,0 +1,29 @@
+<div class="login-container">
+  <div class="login-form">
+    <div class="login-header">
+      <h2>Portal do Funcionário</h2>
+      <p>Compare Solar</p>
+    </div>
+    
+    <%= form_with url: login_path, method: :post do |form| %>
+      <div class="form-group">
+        <%= form.label :email, "Email" %>
+        <%= form.email_field :email, required: true, class: "form-control" %>
+      </div>
+      
+      <div class="form-group">
+        <%= form.label :password, "Senha" %>
+        <%= form.password_field :password, required: true, class: "form-control" %>
+      </div>
+      
+      <div class="form-actions">
+        <%= form.submit "Entrar", class: "btn btn-primary btn-block" %>
+      </div>
+    <% end %>
+    
+    <div class="login-footer">
+      <a href="#" class="forgot-password">Esqueceu a senha?</a>
+      <a href="/" class="back-to-home">Voltar para o site</a>
+    </div>
+  </div>
+</div>

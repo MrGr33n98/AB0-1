@@ -1,0 +1,58 @@
+# app/controllers/api/v1/reviews_controller.rb
+class Api::V1::ReviewsController < Api::V1::BaseController
+  before_action :set_review, only: [:show, :update, :destroy]
+
+  def index
+    # Eager load associations to prevent N+1 queries
+    @reviews = Review.includes(:user, :product).order(created_at: :desc)
+
+    # Add a limit to avoid sending too much data
+    @reviews = @reviews.limit(params[:limit].present? ? params[:limit].to_i : 10)
+
+    # Render a custom JSON response that includes associated data
+    render json: @reviews, include: {
+      user: { only: [:id, :name] },
+      product: { only: [:id, :name] }
+    }
+  end
+
+  def show
+    render json: @review, include: {
+      user: { only: [:id, :name] },
+      product: { only: [:id, :name] }
+    }
+  end
+
+  def create
+    @review = Review.new(review_params)
+
+    if @review.save
+      render json: @review, status: :created
+    else
+      render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  def update
+    if @review.update(review_params)
+      render json: @review
+    else
+      render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  def destroy
+    @review.destroy
+    head :no_content
+  end
+
+  private
+
+  def set_review
+    @review = Review.find(params[:id])
+  end
+
+  def review_params
+    params.require(:review).permit(:rating, :comment, :user_id, :product_id)
+  end
+end
