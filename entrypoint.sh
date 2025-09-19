@@ -20,4 +20,5 @@ bundle exec rake assets:clobber || true
 bundle exec rake assets:precompile
 
 # Inicia o comando final (Rails server, Sidekiq, etc.)
-exec "$@"
+echo "==> Iniciando aplicação..."
+exec bundle exec "$@"
