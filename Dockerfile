@@ -22,7 +22,7 @@ COPY . .
 COPY entrypoint.sh /usr/bin/
 RUN chmod +x /usr/bin/entrypoint.sh
 
-# Variáveis padrão
+# Variáveis padrão para build
 ENV RAILS_ENV=production \
     NODE_ENV=production \
     BUNDLE_WITHOUT="development:test"
@@ -30,12 +30,10 @@ ENV RAILS_ENV=production \
 # Garante diretórios necessários
 RUN mkdir -p tmp/pids tmp/storage public/assets
 
-# Precompile assets com uma chave temporária
-ARG TEMP_SECRET_KEY_BASE=temp_key_for_precompile
-RUN RAILS_ENV=production \
-    NODE_ENV=production \
-    SECRET_KEY_BASE=${TEMP_SECRET_KEY_BASE} \
+# Precompile assets usando chave dummy (NÃO SECRETA, apenas build)
+RUN SECRET_KEY_BASE=dummy_key_for_assets \
     bundle exec rake assets:clobber && \
+    SECRET_KEY_BASE=dummy_key_for_assets \
     bundle exec rake assets:precompile
 
 # Limpa caches
