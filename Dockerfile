@@ -30,8 +30,13 @@ ENV RAILS_ENV=production \
 # Garante diretórios necessários
 RUN mkdir -p tmp/pids tmp/storage public/assets
 
-# Precompile assets com uma chave fake (NÃO expõe segredo real)
-RUN SECRET_KEY_BASE=dummy_key bundle exec rake assets:precompile
+# Precompile assets com uma chave temporária
+ARG TEMP_SECRET_KEY_BASE=temp_key_for_precompile
+RUN RAILS_ENV=production \
+    NODE_ENV=production \
+    SECRET_KEY_BASE=${TEMP_SECRET_KEY_BASE} \
+    bundle exec rake assets:clobber && \
+    bundle exec rake assets:precompile
 
 # Limpa caches
 RUN rm -rf tmp/cache vendor/bundle/ruby/*/cache
