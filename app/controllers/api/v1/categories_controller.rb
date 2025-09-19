@@ -4,81 +4,109 @@ module Api
     class CategoriesController < Api::V1::BaseController
       before_action :set_category, only: [:show, :update, :destroy]
 
+      # =========================
+      # GET /categories
+      # =========================
       def index
         begin
           query = Category.all
 
-          # Filtrar por status
-          if params[:status].present?
+          # Filtrar por status (só se a coluna existir)
+          if Category.column_names.include?("status") && params[:status].present?
             query = query.where(status: params[:status])
           end
 
-          # Filtrar por featured
-          if params[:featured].present?
+          # Filtrar por featured (só se a coluna existir)
+          if Category.column_names.include?("featured") && params[:featured].present?
             featured = ActiveModel::Type::Boolean.new.cast(params[:featured])
             query = query.where(featured: featured)
           end
 
-          # Aplicar limite
-          if params[:limit].present?
+          # Aplicar limite (ignora se for <= 0)
+          if params[:limit].present? && params[:limit].to_i > 0
             query = query.limit(params[:limit].to_i)
           end
 
-          @categories = query.includes(:companies)
-          render json: @categories, include: {
-            companies: { only: [:id, :name] }
-          }, except: [:created_at, :updated_at]
+          # Inclui companies apenas se associação existir
+          query = query.includes(:companies) if Category.reflect_on_association(:companies)
+
+          @categories = query
+
+          render json: @categories.as_json(
+            only: [:id, :name, :seo_url, :seo_title, :short_description, :description, :status, :featured],
+            include: {
+              companies: { only: [:id, :name] }
+            }
+          )
         rescue ActiveRecord::RecordNotFound => e
           Rails.logger.error("Categories not found: #{e.message}")
           render json: { error: "Categorias não encontradas" }, status: :not_found
         rescue StandardError => e
-          Rails.logger.error("Categories error: #{e.message}\n#{e.backtrace.join('\n')}")
-          render json: { error: "Erro interno no servidor" }, status: :internal_server_error
+          Rails.logger.error("Categories error: #{e.message}\n#{e.backtrace.take(5).join("\n")}")
+          render json: { error: "Erro interno no servidor", details: e.message }, status: :internal_server_error
         end
       end
 
+      # =========================
+      # GET /categories/:id
+      # =========================
       def show
-        render json: @category
+        render json: @category.as_json(
+          only: [:id, :name, :seo_url, :seo_title, :short_description, :description, :status, :featured]
+        )
       rescue ActiveRecord::RecordNotFound
         render json: { error: "Categoria não encontrada" }, status: :not_found
       rescue => e
-        Rails.logger.error("Categories error: #{e.message}")
+        Rails.logger.error("Categories#show error: #{e.message}")
         render json: { error: "Erro interno no servidor" }, status: :internal_server_error
       end
 
+      # =========================
+      # POST /categories
+      # =========================
       def create
         @category = Category.new(category_params)
 
         if @category.save
-          render json: @category, status: :created
+          render json: @category.as_json(
+            only: [:id, :name, :seo_url, :seo_title, :short_description, :description, :status, :featured]
+          ), status: :created
         else
           render json: { errors: @category.errors.full_messages }, status: :unprocessable_entity
         end
       rescue => e
-        Rails.logger.error("Categories error: #{e.message}")
+        Rails.logger.error("Categories#create error: #{e.message}")
         render json: { error: "Erro interno no servidor" }, status: :internal_server_error
       end
 
+      # =========================
+      # PUT/PATCH /categories/:id
+      # =========================
       def update
         if @category.update(category_params)
-          render json: @category
+          render json: @category.as_json(
+            only: [:id, :name, :seo_url, :seo_title, :short_description, :description, :status, :featured]
+          )
         else
           render json: { errors: @category.errors.full_messages }, status: :unprocessable_entity
         end
       rescue ActiveRecord::RecordNotFound
         render json: { error: "Categoria não encontrada" }, status: :not_found
       rescue => e
-        Rails.logger.error("Categories error: #{e.message}")
+        Rails.logger.error("Categories#update error: #{e.message}")
         render json: { error: "Erro interno no servidor" }, status: :internal_server_error
       end
 
+      # =========================
+      # DELETE /categories/:id
+      # =========================
       def destroy
         @category.destroy
         render json: { message: "Categoria excluída" }, status: :ok
       rescue ActiveRecord::RecordNotFound
         render json: { error: "Categoria não encontrada" }, status: :not_found
       rescue => e
-        Rails.logger.error("Categories error: #{e.message}")
+        Rails.logger.error("Categories#destroy error: #{e.message}")
         render json: { error: "Erro interno no servidor" }, status: :internal_server_error
       end
 
