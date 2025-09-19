@@ -27,10 +27,11 @@ ENV RAILS_ENV=production \
     NODE_ENV=production \
     BUNDLE_WITHOUT="development:test"
 
+# Garante que o binário Rails esteja no PATH
+ENV PATH="/usr/local/bundle/bin:${PATH}"
+
 # Cria diretórios necessários
 RUN mkdir -p tmp/pids tmp/storage public/assets
-
-# Não faz precompile no build, só no runtime (entrypoint cuida disso)
 
 # Limpa caches do bundle
 RUN rm -rf tmp/cache vendor/bundle/ruby/*/cache
@@ -40,5 +41,5 @@ ENTRYPOINT ["entrypoint.sh"]
 # Expõe a porta do Rails
 EXPOSE 3001
 
-# Comando padrão do container
-CMD ["rails", "server", "-b", "0.0.0.0", "-p", "3001"]
+# Usa bundle exec rails para garantir que Rails seja encontrado
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3001"]
