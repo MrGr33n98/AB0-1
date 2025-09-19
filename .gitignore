@@ -8,16 +8,16 @@
 *.tsbuildinfo
 
 # Logs e temporários
-/log/*
-/tmp/*
-!/log/.keep
-!/tmp/.keep
-/tmp/pids/*
-!/tmp/pids/
-!/tmp/pids/.keep
-/tmp/storage/*
-!/tmp/storage/
-!/tmp/storage/.keep
+*/log/*
+*/tmp/*
+!*/log/.keep
+!*/tmp/.keep
+*/tmp/pids/*
+!*/tmp/pids/
+!*/tmp/pids/.keep
+*/tmp/storage/*
+!*/tmp/storage/
+!*/tmp/storage/.keep
 
 # Env files (sensíveis)
 .env
@@ -32,29 +32,28 @@
 # ============================================
 # Rails (backend)
 # ============================================
-/.bundle
-/db/*.sqlite3
-/db/*.sqlite3-*
-/storage/*
-!/storage/.keep
-/public/assets
-/config/master.key
-/scripts/*
+AB0-1-back/.bundle
+AB0-1-back/db/*.sqlite3
+AB0-1-back/db/*.sqlite3-*
+AB0-1-back/storage/*
+!AB0-1-back/storage/.keep
+AB0-1-back/public/assets
+AB0-1-back/config/master.key
+AB0-1-back/scripts/*
 
 # ============================================
 # Node / Next.js (frontend)
 # ============================================
-/node_modules
-/.pnp
-.pnp.js
-/coverage
-/.next/
-/out/
-/build
-.next
-.next/cache
-.vercel
-next-env.d.ts
+# Add this under the Node / Next.js section
+AB0-1-front/node_modules/@next/swc-darwin-x64/
+AB0-1-front/.pnp
+AB0-1-front/.pnp.js
+AB0-1-front/coverage
+AB0-1-front/.next/
+AB0-1-front/out/
+AB0-1-front/build
+AB0-1-front/.vercel
+AB0-1-front/next-env.d.ts
 
 # ============================================
 # Pastas de backup (evitar commits gigantes)
