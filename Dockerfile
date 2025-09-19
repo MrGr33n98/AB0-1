@@ -23,9 +23,9 @@ COPY entrypoint.sh /usr/bin/
 RUN chmod +x /usr/bin/entrypoint.sh
 
 # Set environment variables for asset precompilation
+# Set Rails environment
 ENV RAILS_ENV=production
 ENV NODE_ENV=production
-ENV SECRET_KEY_BASE=dummy_key_for_precompile
 ENV BUNDLE_WITHOUT="development:test"
 
 # Install dependencies
@@ -38,11 +38,15 @@ RUN mkdir -p tmp/pids && \
     mkdir -p tmp/storage && \
     mkdir -p public/assets
 
-# Clear and precompile assets with proper environment
+# Precompile assets with a temporary key
+ARG TEMP_KEY=temp_key_for_asset_precompile
 RUN RAILS_ENV=production \
-    SECRET_KEY_BASE=dummy_key_for_precompile \
-    bundle exec rake assets:clobber && \
+    NODE_ENV=production \
+    SECRET_KEY_BASE=${TEMP_KEY} \
     bundle exec rake assets:precompile
+
+# Remove temporary build artifacts
+RUN rm -rf tmp/cache vendor/bundle/ruby/*/cache
 
 ENTRYPOINT ["entrypoint.sh"]
 
