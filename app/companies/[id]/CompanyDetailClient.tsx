@@ -101,10 +101,10 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
               <img 
                 src={company.banner_url} 
                 alt={`${company.name} banner`}
-                className="w-full h-[350px] object-cover rounded-2xl shadow-lg"
+                className="w-full h-[180px] sm:h-[200px] md:h-[220px] object-cover rounded-2xl shadow-lg"
               />
             ) : (
-              <div className="w-full h-[350px] bg-muted rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="w-full h-[180px] sm:h-[200px] md:h-[220px] bg-muted rounded-2xl flex items-center justify-center shadow-lg">
                 <span className="text-muted-foreground text-lg">Sem imagem de banner disponível</span>
               </div>
             )}

@@ -40,7 +40,7 @@ export default function CompanyCard({ company, className = '' }: CompanyCardProp
       <Link href={`/companies/${company.id}`}>
         <CardContent className="p-0">
           <div 
-            className="h-32 bg-cover bg-center relative overflow-hidden" 
+            className="h-20 bg-cover bg-center relative overflow-hidden" 
             style={{ 
               backgroundImage: company.banner_url && company.banner_url.trim()
                 ? `url(${company.banner_url})` 

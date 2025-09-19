@@ -44,7 +44,7 @@ export default function CategoryCard({ category, className = "" }: CategoryCardP
       />
 
       {/* IMAGEM DA CATEGORIA */}
-      <div className="relative h-32 w-full overflow-hidden flex-shrink-0">
+      <div className="relative h-20 w-full overflow-hidden flex-shrink-0">
         <Image
           src={displayData.banner_url}
           alt={`Banner da categoria ${displayData.name}`}
