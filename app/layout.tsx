@@ -28,24 +28,24 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
-    url: 'https://www.comparesolar.com.br',
+    url: 'https://www.avaliasolar.com.br',
     siteName: 'Compare Solar',
     title: 'Compare Solar - Marketplace de Energia Solar',
     description: 'O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução.',
     images: [
       {
-        url: 'https://images.pexels.com/photos/9875456/pexels-photo-9875456.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop',
+        url: '/images/category-placeholder.jpg', // ✅ sua imagem local
         width: 1200,
         height: 630,
-        alt: 'Compare Solar - Marketplace de Energia Solar',
+        alt: 'Avalia - Marketplace de Energia Solar',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Compare Solar - Marketplace de Energia Solar',
+    title: 'Avalia - Marketplace de Energia Solar',
     description: 'O maior marketplace de energia solar do Brasil. Compare empresas, produtos e encontre a melhor solução.',
-    images: ['https://images.pexels.com/photos/9875456/pexels-photo-9875456.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop'],
+    images: ['/images/category-placeholder.jpg'], // ✅ mesma imagem no Twitter
     creator: '@comparesolar',
   },
   robots: {
@@ -92,7 +92,7 @@ export default function RootLayout({
               "@type": "Organization",
               "name": "Compare Solar",
               "url": "https://www.comparesolar.com.br",
-              "logo": "https://www.comparesolar.com.br/logo.png",
+              "logo": "https://www.comparesolar.com.br/images/category-placeholder.jpg", // ✅ ajustado aqui também
               "description": "O maior marketplace de energia solar do Brasil.",
               "sameAs": [
                 "https://www.facebook.com/comparesolar",
