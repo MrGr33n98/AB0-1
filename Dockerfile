@@ -2,7 +2,7 @@ FROM ruby:3.2.2
 
 # Instala dependências do sistema
 RUN apt-get update -qq && \
-    apt-get install -y build-essential libpq-dev postgresql-client nodejs && \
+    apt-get install -y build-essential libpq-dev postgresql-client nodejs yarn && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -22,30 +22,18 @@ COPY . .
 COPY entrypoint.sh /usr/bin/
 RUN chmod +x /usr/bin/entrypoint.sh
 
-# Set environment variables for asset precompilation
-# Set Rails environment
-ENV RAILS_ENV=production
-ENV NODE_ENV=production
-ENV BUNDLE_WITHOUT="development:test"
-
-# Install dependencies
-RUN bundle config set --local deployment 'true' && \
-    bundle config set --local without 'development test' && \
-    bundle install --jobs 4 --retry 3
-
-# Create required directories
-RUN mkdir -p tmp/pids && \
-    mkdir -p tmp/storage && \
-    mkdir -p public/assets
-
-# Precompile assets with a temporary key
-ARG TEMP_KEY=temp_key_for_asset_precompile
-RUN RAILS_ENV=production \
+# Variáveis padrão
+ENV RAILS_ENV=production \
     NODE_ENV=production \
-    SECRET_KEY_BASE=${TEMP_KEY} \
-    bundle exec rake assets:precompile
+    BUNDLE_WITHOUT="development:test"
 
-# Remove temporary build artifacts
+# Garante diretórios necessários
+RUN mkdir -p tmp/pids tmp/storage public/assets
+
+# Precompile assets com uma chave fake (NÃO expõe segredo real)
+RUN SECRET_KEY_BASE=dummy_key bundle exec rake assets:precompile
+
+# Limpa caches
 RUN rm -rf tmp/cache vendor/bundle/ruby/*/cache
 
 ENTRYPOINT ["entrypoint.sh"]
