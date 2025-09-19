@@ -12,10 +12,8 @@ class Company < ApplicationRecord
   # Validations
   # =========================
   validates :name, presence: true
-  # Usamos alias_attribute abaixo, então esta validação funciona sobre :about
   validates :description, presence: true
 
-  # Mantidas as validações originais
   validates :state, :city, presence: false
   validates :website, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
                                 message: 'must be a valid URL' }, allow_blank: true
@@ -25,12 +23,6 @@ class Company < ApplicationRecord
                                      message: 'must be a valid WhatsApp number' }, allow_blank: true
   validates :email_public, format: { with: URI::MailTo::EMAIL_REGEXP,
                                      message: 'must be a valid email' }, allow_blank: true
-
-  # =========================
-  # Attribute aliases
-  # =========================
-  # Permite usar :description na UI e no código, persistindo em :about
-  alias_attribute :description, :about
 
   # =========================
   # Scopes
@@ -45,8 +37,6 @@ class Company < ApplicationRecord
   # =========================
   # Ransack (busca/filters)
   # =========================
-
-  # Whitelist de atributos pesquisáveis/filtráveis
   def self.ransackable_attributes(_auth_object = nil)
     %w[
       id name description website phone address state city
@@ -57,14 +47,8 @@ class Company < ApplicationRecord
     ]
   end
 
-  # Whitelist de associações navegáveis
   def self.ransackable_associations(_auth_object = nil)
     %w[categories reviews]
-  end
-
-  # Mapeia o "attribute" virtual :description para a coluna real :about
-  ransacker :description do |parent|
-    parent.table[:about]
   end
 
   # =========================
@@ -78,18 +62,15 @@ class Company < ApplicationRecord
     rating_count.present? ? rating_count : reviews.count
   end
 
-  # Anos de atividade com base em founded_year
   def years_in_business
     return nil unless founded_year.present?
     Time.current.year - founded_year
   end
 
-  # Geração de CTAs conforme contexto
   def build_ctas(context = 'detail', utm = {}, vars = {})
     CompanyCtaBuilder.new(self, context, utm, vars).build_all_ctas
   end
 
-  # Retorna redes sociais disponíveis
   def social_links
     links = {}
     links[:facebook]  = facebook_url  if respond_to?(:facebook_url)  && facebook_url.present?
@@ -99,7 +80,6 @@ class Company < ApplicationRecord
     links.present? ? links : nil
   end
 
-  # Serialização JSON amigável para API/Front
   def as_json(options = {})
     context = options.delete(:context) || 'detail'
     utm     = options.delete(:utm)     || {}
@@ -115,7 +95,6 @@ class Company < ApplicationRecord
       }
     ))
 
-    # URLs de imagens (requer default_url_options[:host] configurado p/ gerar URLs absolutas)
     begin
       banner_url = banner.attached? ? Rails.application.routes.url_helpers.url_for(banner) : nil
     rescue => e
@@ -139,7 +118,6 @@ class Company < ApplicationRecord
     json
   end
 
-  # Exposição simples de CTAs
   def ctas
     build_ctas
   end
