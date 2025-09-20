@@ -1,0 +1,32 @@
+name: Security Scan
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # roda 1x por dia
+  workflow_dispatch:
+
+jobs:
+  backend-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./AB0-1-back
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2.2
+      - run: gem install bundler-audit
+      - run: bundler-audit check --update
+
+  frontend-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./AB0-1-front
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: npm audit --production

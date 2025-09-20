@@ -1,6 +1,0 @@
-en:
-  active_admin:
-    dashboard: "Dashboard"
-  dashboard:
-    welcome: "Welcome to my Active Admin Tutorial"
-    call_to_action: "Read more on Active Admin 3.2.0"

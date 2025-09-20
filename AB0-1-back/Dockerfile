@@ -1,6 +1,6 @@
 FROM ruby:3.2.2
 
-# Instala dependências do sistema
+# Install system dependencies
 RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends \
       build-essential \
@@ -11,46 +11,39 @@ RUN apt-get update -qq && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Define diretório de trabalho
+# Set working directory
 WORKDIR /app
 
-# Copia dependências Ruby primeiro (melhora cache)
-COPY Gemfile Gemfile.lock ./
-RUN bundle config set --local deployment 'true' && \
-    bundle config set --local without 'development test' && \
-    bundle install --jobs 4 --retry 3
+# Install specific bundler version
+RUN gem install bundler:2.4.22
 
-# Copia o restante da aplicação
+# Copy Gemfile and install dependencies
+COPY Gemfile Gemfile.lock ./
+RUN bundle install --jobs 4 --retry 3
+
+# Copy application code
 COPY . .
 
-# Script de inicialização
+# Create necessary directories
+RUN mkdir -p tmp/pids tmp/storage public/assets log
+
+# Set environment variables
+ENV RAILS_ENV=production \
+    PATH="/app/bin:${PATH}"
+
+# Create database.yml
+RUN echo "production:\n\
+  adapter: postgresql\n\
+  encoding: unicode\n\
+  pool: 5\n\
+  url: <%= ENV['DATABASE_URL'] %>" > config/database.yml
+
+EXPOSE 3001
+
+# Start the server
+# Add entrypoint script
 COPY entrypoint.sh /usr/bin/
 RUN chmod +x /usr/bin/entrypoint.sh
 
-# Variáveis padrão (somente build)
-ENV RAILS_ENV=production \
-    NODE_ENV=production \
-    BUNDLE_WITHOUT="development:test"
-
-# Garante que Rails e Bundler estão no PATH
-ENV PATH="/usr/local/bundle/bin:${PATH}"
-
-# Cria diretórios necessários
-RUN mkdir -p tmp/pids tmp/storage public/assets log
-
-# Precompile dos assets (com chave dummy segura só para build)
-RUN SECRET_KEY_BASE=dummy_key_for_assets \
-    bundle exec rake assets:clobber && \
-    SECRET_KEY_BASE=dummy_key_for_assets \
-    bundle exec rake assets:precompile
-
-# Limpa caches do bundle (reduz tamanho da imagem)
-RUN rm -rf tmp/cache vendor/bundle/ruby/*/cache
-
-ENTRYPOINT ["entrypoint.sh"]
-
-# Expõe a porta do Rails
-EXPOSE 3001
-
-# Usa bundle exec rails para garantir que Rails seja encontrado
+ENTRYPOINT ["/usr/bin/entrypoint.sh"]
 CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3001"]

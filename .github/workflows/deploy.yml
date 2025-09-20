@@ -1,0 +1,136 @@
+name: CI/CD Deploy
+
+on:
+  push:
+    branches:
+      - main   # dispara no push para main
+      - master-frontend
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # LOGIN DOCKER HUB
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # BACKEND - Build & Push
+      - name: Build & Push Backend
+        run: |
+          IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/ab0-backend
+          docker build -t $IMAGE:latest -t $IMAGE:${{ github.sha }} ./AB0-1-back
+          docker push $IMAGE:latest
+          docker push $IMAGE:${{ github.sha }}
+
+          # mantém só as 2 últimas tags (latest + SHA mais novo)
+          IMAGES=$(curl -s -u "${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" \
+            "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ab0-backend/tags/?page_size=100" \
+            | jq -r '.results[].name' | grep -v latest | sort -r)
+          echo "$IMAGES" | tail -n +3 | xargs -I {} curl -s -u "${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" \
+            -X DELETE "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ab0-backend/tags/{}/"
+
+      # FRONTEND - Build & Push
+      - name: Build & Push Frontend
+        run: |
+          IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/ab0-frontend
+          docker build -t $IMAGE:latest -t $IMAGE:${{ github.sha }} ./AB0-1-front
+          docker push $IMAGE:latest
+          docker push $IMAGE:${{ github.sha }}
+
+          # mantém só as 2 últimas tags
+          IMAGES=$(curl -s -u "${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" \
+            "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ab0-frontend/tags/?page_size=100" \
+            | jq -r '.results[].name' | grep -v latest | sort -r)
+          echo "$IMAGES" | tail -n +3 | xargs -I {} curl -s -u "${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" \
+            -X DELETE "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ab0-frontend/tags/{}/"
+
+      # DEPLOY NA VM
+      - name: Deploy on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_KEY }}
+          script: |
+            set -e
+
+            echo "==> Atualizando projeto em produção"
+            cd ~/ab0-app || mkdir -p ~/ab0-app && cd ~/ab0-app
+
+            echo "==> Criando/atualizando docker-compose.yml"
+            cat > docker-compose.yml <<'EOF'
+            version: "3.9"
+
+            services:
+              db:
+                image: postgres:14
+                container_name: ab0-postgres
+                restart: always
+                environment:
+                  POSTGRES_USER: ${POSTGRES_USER}
+                  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+                  POSTGRES_DB: ${POSTGRES_DB}
+                volumes:
+                  - db_data:/var/lib/postgresql/data
+                ports:
+                  - "5432:5432"
+
+              backend:
+                image: ${{ secrets.DOCKERHUB_USERNAME }}/ab0-backend:latest
+                container_name: ab0-backend
+                depends_on:
+                  - db
+                environment:
+                  RAILS_ENV: production
+                  DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+                  RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+                  JWT_SECRET: ${JWT_SECRET}
+                  POSTGRES_HOST: db
+                  POSTGRES_USER: ${POSTGRES_USER}
+                  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+                  POSTGRES_DB: ${POSTGRES_DB}
+                  CORS_ORIGINS: http://64.225.59.107:3000
+                ports:
+                  - "3001:3001"
+
+              frontend:
+                image: ${{ secrets.DOCKERHUB_USERNAME }}/ab0-frontend:latest
+                container_name: ab0-frontend
+                depends_on:
+                  - backend
+                environment:
+                  NODE_ENV: production
+                  NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+                  NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+                ports:
+                  - "3000:3000"
+
+            volumes:
+              db_data:
+            EOF
+
+            echo "==> Criando arquivo .env"
+            cat > .env <<EOF
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
+            EOF
+
+            echo "==> Subindo containers atualizados"
+            docker compose pull
+            docker compose down
+            docker compose up -d --remove-orphans
+
+            echo "==> Limpando imagens antigas não usadas"
+            docker image prune -af

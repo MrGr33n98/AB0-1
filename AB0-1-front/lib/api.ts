@@ -128,7 +128,12 @@ export interface Category {
   kind: string;
   status: string;
   featured: boolean;
-  banner_url?: string;   // ← adicionado
+  banner: {
+    url: string;
+  } | null;
+  logo: {
+    url: string;
+  } | null;
   created_at: string;
   updated_at: string;
 }

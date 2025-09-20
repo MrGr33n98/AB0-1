@@ -1,24 +1,19 @@
 #!/bin/bash
 set -e
 
-# Espera o Postgres subir (ajuste host e porta se necessário)
-until pg_isready -h "$POSTGRES_HOST" -p 5432 -U "$POSTGRES_USER"; do
-  echo "Aguardando Postgres em $POSTGRES_HOST:5432..."
-  sleep 2
+# Remove any existing pid file
+rm -f tmp/pids/server.pid
+rm -f tmp/pids/*.pid
+
+# Wait for database
+until PGPASSWORD=$POSTGRES_PASSWORD psql -h "db" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c '\q'; do
+  echo "Postgres is unavailable - sleeping"
+  sleep 1
 done
 
-# Remove PID antigo se existir
-rm -f /app/tmp/pids/server.pid
-
-# Executa migrações
-echo "==> Rodando migrações do banco..."
+# Setup database if needed
+bundle exec rails db:migrate:status || bundle exec rails db:setup
 bundle exec rails db:migrate
 
-# Precompile assets (agora em runtime, com secrets reais do container)
-echo "==> Limpando e precompilando assets..."
-bundle exec rake assets:clobber || true
-bundle exec rake assets:precompile
-
-# Inicia o comando final (Rails server, Sidekiq, etc.)
-echo "==> Iniciando aplicação..."
-exec bundle exec "$@"
+# Then exec the container's main process
+exec "$@"

@@ -11,8 +11,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-app_db}
     volumes:
       - db_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    networks:
+      - ab0-network
 
   backend:
     build:
@@ -23,18 +23,20 @@ services:
       - db
     environment:
       RAILS_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-app_db}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
-      JWT_SECRET: ${JWT_SECRET:-changeme}
+      JWT_SECRET: ${JWT_SECRET}
       POSTGRES_HOST: db
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-app_db}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      CORS_ORIGINS: "https://avaliasolar.com.br"
     volumes:
       - ./AB0-1-back:/app
     ports:
       - "3001:3001"
-    command: ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3001"]
+    networks:
+      - ab0-network
 
   frontend:
     build:
@@ -45,8 +47,16 @@ services:
       - backend
     environment:
       NODE_ENV: production
+      NEXT_PUBLIC_API_URL: "https://api.avaliasolar.com.br/api/v1"
     ports:
       - "3000:3000"
+    command: ["node", "server.js"]
+    networks:
+      - ab0-network
 
 volumes:
   db_data:
+
+networks:
+  ab0-network:
+    external: true

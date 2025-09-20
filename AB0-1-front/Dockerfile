@@ -1,45 +1,45 @@
-# =========================
-# 1. Build stage
-# =========================
+# Build stage
 FROM node:18-alpine AS builder
 
-# Definir diretório de trabalho
 WORKDIR /app
 
-# Instalar dependências primeiro (cache otimizado)
+# Add package files
 COPY package*.json ./
-RUN npm install -g npm@10.2.4 && npm ci --legacy-peer-deps
 
-# Copiar o restante do código
+# Install dependencies with retry mechanism
+RUN --mount=type=cache,target=/root/.npm \
+    npm config set registry https://registry.npmjs.org/ && \
+    npm config set fetch-retry-maxtimeout 600000 && \
+    npm config set fetch-retry-mintimeout 10000 && \
+    npm config set fetch-retries 5 && \
+    npm install -g npm@10.2.4 && \
+    npm install --legacy-peer-deps --no-audit --network-timeout=600000
+
+# Add app files
 COPY . .
 
-# Variáveis do build
+# Build app
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
-
-# Compilar o Next.js
 RUN npm run build
 
-# =========================
-# 2. Production stage
-# =========================
+# Production stage
 FROM node:18-alpine
 
 WORKDIR /app
 
-# Copiar apenas o necessário do build
+# Copy built assets
 COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.js ./next.config.js
+COPY --from=builder /app/node_modules ./node_modules
 
-# Variáveis de ambiente
+# Set production environment
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Porta do Next.js
-EXPOSE 3000
-
-# Subir em modo produção
-CMD ["npm", "run", "start"]
+# Start the app with standalone configuration
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+CMD ["node", "server.js"]

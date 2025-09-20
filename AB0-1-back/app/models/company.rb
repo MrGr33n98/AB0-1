@@ -14,7 +14,7 @@ class Company < ApplicationRecord
   # =========================
   # Validations
   # =========================
-  validates :name, :about, presence: true   # <-- corrigido (era :description)
+  validates :name, :description, presence: true
   validates :website,
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
                       message: "must be a valid URL" },
@@ -47,7 +47,7 @@ class Company < ApplicationRecord
   # =========================
   def self.ransackable_attributes(_auth_object = nil)
     %w[
-      id name about website phone address state city
+      id name description website phone address state city
       featured verified cnpj email_public instagram facebook linkedin
       working_hours payment_methods certifications status
       founded_year employees_count rating_avg rating_count

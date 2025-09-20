@@ -8,15 +8,14 @@ ActiveAdmin.register Company do
                 :awards, :partner_brands, :coverage_states, :coverage_cities,
                 :latitude, :longitude, :minimum_ticket, :maximum_ticket,
                 :financing_options, :response_time_sla, :languages,
-                :email_public, :phone_alt, :facebook_url, :instagram_url,
-                :linkedin_url, :youtube_url, :highlights, :about,
-                :media_gallery, category_ids: []
+                :email_public, :phone_alt, :facebook, :instagram,
+                :linkedin, :description,
+                category_ids: []
 
   form do |f|
     f.inputs "Basic Information" do
       f.input :name
-      f.input :about
-      f.input :highlights
+      f.input :description
       f.input :status, as: :select, collection: %w[active inactive pending blocked]
       f.input :featured
       f.input :verified
@@ -58,16 +57,14 @@ ActiveAdmin.register Company do
 
     f.inputs "Social Media" do
       f.input :website
-      f.input :facebook_url
-      f.input :instagram_url
-      f.input :linkedin_url
-      f.input :youtube_url
+      f.input :facebook
+      f.input :instagram
+      f.input :linkedin
     end
 
     f.inputs "Media" do
       f.input :banner, as: :file
       f.input :logo, as: :file
-      f.input :media_gallery
     end
 
     f.inputs "Categories" do
