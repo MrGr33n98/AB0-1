@@ -11,6 +11,9 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "plpgsql"
+
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
     t.text "body"
@@ -25,9 +28,9 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
     t.string "namespace"
     t.text "body"
     t.string "resource_type"
-    t.integer "resource_id"
+    t.bigint "resource_id"
     t.string "author_type"
-    t.integer "author_id"
+    t.bigint "author_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["author_type", "author_id"], name: "index_active_admin_comments_on_author"
@@ -51,7 +54,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
     t.string "content_type"
     t.text "metadata"
     t.string "service_name", null: false
-    t.integer "byte_size", null: false
+    t.bigint "byte_size", null: false
     t.string "checksum"
     t.datetime "created_at", null: false
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
@@ -78,8 +81,8 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
   create_table "articles", force: :cascade do |t|
     t.string "title"
     t.text "content"
-    t.integer "category_id", null: false
-    t.integer "product_id", null: false
+    t.bigint "category_id", null: false
+    t.bigint "product_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["category_id"], name: "index_articles_on_category_id"
@@ -92,7 +95,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
     t.integer "position"
     t.integer "year"
     t.string "edition"
-    t.integer "category_id", null: false
+    t.bigint "category_id", null: false
     t.string "products"
     t.string "image"
     t.datetime "created_at", null: false
@@ -110,7 +113,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
   end
 
   create_table "campaign_reviews", force: :cascade do |t|
-    t.integer "product_id", null: false
+    t.bigint "product_id", null: false
     t.string "title"
     t.string "code"
     t.integer "member_id"
@@ -152,20 +155,22 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
   end
 
   create_table "categories_companies", id: false, force: :cascade do |t|
-    t.integer "company_id", null: false
-    t.integer "category_id", null: false
+    t.bigint "company_id", null: false
+    t.bigint "category_id", null: false
     t.index ["category_id", "company_id"], name: "index_categories_companies_on_category_id_and_company_id"
     t.index ["company_id", "category_id"], name: "index_categories_companies_on_company_id_and_category_id"
   end
 
   create_table "categories_products", id: false, force: :cascade do |t|
-    t.integer "product_id", null: false
-    t.integer "category_id", null: false
+    t.bigint "product_id", null: false
+    t.bigint "category_id", null: false
+    t.index ["category_id", "product_id"], name: "index_categories_products_on_category_id_and_product_id"
+    t.index ["product_id", "category_id"], name: "index_categories_products_on_product_id_and_category_id"
   end
 
   create_table "comments", force: :cascade do |t|
-    t.integer "post_id", null: false
-    t.integer "user_id", null: false
+    t.bigint "post_id", null: false
+    t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["post_id"], name: "index_comments_on_post_id"
@@ -174,8 +179,15 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
 
   create_table "companies", force: :cascade do |t|
     t.string "name"
+    t.text "description"
+    t.string "website"
+    t.string "phone"
+    t.text "address"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "phone_alt"
+    t.string "whatsapp"
+    t.string "email_public"
     t.string "state"
     t.string "city"
     t.boolean "featured", default: false
@@ -201,7 +213,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
     t.string "cta_utm_source"
     t.string "cta_utm_medium"
     t.string "cta_utm_campaign"
-    t.json "ctas_json", default: {}
+    t.jsonb "ctas_json", default: {}
     t.integer "founded_year"
     t.integer "employees_count"
     t.decimal "rating_avg", precision: 3, scale: 2, default: "0.0"
@@ -217,23 +229,6 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
     t.text "financing_options"
     t.string "response_time_sla"
     t.text "languages"
-    t.string "email_public"
-    t.string "whatsapp"
-    t.string "phone_alt"
-    t.string "facebook_url"
-    t.string "instagram_url"
-    t.string "linkedin_url"
-    t.string "youtube_url"
-    t.text "highlights"
-    t.text "about"
-    t.text "media_gallery"
-    t.string "phone"
-    t.string "website"
-    t.string "address"
-    t.index ["city"], name: "index_companies_on_city"
-    t.index ["founded_year"], name: "index_companies_on_founded_year"
-    t.index ["rating_avg"], name: "index_companies_on_rating_avg"
-    t.index ["state"], name: "index_companies_on_state"
   end
 
   create_table "contents", force: :cascade do |t|
@@ -254,8 +249,8 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
   end
 
   create_table "forum_answers", force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.integer "forum_question_id", null: false
+    t.bigint "user_id", null: false
+    t.bigint "forum_question_id", null: false
     t.text "answer"
     t.string "status"
     t.datetime "requested_at"
@@ -266,9 +261,9 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
   end
 
   create_table "forum_questions", force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.integer "product_id", null: false
-    t.integer "category_id", null: false
+    t.bigint "user_id", null: false
+    t.bigint "product_id", null: false
+    t.bigint "category_id", null: false
     t.string "subject"
     t.text "description"
     t.string "status"
@@ -294,7 +289,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
     t.string "type"
     t.string "record_type"
     t.bigint "record_id"
-    t.json "params"
+    t.jsonb "params"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "notifications_count"
@@ -329,13 +324,13 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "views", default: 0
-    t.integer "user_id", null: false
+    t.bigint "user_id", null: false
     t.datetime "published_at"
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
 
   create_table "pricings", force: :cascade do |t|
-    t.integer "product_id", null: false
+    t.bigint "product_id", null: false
     t.string "title"
     t.string "currency"
     t.decimal "value"
@@ -351,8 +346,8 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
   end
 
   create_table "product_accesses", force: :cascade do |t|
-    t.integer "product_id", null: false
-    t.integer "user_id", null: false
+    t.bigint "product_id", null: false
+    t.bigint "user_id", null: false
     t.string "status"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -364,7 +359,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
     t.string "name"
     t.text "description"
     t.decimal "price"
-    t.integer "company_id"
+    t.bigint "company_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "short_description"
@@ -380,10 +375,10 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
   create_table "reviews", force: :cascade do |t|
     t.decimal "rating", precision: 2, scale: 1
     t.text "comment"
-    t.integer "user_id", null: false
+    t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "company_id", null: false
+    t.bigint "company_id"
     t.boolean "verified", default: false
     t.boolean "featured", default: false
     t.index ["company_id", "user_id"], name: "index_reviews_on_company_id_and_user_id", unique: true
@@ -393,9 +388,9 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
 
   create_table "sponsored_plans", force: :cascade do |t|
     t.integer "member_id"
-    t.integer "product_id", null: false
-    t.integer "category_id", null: false
-    t.integer "plan_id", null: false
+    t.bigint "product_id", null: false
+    t.bigint "category_id", null: false
+    t.bigint "plan_id", null: false
     t.string "custom_cta"
     t.boolean "active"
     t.datetime "purchased_at"
@@ -410,9 +405,9 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
 
   create_table "subscription_plans", force: :cascade do |t|
     t.integer "member_id"
-    t.integer "product_id", null: false
-    t.integer "category_id", null: false
-    t.integer "plan_id", null: false
+    t.bigint "product_id", null: false
+    t.bigint "category_id", null: false
+    t.bigint "plan_id", null: false
     t.decimal "value"
     t.string "status"
     t.datetime "purchased_at"

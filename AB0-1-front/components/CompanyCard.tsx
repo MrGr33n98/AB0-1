@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Company } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
+import { useState } from 'react';
 
 interface Props {
   company: Company;
@@ -16,6 +17,23 @@ interface Props {
 }
 
 export default function CompanyCard({ company, className = '' }: Props) {
+  const [bannerError, setBannerError] = useState(false);
+  const [logoError, setLogoError] = useState(false);
+  
+  // Função para garantir que as URLs das imagens sejam absolutas
+  const getFullImageUrl = (url: string | null | undefined): string | null => {
+    if (!url) return null;
+    
+    // Verifica se a URL já é absoluta
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    
+    // Adiciona o host da API para URLs relativas
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    return `${apiBaseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
   if (!company) return (
     <Card className={`overflow-hidden h-full ${className}`}>
       <CardContent className="p-4 text-gray-500">Company data not available</CardContent>
@@ -25,7 +43,7 @@ export default function CompanyCard({ company, className = '' }: Props) {
   const {
     id, name, city, state, description, about, working_hours, business_hours,
     payment_methods, reviews_count, rating_count, average_rating, rating_avg,
-    categories, website, social_links, banner_url, logo_url
+    categories, website, social_links
   } = company;
 
   const rating = average_rating || rating_avg || '0.0';
@@ -33,25 +51,55 @@ export default function CompanyCard({ company, className = '' }: Props) {
   const workingHours = working_hours || business_hours;
   const payments = Array.isArray(payment_methods) ? payment_methods.join(', ') : payment_methods || '';
   const category = categories?.[0]?.name;
-  const banner = banner_url || '/images/default-banner.jpg';
-  const logo = logo_url || null;
+  
+  // Prepara as URLs das imagens
+  const bannerUrl = getFullImageUrl(company.banner_url);
+  const logoUrl = getFullImageUrl(company.logo_url);
 
   return (
     <Card className={`overflow-hidden h-full hover:shadow-lg transition-shadow ${className}`}>
       <Link href={`/companies/${id}`}>
         <CardContent className="p-0">
-          {/* Banner */}
-          <div className="h-20 bg-cover bg-center" style={{ backgroundImage: `url(${banner})` }} />
+          {/* Banner with error handling */}
+          <div className="h-20 bg-gradient-to-r from-gray-200 to-gray-300 relative">
+            {bannerUrl && !bannerError ? (
+              <img
+                src={bannerUrl}
+                alt={`${company.name} banner`}
+                className="w-full h-full object-cover"
+                onError={() => setBannerError(true)}
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <img
+                  src="/images/banner-placeholder.svg"
+                  alt="Banner placeholder"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+          </div>
 
           <div className="p-4">
             {/* Header */}
             <div className="flex items-start justify-between">
               <div className="flex items-center">
-                {logo ? (
-                  <img src={logo} alt={name} className="w-12 h-12 rounded-full mr-3 border" />
+                {logoUrl && !logoError ? (
+                  <div className="mr-3 relative">
+                    <img
+                      src={logoUrl}
+                      alt={name}
+                      className="w-12 h-12 rounded-full border object-cover bg-gray-100"
+                      onError={() => setLogoError(true)}
+                    />
+                  </div>
                 ) : (
-                  <div className="w-12 h-12 rounded-full mr-3 bg-gray-200 flex items-center justify-center">
-                    <span className="text-gray-500 font-semibold">{name?.charAt(0) || '?'}</span>
+                  <div className="w-12 h-12 rounded-full mr-3 bg-gray-200 flex items-center justify-center border">
+                    <img
+                      src="/images/logo-placeholder.svg"
+                      alt="Logo placeholder"
+                      className="w-6 h-6 rounded-full"
+                    />
                   </div>
                 )}
                 <h3 className="text-lg font-semibold">{name}</h3>

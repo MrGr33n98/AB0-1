@@ -30,7 +30,7 @@ class Category < ApplicationRecord
   # JSON serialization
   # =========================
   def as_json(options = {})
-    super(
+    json = super(
       options.merge(
         include: {
           companies: { only: %i[id name about] }, # <-- inclui about
@@ -39,6 +39,20 @@ class Category < ApplicationRecord
         except: %i[created_at updated_at]
       )
     )
+    
+    # Add banner URL if attached
+    if banner.attached?
+      begin
+        json[:banner_url] = Rails.application.routes.url_helpers.rails_blob_url(banner, only_path: false)
+      rescue => e
+        Rails.logger.error("Error generating category banner URL: #{e.message}")
+        json[:banner_url] = nil
+      end
+    else
+      json[:banner_url] = nil
+    end
+    
+    json
   end
 
   # =========================
@@ -46,7 +60,7 @@ class Category < ApplicationRecord
   # =========================
   def banner_url
     return nil unless banner.attached?
-    Rails.application.routes.url_helpers.url_for(banner)
+    Rails.application.routes.url_helpers.rails_blob_url(banner, only_path: false)
   rescue => e
     Rails.logger.error("Error generating category banner URL: #{e.message}")
     nil

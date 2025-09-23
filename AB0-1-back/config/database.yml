@@ -5,17 +5,17 @@ default: &default
 
 development:
   <<: *default
-  database: <%= ENV['POSTGRES_DB'] || 'ab0_development' %>
-  username: <%= ENV['POSTGRES_USER'] || 'postgres' %>
-  password: <%= ENV['POSTGRES_PASSWORD'] || 'postgres' %>
-  host: <%= ENV['POSTGRES_HOST'] || 'localhost' %>
+  database: ab0_development
+  username: postgres
+  password: postgres
+  host: localhost
 
 test:
   <<: *default
   database: ab0_test
-  username: <%= ENV['POSTGRES_USER'] || 'postgres' %>
-  password: <%= ENV['POSTGRES_PASSWORD'] || 'postgres' %>
-  host: <%= ENV['POSTGRES_HOST'] || 'localhost' %>
+  username: postgres
+  password: postgres
+  host: localhost
 
 production:
   <<: *default

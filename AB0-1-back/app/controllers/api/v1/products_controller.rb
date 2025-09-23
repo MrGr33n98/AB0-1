@@ -2,8 +2,18 @@ class Api::V1::ProductsController < Api::V1::BaseController
   before_action :set_product, only: [:show, :update, :destroy]
 
   def index
-    @products = Product.all
-    render json: @products
+    @products = Product.includes(:company, :categories)
+    
+    # Filtra por company_id se fornecido
+    @products = @products.where(company_id: params[:company_id]) if params[:company_id].present?
+    
+    # Adiciona limite se fornecido
+    @products = @products.limit(params[:limit].to_i) if params[:limit].present?
+    
+    render json: @products, include: {
+      company: { only: [:id, :name] },
+      categories: { only: [:id, :name] }
+    }
   rescue => e
     Rails.logger.error("Products error: #{e.message}")
     render json: { error: "Erro interno no servidor" }, status: :internal_server_error

@@ -9,7 +9,7 @@ import axios from 'axios';
 export interface Company {
   id: number;
   name: string;
-  about: string;               // ← substitui description
+  description: string;         // Corrigido de 'about' para 'description'
   highlights?: string;
   website: string;
   phone: string;
@@ -18,8 +18,8 @@ export interface Company {
   city?: string;
   created_at: string;
   updated_at: string;
-  banner_url?: string;
-  logo_url?: string;
+  banner_url?: string | null;
+  logo_url?: string | null;
   rating?: number;
   total_reviews?: number;
   business_hours?: string;
@@ -128,9 +128,7 @@ export interface Category {
   kind: string;
   status: string;
   featured: boolean;
-  banner: {
-    url: string;
-  } | null;
+  banner_url?: string | null;
   logo: {
     url: string;
   } | null;
@@ -215,7 +213,7 @@ export interface City {
 // Axios Config
 // =======================
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
+  `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1` ||
   (process.env.NODE_ENV === 'development'
     ? 'http://localhost:3001/api/v1'
     : 'https://api.avaliasolar.com.br/api/v1');
@@ -363,7 +361,7 @@ export const leadsApi = {
 };
 
 export const reviewsApi = {
-  getAll: () => fetchApi('/reviews'),
+  getAll: (params?: any) => fetchApi('/reviews', { params }),
   getById: (id: number) => fetchApi(`/reviews/${id}`),
   create: (review: Partial<Review>) =>
     fetchApi('/reviews', {

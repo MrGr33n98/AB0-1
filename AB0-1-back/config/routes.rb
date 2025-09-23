@@ -2,12 +2,16 @@ Rails.application.routes.draw do
   devise_for :admin_users, ActiveAdmin::Devise.config
   ActiveAdmin.routes(self)
 
+  # Mount Active Storage routes
+  mount ActiveStorage::Engine => '/rails/active_storage'
+
   namespace :api do
     namespace :v1 do
       # Banners / Auth / Dashboard
       resources :banners, only: [:index]
       post 'auth/login',    to: 'authentication#login'
       post 'auth/register', to: 'authentication#register'
+      get  'auth/me',       to: 'users#me'
       get  'dashboard/stats', to: 'dashboard#stats'
 
       # Location data endpoints
@@ -24,7 +28,9 @@ Rails.application.routes.draw do
       resources :badges
       resources :articles
       resources :plans
-      resources :users, only: [:show, :update]
+      resources :users, only: [:show, :update] do
+        get :me, on: :collection
+      end
 
       # Search endpoints (o front consome estes)
       get 'search/all',       to: 'search#all'

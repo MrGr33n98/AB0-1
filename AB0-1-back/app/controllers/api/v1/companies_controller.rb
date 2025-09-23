@@ -8,41 +8,26 @@ module Api
       def index
         Rails.logger.info("Starting companies#index with params: #{params.inspect}")
 
-        begin
-          @companies = Company.includes(:categories, :reviews)
-                              .order(created_at: :desc)
+        @companies = Company.includes(:categories, :reviews)
+                            .order(created_at: :desc)
 
-          # Filtros
-          @companies = @companies.where(status: params[:status]) if params[:status].present?
-
-          if params[:featured].present?
-            featured_value = ActiveModel::Type::Boolean.new.cast(params[:featured])
-            @companies = @companies.where(featured: featured_value)
-          end
-
-          if params[:category_id].present?
-            @companies = @companies.joins(:categories).where(categories: { id: params[:category_id] })
-          end
-
-          @companies = @companies.limit(params[:limit].to_i) if params[:limit].present?
-
-          Rails.logger.info("Found #{@companies.size} companies")
-
-          # Serialização com fallback para array vazio
-          companies_json = Array(@companies).map do |c|
-            c.as_json(include_ctas: false)
-          end
-
-          render json: { companies: companies_json }
-        rescue => e
-          Rails.logger.error("Error in companies#index: #{e.message}\n#{e.backtrace.join("\n")}")
-          render json: { companies: [] }, status: :internal_server_error
+        # Filtros
+        @companies = @companies.where(status: params[:status]) if params[:status].present?
+        if params[:featured].present?
+          featured_value = ActiveModel::Type::Boolean.new.cast(params[:featured])
+          @companies = @companies.where(featured: featured_value)
         end
+        if params[:category_id].present?
+          @companies = @companies.joins(:categories).where(categories: { id: params[:category_id] })
+        end
+        @companies = @companies.limit(params[:limit].to_i) if params[:limit].present?
+
+        render json: @companies, each_serializer: CompanySerializer, root: 'companies', include_ctas: false
       end
 
       # GET /api/v1/companies/:id
       def show
-        render json: { company: @company.as_json(include_ctas: true) }
+        render json: @company, serializer: CompanySerializer, root: 'company', include_ctas: true
       end
 
       # POST /api/v1/companies
@@ -98,6 +83,9 @@ module Api
 
       def set_company
         @company = Company.find(params[:id])
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Company not found' }, status: :not_found
+        return
       end
 
       def company_params

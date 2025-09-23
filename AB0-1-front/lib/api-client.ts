@@ -8,7 +8,7 @@ import { Category, Company, Review, Product } from './api';
 // ------------------
 // Configuração
 // ------------------
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1`;
 
 // Função auxiliar para montar query params
 const buildQueryParams = (params: Record<string, any>) => {

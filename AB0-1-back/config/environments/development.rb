@@ -29,18 +29,26 @@ Rails.application.configure do
     }
   else
     config.action_controller.perform_caching = false
-
     config.cache_store = :null_store
   end
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
-  # Configure Active Storage URL generation
   config.active_storage.service = :local
-  Rails.application.routes.default_url_options[:host] = 'localhost:3001'
+
+  # Configure Active Storage URL generation
+  Rails.application.routes.default_url_options = {
+    host: "localhost",
+    port: 3001,
+    protocol: "http"
+  }
+  config.active_storage.default_url_options = {
+    host: "localhost",
+    port: 3001,
+    protocol: "http"
+  }
 
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false
-
   config.action_mailer.perform_caching = false
 
   # Print deprecation notices to the Rails logger.
@@ -48,8 +56,6 @@ Rails.application.configure do
 
   # Raise exceptions for disallowed deprecations.
   config.active_support.disallowed_deprecation = :raise
-
-  # Tell Active Support which deprecation messages to disallow.
   config.active_support.disallowed_deprecation_warnings = []
 
   # Raise an error on page load if there are pending migrations.
@@ -69,11 +75,7 @@ Rails.application.configure do
 
   # Uncomment if you wish to allow Action Cable access from any origin.
   # config.action_cable.disable_request_forgery_protection = true
-  
+
   # Configure host for URL generation (needed for Active Storage URLs)
   config.hosts << "localhost"
-  Rails.application.routes.default_url_options = {
-    host: 'localhost',
-    port: 3001
-  }
 end

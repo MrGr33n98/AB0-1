@@ -7,6 +7,8 @@ class ProductSerializer < ActiveModel::Serializer
   has_many :categories
 
   def image_url
-    object.image.url if object.image.attached?
+    if object.image.attached?
+      Rails.application.routes.url_helpers.rails_blob_url(object.image, only_path: false)
+    end
   end
 end

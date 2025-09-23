@@ -97,10 +97,18 @@ ActiveAdmin.register Company do
         company.categories.pluck(:name).join(", ")
       end
       row :banner do |company|
-        image_tag url_for(company.banner) if company.banner.attached?
+        if company.banner.attached?
+          image_tag(url_for(company.banner), style: 'max-width: 300px')
+        else
+          content_tag(:span, "Sem banner")
+        end
       end
       row :logo do |company|
-        image_tag url_for(company.logo) if company.logo.attached?
+        if company.logo.attached?
+          image_tag(url_for(company.logo), style: 'max-width: 200px')
+        else
+          content_tag(:span, "Sem logo")
+        end
       end
     end
   end

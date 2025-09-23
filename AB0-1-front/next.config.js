@@ -55,6 +55,12 @@ const nextConfig = {
         hostname: 'api.avaliasolar.com.br',
         pathname: '/**',
       },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3001',
+        pathname: '/rails/active_storage/blobs/**',
+      },
     ],
     unoptimized: true,
   },

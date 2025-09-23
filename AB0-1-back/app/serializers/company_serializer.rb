@@ -3,17 +3,35 @@ class CompanySerializer < ActiveModel::Serializer
 
   attributes :id, :name, :description, :website, :phone,
              :address, :created_at, :updated_at,
-             :banner_url, :logo_url
-  
+             :banner_url, :logo_url, :state, :city, :featured,
+             :verified, :rating_avg, :rating_count, :working_hours,
+             :payment_methods, :certifications
+
+  attribute :ctas, if: -> { @instance_options[:include_ctas] }
+
   def banner_url
-    if object.banner.attached?
-      Rails.application.routes.url_helpers.url_for(object.banner)
-    end
+    generate_attachment_url(object.banner)
   end
-  
+
   def logo_url
-    if object.logo.attached?
-      Rails.application.routes.url_helpers.url_for(object.logo)
+    generate_attachment_url(object.logo)
+  end
+
+  def ctas
+    object.build_ctas
+  end
+
+  private
+
+  def generate_attachment_url(attachment)
+    return nil unless attachment.attached?
+    
+    begin
+      # Use rails_blob_url for Active Storage attachments with full URL
+      Rails.application.routes.url_helpers.rails_blob_url(attachment, only_path: false)
+    rescue => e
+      Rails.logger.error("Error generating attachment URL for company #{object.id}: #{e.message}")
+      nil
     end
   end
 end

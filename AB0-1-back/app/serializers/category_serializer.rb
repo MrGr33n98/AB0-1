@@ -11,7 +11,7 @@ class CategorySerializer < ActiveModel::Serializer
 
   def banner_url
     if object.banner.attached?
-      Rails.application.routes.url_helpers.url_for(object.banner)
+      Rails.application.routes.url_helpers.rails_blob_url(object.banner, only_path: false)
     end
   end
 end

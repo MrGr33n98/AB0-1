@@ -88,36 +88,5 @@ class Company < ApplicationRecord
     }.compact.presence
   end
 
-  def as_json(options = {})
-    context = options.delete(:context) || "detail"
-    utm     = options.delete(:utm)     || {}
-    vars    = options.delete(:vars)    || {}
 
-    methods = %i[average_rating reviews_count years_in_business social_links]
-    methods << :ctas if options[:include_ctas]
-
-    json = super(
-      options.merge(
-        methods: methods,
-        include: {
-          categories: { only: %i[id name] }
-        }
-      )
-    )
-
-    json.merge!(
-      banner_url: banner.attached? ? Rails.application.routes.url_helpers.url_for(banner) : nil,
-      logo_url:   logo.attached? ? Rails.application.routes.url_helpers.url_for(logo) : nil
-    )
-
-    json[:ctas] = build_ctas(context, utm, vars) if options[:include_ctas]
-    json
-  rescue => e
-    Rails.logger.error("Error generating company JSON: #{e.message}")
-    super
-  end
-
-  def ctas
-    build_ctas
-  end
 end

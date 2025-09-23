@@ -8,26 +8,24 @@ import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Company } from '@/lib/api';
+import { Category } from '@/lib/api';
 
-interface CompanyCardProps {
-  company: Company;
+interface CategoryCardProps {
+  category: Category;
   className?: string;
 }
 
-export default function CompanyCard({ company, className = "" }: CompanyCardProps) {
+export default function CategoryCard({ category, className = "" }: CategoryCardProps) {
   const [imageError, setImageError] = useState(false);
 
   const displayData = {
-    id: company?.id,
-    name: company?.name || 'Nome da Empresa',
-    description: company?.about || 'Empresa especializada em energia solar.',
-    rating: company?.rating_avg ?? 0,
-    totalReviews: company?.rating_count ?? 0,
-    banner_url: !imageError && company?.banner_url
-      ? company.banner_url
-      : "/images/company-placeholder.jpg",
-    seo_url: company?.id ? `companies/${company.id}` : "#"
+    id: category?.id,
+    name: category?.name || 'Nome da Categoria',
+    description: category?.short_description || category?.description || 'Categoria de energia solar.',
+    banner_url: !imageError && category?.banner_url
+      ? category.banner_url
+      : "/images/category-placeholder.svg",
+    seo_url: category?.seo_url ? `categories/${category.seo_url}` : `categories/${category.id}`
   };
 
   return (
@@ -40,19 +38,29 @@ export default function CompanyCard({ company, className = "" }: CompanyCardProp
       <Link
         href={`/${displayData.seo_url}`}
         className="absolute inset-0 z-10"
-        aria-label={`Ver detalhes da empresa ${displayData.name}`}
+        aria-label={`Ver detalhes da categoria ${displayData.name}`}
       />
 
       {/* BANNER DA EMPRESA */}
       <div className="relative h-28 w-full overflow-hidden flex-shrink-0">
-        <Image
-          src={displayData.banner_url}
-          alt={`Banner da empresa ${displayData.name}`}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={() => setImageError(true)}
-        />
+        {displayData.banner_url && !imageError ? (
+          <Image
+            src={displayData.banner_url}
+            alt={`Banner da categoria ${displayData.name}`}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <Image
+            src="/images/category-placeholder.svg"
+            alt={`Banner da categoria ${displayData.name}`}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
       </div>
 
@@ -65,13 +73,6 @@ export default function CompanyCard({ company, className = "" }: CompanyCardProp
           {displayData.description}
         </p>
 
-        {/* Avaliação */}
-        <div className="flex items-center gap-2 mb-2">
-          <Star className="h-4 w-4 text-yellow-400" />
-          <span className="text-sm text-gray-600">
-            {displayData.rating.toFixed(1)} ({displayData.totalReviews} avaliações)
-          </span>
-        </div>
 
         <Button
           size="sm"

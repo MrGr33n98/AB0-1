@@ -14,7 +14,8 @@ import {
   Calendar,
   MessageCircle,
   ChevronsRight,
-  ArrowLeft
+  ArrowLeft,
+  Building
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,11 +35,93 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
   const [reviews, setReviews] = useState<Review[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [bannerError, setBannerError] = useState(false);
+  const [logoError, setLogoError] = useState(false);
+  const [bannerLoading, setBannerLoading] = useState(true);
+  const [logoLoading, setLogoLoading] = useState(true);
   const router = useRouter();
+  
+  // Função para garantir que as URLs das imagens sejam absolutas
+  const getFullImageUrl = (url: string | null | undefined): string | null => {
+    if (!url) return null;
+    
+    // Verifica se a URL já é absoluta
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    
+    // Adiciona o host da API para URLs relativas
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    return `${apiBaseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+  
+  // Prepara as URLs das imagens
+  const bannerUrl = getFullImageUrl(company?.banner_url);
+  const logoUrl = getFullImageUrl(company?.logo_url);
+
+  useEffect(() => {
+    if (!company?.id) {
+      setError('Dados da empresa não encontrados');
+      setProductsLoading(false);
+      setReviewsLoading(false);
+      return;
+    }
+
+    const fetchCompanyData = async () => {
+      try {
+        const [productsResponse, reviewsResponse] = await Promise.allSettled([
+          productsApi.getAll({ company_id: company.id }),
+          reviewsApi.getAll({ company_id: company.id })
+        ]);
+
+        // Processa produtos
+        if (productsResponse.status === 'fulfilled') {
+          setProducts(productsResponse.value || []);
+        } else {
+          console.error('Erro ao carregar produtos:', productsResponse.reason);
+          setProducts([]);
+        }
+
+        // Processa reviews
+        if (reviewsResponse.status === 'fulfilled') {
+          setReviews(reviewsResponse.value || []);
+        } else {
+          console.error('Erro ao carregar avaliações:', reviewsResponse.reason);
+          setReviews([]);
+        }
+
+        setError(null);
+      } catch (error) {
+        console.error('Error fetching company data:', error);
+        setError('Erro ao carregar dados da empresa');
+      } finally {
+        setProductsLoading(false);
+        setReviewsLoading(false);
+      }
+    };
+
+    fetchCompanyData();
+  }, [company?.id]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-foreground mb-4">{error}</h1>
+          <Button onClick={() => router.push('/companies')}>Voltar para lista de empresas</Button>
+        </div>
+      </div>
+    );
+  }
 
   // Estatísticas da empresa
+  const avgRating = reviews.length > 0
+    ? reviews.reduce((acc, rev) => acc + rev.rating, 0) / reviews.length
+    : 0;
+
   const companyStats = {
-    rating: reviews.reduce((acc, rev) => acc + rev.rating, 0) / (reviews.length || 1),
+    rating: avgRating,
     reviewCount: reviews.length,
     completedProjects: products.length * 10, 
     yearsInBusiness: new Date().getFullYear() - new Date(company.created_at).getFullYear(),
@@ -54,30 +137,9 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
       { label: 'Produtos', value: `${products.length}+`, icon: Award },
       { label: 'Avaliações', value: `${reviews.length}`, icon: Users },
       { label: 'Anos no Mercado', value: `${new Date().getFullYear() - new Date(company.created_at).getFullYear()}+`, icon: Calendar },
-      { label: 'Avaliação Média', value: `${(reviews.reduce((acc, rev) => acc + rev.rating, 0) / (reviews.length || 1)).toFixed(1)}/5`, icon: Star },
+      { label: 'Avaliação Média', value: `${avgRating.toFixed(1)}/5`, icon: Star },
     ]
   };
-
-  useEffect(() => {
-    const fetchCompanyData = async () => {
-      try {
-        const [companyProducts, companyReviews] = await Promise.all([
-          productsApi.getAll({ company_id: company.id }),
-          reviewsApi.getAll({ company_id: company.id })
-        ]);
-
-        setProducts(companyProducts || []);
-        setReviews(companyReviews || []);
-      } catch (error) {
-        console.error('Error fetching company data:', error);
-      } finally {
-        setProductsLoading(false);
-        setReviewsLoading(false);
-      }
-    };
-
-    fetchCompanyData();
-  }, [company.id]);
 
   return (
     <div className="min-h-screen bg-background font-sans antialiased">
@@ -97,31 +159,68 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
 
           {/* Banner */}
           <div className="relative w-full mb-8">
-            {company.banner_url ? (
-              <img 
-                src={company.banner_url} 
-                alt={`${company.name} banner`}
-                className="w-full h-[180px] sm:h-[200px] md:h-[220px] object-cover rounded-2xl shadow-lg"
-              />
-            ) : (
-              <div className="w-full h-[180px] sm:h-[200px] md:h-[220px] bg-muted rounded-2xl flex items-center justify-center shadow-lg">
-                <span className="text-muted-foreground text-lg">Sem imagem de banner disponível</span>
-              </div>
-            )}
+            <div className="relative w-full h-[180px] sm:h-[200px] md:h-[220px]">
+              {bannerUrl && !bannerError ? (
+                <>
+                  {bannerLoading && (
+                    <div className="absolute inset-0 bg-muted animate-pulse rounded-2xl" />
+                  )}
+                  <img 
+                    src={bannerUrl}
+                    alt={`${company.name} banner`}
+                    className="w-full h-full object-cover rounded-2xl shadow-lg"
+                    onError={() => {
+                      console.error('Erro ao carregar banner:', bannerUrl);
+                      setBannerError(true);
+                    }}
+                    onLoad={() => setBannerLoading(false)}
+                    style={{ display: bannerLoading ? 'none' : 'block' }}
+                  />
+                </>
+              ) : (
+                <div className="w-full h-full bg-gradient-to-r from-gray-200 to-gray-300 rounded-2xl flex items-center justify-center shadow-lg">
+                  <div className="text-center">
+                    <Globe className="w-12 h-12 text-muted-foreground/50 mx-auto mb-2" />
+                    <span className="text-muted-foreground text-lg">
+                      {bannerError ? 'Erro ao carregar banner' : 'Sem imagem de banner disponível'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Info da empresa */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 -mt-24 z-10 relative">
             <div className="bg-card p-6 rounded-2xl shadow-xl border border-border flex items-center">
-              {company.logo_url && (
-                <div className="mr-6">
-                  <img 
-                    src={company.logo_url} 
-                    alt={`${company.name} logo`}
-                    className="w-24 h-24 rounded-full object-cover border-2 border-border shadow-sm"
-                  />
-                </div>
-              )}
+              <div className="mr-6">
+                {logoUrl && !logoError ? (
+                  <div className="relative w-24 h-24">
+                    {logoLoading && (
+                      <div className="absolute inset-0 bg-muted animate-pulse rounded-full" />
+                    )}
+                    <img 
+                      src={logoUrl}
+                      alt={`${company.name} logo`}
+                      className="w-24 h-24 rounded-full object-cover border-2 border-border shadow-sm"
+                      onError={() => {
+                        console.error('Erro ao carregar logo:', logoUrl);
+                        setLogoError(true);
+                      }}
+                      onLoad={() => setLogoLoading(false)}
+                      style={{ display: logoLoading ? 'none' : 'block' }}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-r from-primary/10 to-primary/20 flex items-center justify-center border-2 border-border shadow-sm">
+                    <Building className="w-12 h-12 text-primary/40" />
+                    {logoError && (
+                      <span className="sr-only">Erro ao carregar logo</span>
+                    )}
+                  </div>
+                )}
+              </div>
+              ) : null}
               
               <div>
                 <h1 className="text-4xl font-extrabold text-foreground mb-2">{company.name}</h1>

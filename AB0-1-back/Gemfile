@@ -53,9 +53,7 @@ group :development, :test do
   gem 'debug', platforms: %i[mri mingw x64_mingw]
 end
 
-group :production do
-  gem 'pg' # Make sure this line exists
-end
+gem 'pg' # Make sure this line exists
 
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]

@@ -32,12 +32,8 @@ module Api
 
           @categories = query
 
-          render json: @categories.as_json(
-            only: [:id, :name, :seo_url, :seo_title, :short_description, :description, :status, :featured],
-            include: {
-              companies: { only: [:id, :name] }
-            }
-          )
+          # Use the as_json method from the Category model which includes banner_url
+          render json: @categories.map { |c| c.as_json }
         rescue ActiveRecord::RecordNotFound => e
           Rails.logger.error("Categories not found: #{e.message}")
           render json: { error: "Categorias não encontradas" }, status: :not_found
@@ -51,9 +47,7 @@ module Api
       # GET /categories/:id
       # =========================
       def show
-        render json: @category.as_json(
-          only: [:id, :name, :seo_url, :seo_title, :short_description, :description, :status, :featured]
-        )
+        render json: @category.as_json
       rescue ActiveRecord::RecordNotFound
         render json: { error: "Categoria não encontrada" }, status: :not_found
       rescue => e
