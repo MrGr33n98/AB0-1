@@ -3,57 +3,25 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCategories } from '@/hooks/useCategories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChevronDown, Search, Star } from 'lucide-react';
+import { Category } from '@/lib/api';
 
 interface SidebarFilterProps {
   onFilterChange: (filterType: string, value: any) => void;
   filters: {
     searchTerm: string;
-    category: string | null;
+    category: number | null;
     state: string | null;
     city: string | null;
     rating: number | null;
   };
   locationsData?: Record<string, string[]>;
+  categories: Category[];
+  categoriesLoading: boolean;
 }
 
-// Dados mockados de estados e cidades
-const mockStatesAndCities = {
-  'AC': ['Rio Branco', 'Cruzeiro do Sul', 'Sena Madureira', 'Tarauacá', 'Feijó'],
-  'AL': ['Maceió', 'Arapiraca', 'Rio Largo', 'Palmeira dos Índios', 'União dos Palmares'],
-  'AM': ['Manaus', 'Parintins', 'Itacoatiara', 'Manacapuru', 'Coari'],
-  'AP': ['Macapá', 'Santana', 'Laranjal do Jari', 'Oiapoque', 'Porto Grande'],
-  'BA': ['Salvador', 'Feira de Santana', 'Vitória da Conquista', 'Camaçari', 'Juazeiro'],
-  'CE': ['Fortaleza', 'Caucaia', 'Juazeiro do Norte', 'Maracanaú', 'Sobral'],
-  'DF': ['Brasília', 'Ceilândia', 'Taguatinga', 'Gama', 'Samambaia'],
-  'ES': ['Vitória', 'Serra', 'Vila Velha', 'Cariacica', 'Linhares'],
-  'GO': ['Goiânia', 'Aparecida de Goiânia', 'Anápolis', 'Rio Verde', 'Luziânia'],
-  'MA': ['São Luís', 'Imperatriz', 'São José de Ribamar', 'Timon', 'Caxias'],
-  'MG': ['Belo Horizonte', 'Uberlândia', 'Contagem', 'Juiz de Fora', 'Betim'],
-  'MS': ['Campo Grande', 'Dourados', 'Três Lagoas', 'Corumbá', 'Ponta Porã'],
-  'MT': ['Cuiabá', 'Várzea Grande', 'Rondonópolis', 'Sinop', 'Tangará da Serra'],
-  'PA': ['Belém', 'Ananindeua', 'Santarém', 'Marabá', 'Castanhal'],
-  'PB': ['João Pessoa', 'Campina Grande', 'Santa Rita', 'Patos', 'Bayeux'],
-  'PE': ['Recife', 'Jaboatão dos Guararapes', 'Olinda', 'Caruaru', 'Petrolina'],
-  'PI': ['Teresina', 'Parnaíba', 'Picos', 'Piripiri', 'Floriano'],
-  'PR': ['Curitiba', 'Londrina', 'Maringá', 'Ponta Grossa', 'Cascavel'],
-  'RJ': ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu', 'Niterói'],
-  'RN': ['Natal', 'Mossoró', 'Parnamirim', 'São Gonçalo do Amarante', 'Macaíba'],
-  'RO': ['Porto Velho', 'Ji-Paraná', 'Ariquemes', 'Cacoal', 'Vilhena'],
-  'RR': ['Boa Vista', 'Rorainópolis', 'Caracaraí', 'Mucajaí', 'Pacaraima'],
-  'RS': ['Porto Alegre', 'Caxias do Sul', 'Canoas', 'Pelotas', 'Santa Maria'],
-  'SC': ['Florianópolis', 'Joinville', 'Blumenau', 'São José', 'Chapecó'],
-  'SE': ['Aracaju', 'Nossa Senhora do Socorro', 'Lagarto', 'Itabaiana', 'Estância'],
-  'SP': ['São Paulo', 'Guarulhos', 'Campinas', 'São Bernardo do Campo', 'Santo André'],
-  'TO': ['Palmas', 'Araguaína', 'Gurupi', 'Porto Nacional', 'Paraíso do Tocantins']
-};
-
-// Componente genérico para renderizar uma seção de filtro expansível
-
-// Componente genérico para renderizar uma seção de filtro expansível
 const FilterSection = ({ title, children, isOpen, onToggle, className = '' }) => (
   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className={className}>
     <button
@@ -111,8 +79,7 @@ const RatingFilterButton = ({ active, children, onClick }) => (
 // Componente principal da barra lateral de filtros
 // Remove the mockStatesAndCities constant as we'll use real data
 
-const SidebarFilter = ({ onFilterChange, filters, locationsData = {} }: SidebarFilterProps) => {
-  const { categories, loading: categoriesLoading } = useCategories();
+const SidebarFilter = ({ onFilterChange, filters, locationsData = {}, categories, categoriesLoading }: SidebarFilterProps) => {
   const [openSection, setOpenSection] = useState<string | null>(null);
 
   const toggleSection = (section: string) => {
@@ -177,8 +144,8 @@ const SidebarFilter = ({ onFilterChange, filters, locationsData = {} }: SidebarF
           categories.map((category) => (
             <FilterButton
               key={category.id}
-              active={filters.category === category.name}
-              onClick={() => handleFilterClick('category', category.name)}
+              active={filters.category === category.id}
+              onClick={() => handleFilterClick('category', category.id)}
             >
               {category.name}
             </FilterButton>

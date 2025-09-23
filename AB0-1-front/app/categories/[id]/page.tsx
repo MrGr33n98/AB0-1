@@ -8,32 +8,28 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 import SidebarFilter from '@/components/SidebarFilter';
+import { useParams } from 'next/navigation';
+import { extractLocations } from '@/utils/address';
 
-// Função utilitária para extrair estados/cidades
-const extractLocations = (companies: any[]) => {
-  const locations = companies.reduce((acc, company) => {
-    if (company.address) {
-      const parts = company.address.split(',').map((p: string) => p.trim());
-      const state = parts[parts.length - 1];
-      const city = parts[parts.length - 2];
-      if (state && city) {
-        if (!acc[state]) acc[state] = new Set();
-        acc[state].add(city);
-      }
-    }
-    return acc;
-  }, {} as Record<string, Set<string>>);
 
-  return Object.fromEntries(Object.entries(locations).map(([s, c]) => [s, [...c]]));
+
+type Filters = {
+  searchTerm: string;
+  state: string | null;
+  city: string | null;
+  rating: number | null;
 };
 
 export default function CompaniesPage() {
-  const { companies, loading } = useCompaniesSafe();
-  const [filters, setFilters] = useState({
+  const params = useParams();
+  const categoryId = params.id ? Number(params.id) : null;
+
+  const { companies, loading } = useCompaniesSafe(categoryId ? { category_id: categoryId } : {});
+  const [filters, setFilters] = useState<Filters>({
     searchTerm: '',
-    state: null as string | null,
-    city: null as string | null,
-    rating: null as number | null,
+    state: null,
+    city: null,
+    rating: null,
   });
 
   const locationsData = useMemo(() => extractLocations(companies), [companies]);
@@ -48,6 +44,7 @@ export default function CompaniesPage() {
 
   const filteredCompanies = useMemo(() => {
     return companies.filter(c => {
+      if (categoryId && c.category_id !== categoryId) return false;
       if (filters.searchTerm) {
         const term = filters.searchTerm.toLowerCase();
         if (!c.name.toLowerCase().includes(term) && !c.description?.toLowerCase().includes(term)) return false;
@@ -64,6 +61,7 @@ export default function CompaniesPage() {
       <div className="container mx-auto py-12">
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1">
+            <h1 className="sr-only">Empresas por Categoria</h1>
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-3xl font-extrabold">Empresas</h1>
               <p className="text-gray-600">
@@ -74,7 +72,7 @@ export default function CompaniesPage() {
             {/* Chips de filtros ativos */}
             <AnimatePresence>
               {(filters.searchTerm || filters.state || filters.city || filters.rating) && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-wrap gap-2 mb-6">
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-wrap gap-2 mb-6 items-center">
                   {Object.entries(filters).map(([key, val]) =>
                     val ? (
                       <Badge
@@ -86,13 +84,19 @@ export default function CompaniesPage() {
                       </Badge>
                     ) : null
                   )}
+                  <button
+                    onClick={() => handleFilterChange('clearAll', null)}
+                    className="text-sm text-gray-600 underline ml-2"
+                  >
+                    Limpar todos
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
 
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[...Array(9)].map((_, i) => <Skeleton key={i} className="h-80 rounded-2xl" />)}
+                {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-80 rounded-2xl" />)}
               </div>
             ) : filteredCompanies.length === 0 ? (
               <p className="text-center py-20 text-gray-500">Nenhuma empresa encontrada.</p>

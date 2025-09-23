@@ -11,21 +11,45 @@ import { X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import SidebarFilter from '@/components/SidebarFilter';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useDebounce } from '@/hooks/useDebounce';
+
+type Filters = {
+  searchTerm: string;
+  category: number | null;
+  state: string | null;
+  city: string | null;
+  rating: number | null;
+};
+
+const parseAddress = (address?: string) => {
+  if (!address) return { state: null, city: null };
+  const parts = address.split(',').map(p => p.trim());
+  if (parts.length < 2) return { state: null, city: null };
+  return {
+    state: parts.at(-1) || null,
+    city: parts.at(-2) || null,
+  };
+};
 
 export default function CategoriesClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { categories, loading: categoriesLoading } = useCategories();
-  const { companies, loading: companiesLoading } = useCompaniesSafe();
+  const { companies, loading: companiesLoading } = useCompaniesSafe({
+    category_id: filters.category || undefined,
+  });
 
   // Initialize filters from URL params
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<Filters>({
     searchTerm: searchParams.get('search') || '',
-    category: searchParams.get('category') || null, // category now stores ID
+    category: searchParams.get('category') ? Number(searchParams.get('category')) : null,
     state: searchParams.get('state') || null,
     city: searchParams.get('city') || null,
     rating: searchParams.get('rating') ? Number(searchParams.get('rating')) : null,
     });
+
+  // Debounce filters for URL update
+  const debouncedFilters = useDebounce(filters, 300);
 
   // Group companies by category
   const companiesByCategory = useMemo(() => {
@@ -43,12 +67,12 @@ export default function CategoriesClient() {
   // Update URL when filters change
   useEffect(() => {
     const params = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
+    Object.entries(debouncedFilters).forEach(([key, value]) => {
       if (value) params.set(key, value.toString());
     });
     const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
     router.push(newUrl, { scroll: false });
-  }, [filters, router]);
+  }, [debouncedFilters, router]);
 
   // Location data (safe parsing)
   const locationsData = useMemo(() => {
@@ -56,10 +80,7 @@ export default function CategoriesClient() {
     return companies.reduce((acc, company) => {
       if (typeof company.address !== 'string' || !company.address.trim()) return acc;
       try {
-        const addressParts = company.address.split(',').map(part => part.trim());
-        if (addressParts.length < 2) return acc;
-        const state = addressParts[addressParts.length - 1];
-        const city = addressParts[addressParts.length - 2];
+        const { state, city } = parseAddress(company.address);
         if (!state || !city) return acc;
         if (!acc[state]) acc[state] = new Set();
         acc[state].add(city);
@@ -83,10 +104,11 @@ export default function CategoriesClient() {
       return;
     }
     setFilters(prevFilters => {
-      let  newValue = value;
+      let newValue = value;
       if (filterType === 'category' && value !== null) {
-        const selectedCategory = categories?.find(cat => cat.name === value);
-        newValue = selectedCategory ? selectedCategory.id : null;
+        newValue = value;
+      } else if (filterType === 'category' && value === null) {
+        newValue = null;
       }
       const newFilters = {
         ...prevFilters,
@@ -104,8 +126,14 @@ export default function CategoriesClient() {
   // Filtered companies (safe parsing no .split)
   const filteredCompanies = useMemo(() => {
     if (!companies?.length || !categories?.length) return [];
-    console.log('Filters category:', filters.category);
-    console.log('Categories:', categories);
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Filters category:', filters.category);
+      console.log('Categories:', categories);
+    }
+
+    const searchTermLower = filters.searchTerm.toLowerCase();
+
     try {
       return companies.filter(company => {
         if (filters.category) {
@@ -113,16 +141,13 @@ export default function CategoriesClient() {
           if (company.category_id !== filters.category) return false;
         }
         if (filters.searchTerm) {
-          const searchTermLower = filters.searchTerm.toLowerCase();
-          const matchesName = (company.name || '').toLowerCase().includes(searchTermLower);
-          const matchesDescription = (company.description || '').toLowerCase().includes(searchTermLower);
-          if (!matchesName && !matchesDescription) return false;
+          const name = (company.name || '').toLowerCase();
+          const description = (company.description || '').toLowerCase();
+          if (!name.includes(searchTermLower) && !description.includes(searchTermLower)) return false;
         }
         if (typeof company.address === 'string' && company.address.trim() && (filters.state || filters.city)) {
           try {
-            const addressParts = company.address.split(',').map(part => part.trim());
-            const companyState = addressParts[addressParts.length - 1];
-            const companyCity = addressParts[addressParts.length - 2];
+            const { state: companyState, city: companyCity } = parseAddress(company.address);
             if (filters.state && companyState !== filters.state) return false;
             if (filters.city && companyCity !== filters.city) return false;
           } catch {
@@ -148,7 +173,7 @@ export default function CategoriesClient() {
       case 'searchTerm': return `Busca: ${value}`;
       case 'category':
         const categoryName = categories?.find(cat => cat.id === value)?.name;
-        return `Categoria: ${categoryName || value}`;
+        return `Categoria: ${categoryName || 'Desconhecida'}`;
       case 'state': return `Estado: ${value}`;
       case 'city': return `Cidade: ${value}`;
       case 'rating': return `${value} estrelas ou mais`;
@@ -164,11 +189,13 @@ export default function CategoriesClient() {
             onFilterChange={handleFilterChange} 
             filters={filters} 
             locationsData={locationsData}
+            categories={categories}
+            categoriesLoading={categoriesLoading}
           />
           <div className="flex-1">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
               <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">
-                {filters.category || 'Todas as Categorias'}
+                {filters.category ? categories?.find(cat => cat.id === filters.category)?.name || 'Categoria Desconhecida' : 'Todas as Categorias'}
               </h1>
               <p className="text-gray-600 mt-2 md:mt-0">
                 <span className="font-semibold text-orange-600">
@@ -182,7 +209,7 @@ export default function CategoriesClient() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="flex flex-wrap gap-2 mb-6"
+                  className="flex flex-wrap gap-2 mb-6 items-center"
                 >
                   {Object.entries(filters).map(([key, value]) => {
                     if (!value) return null;
@@ -197,6 +224,12 @@ export default function CategoriesClient() {
                       </Badge>
                     );
                   })}
+                  <button
+                    onClick={() => handleFilterChange('clearAll', null)}
+                    className="text-sm text-gray-600 underline ml-2"
+                  >
+                    Limpar todos
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
