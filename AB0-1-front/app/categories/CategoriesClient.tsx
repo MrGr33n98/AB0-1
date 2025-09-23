@@ -21,11 +21,11 @@ export default function CategoriesClient() {
   // Initialize filters from URL params
   const [filters, setFilters] = useState({
     searchTerm: searchParams.get('search') || '',
-    category: searchParams.get('category') || null,
+    category: searchParams.get('category') || null, // category now stores ID
     state: searchParams.get('state') || null,
     city: searchParams.get('city') || null,
     rating: searchParams.get('rating') ? Number(searchParams.get('rating')) : null,
-  });
+    });
 
   // Group companies by category
   const companiesByCategory = useMemo(() => {
@@ -83,9 +83,14 @@ export default function CategoriesClient() {
       return;
     }
     setFilters(prevFilters => {
+      let  newValue = value;
+      if (filterType === 'category' && value !== null) {
+        const selectedCategory = categories?.find(cat => cat.name === value);
+        newValue = selectedCategory ? selectedCategory.id : null;
+      }
       const newFilters = {
         ...prevFilters,
-        [filterType]: value,
+        [filterType]: newValue,
         ...(filterType === 'state' && { city: null }),
         ...(filterType === 'category' && { rating: null }),
       };
@@ -99,11 +104,13 @@ export default function CategoriesClient() {
   // Filtered companies (safe parsing no .split)
   const filteredCompanies = useMemo(() => {
     if (!companies?.length || !categories?.length) return [];
+    console.log('Filters category:', filters.category);
+    console.log('Categories:', categories);
     try {
       return companies.filter(company => {
         if (filters.category) {
-          const companyCategory = categories.find(cat => cat.id === company.category_id);
-          if (!companyCategory || companyCategory.name !== filters.category) return false;
+          // Compare company.category_id with filters.category (which is the ID)
+          if (company.category_id !== filters.category) return false;
         }
         if (filters.searchTerm) {
           const searchTermLower = filters.searchTerm.toLowerCase();
@@ -139,7 +146,9 @@ export default function CategoriesClient() {
   const getFilterLabel = (key: string, value: any): string => {
     switch (key) {
       case 'searchTerm': return `Busca: ${value}`;
-      case 'category': return `Categoria: ${value}`;
+      case 'category':
+        const categoryName = categories?.find(cat => cat.id === value)?.name;
+        return `Categoria: ${categoryName || value}`;
       case 'state': return `Estado: ${value}`;
       case 'city': return `Cidade: ${value}`;
       case 'rating': return `${value} estrelas ou mais`;

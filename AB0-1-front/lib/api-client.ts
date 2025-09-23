@@ -127,7 +127,9 @@ export const companiesApiSafe = {
 
 // Categorias
 export const categoriesApiSafe = {
-  getAll: async (params?: { status?: string; featured?: boolean; limit?: number }): Promise<Category[]> => {
+  getAll: async (
+    params?: { status?: string; featured?: boolean; category_id?: number; limit?: number; include_subcategories?: boolean }
+  ): Promise<Category[]> => {
     try {
       const url = `categories?${buildQueryParams(params || {})}`;
       return await fetchApiSafe<Category[]>(url);

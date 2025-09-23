@@ -124,7 +124,9 @@ export interface Category {
   seo_title: string;
   short_description?: string;
   description?: string;
-  parent_id?: number;
+  parent_id?: number | null;
+  companies_count?: number;
+  subcategories?: Category[];
   kind: string;
   status: string;
   featured: boolean;

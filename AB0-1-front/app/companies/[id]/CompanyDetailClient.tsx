@@ -184,7 +184,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
 
           {/* Info da empresa */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 -mt-24 z-10 relative">
-            <div className="bg-card p-6 rounded-2xl shadow-xl border border-border flex items-center">
+            <div className="bg-card p-4 rounded-2xl shadow-xl border border-border flex items-center">
               <div className="mr-6">
                 {logoUrl && !logoError ? (
                   <Image

@@ -16,7 +16,8 @@ export function useCategories() {
       const data = await categoriesApiSafe.getAll({
         featured: true,
         status: 'active',
-        limit: 8
+        limit: 8,
+        include_subcategories: true,
       });
       if (!data || data.length === 0) {
         console.warn('Nenhuma categoria encontrada');

@@ -9,6 +9,7 @@ export interface Category {
   kind?: string;
   status?: string;
   featured?: boolean;
+  subcategories?: Category[];
 }
 
 export interface Product {
