@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Company } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Props {
   company: Company;
@@ -17,9 +17,32 @@ interface Props {
 }
 
 export default function CompanyCard({ company, className = '' }: Props) {
+  const [error, setError] = useState<string | null>(null);
   const [bannerError, setBannerError] = useState(false);
   const [logoError, setLogoError] = useState(false);
   
+  useEffect(() => {
+    if (error) {
+      console.error('[CompanyCard] Error:', error);
+    }
+  }, [error]);
+
+  if (error) {
+    return (
+      <Card className={`overflow-hidden h-full ${className}`}>
+        <CardContent className="p-4 text-red-500">Error loading company data</CardContent>
+      </Card>
+    );
+  }
+  
+  if (!company) {
+    return (
+      <Card className={`overflow-hidden h-full ${className}`}>
+        <CardContent className="p-4 text-gray-500">Company data not available</CardContent>
+      </Card>
+    );
+  }
+
   // Função para garantir que as URLs das imagens sejam absolutas
   const getFullImageUrl = (url: string | null | undefined): string | null => {
     if (!url) return null;
@@ -34,11 +57,10 @@ export default function CompanyCard({ company, className = '' }: Props) {
     return `${apiBaseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
-  if (!company) return (
-    <Card className={`overflow-hidden h-full ${className}`}>
-      <CardContent className="p-4 text-gray-500">Company data not available</CardContent>
-    </Card>
-  );
+  // Debug company data
+  console.log('Company data:', company);
+  console.log('Company banner URL:', company.banner_url);
+  console.log('Company logo URL:', company.logo_url);
 
   const {
     id, name, city, state, description, about, working_hours, business_hours,
@@ -46,18 +68,21 @@ export default function CompanyCard({ company, className = '' }: Props) {
     categories, website, social_links
   } = company;
 
-  const rating = average_rating || rating_avg || '0.0';
-  const totalReviews = reviews_count || rating_count || 0;
-  const workingHours = working_hours || business_hours;
+  const rating = rating_avg || '0.0';
+  const totalReviews = rating_count || 0;
+  const workingHours = business_hours;
   const payments = Array.isArray(payment_methods) ? payment_methods.join(', ') : payment_methods || '';
-  const category = categories?.[0]?.name;
+  const category = company.category_name;
   
   // Prepara as URLs das imagens
   const bannerUrl = getFullImageUrl(company.banner_url);
   const logoUrl = getFullImageUrl(company.logo_url);
 
+  console.log('Processed banner URL:', bannerUrl);
+  console.log('Processed logo URL:', logoUrl);
+
   return (
-    <Card className={`overflow-hidden h-full hover:shadow-lg transition-shadow ${className}`}>
+    <Card className={`overflow-hidden h-full hover:shadow-lg transition-shadow ${className}`} suppressHydrationWarning>
       <Link href={`/companies/${id}`}>
         <CardContent className="p-0">
           {/* Banner with error handling */}
@@ -68,14 +93,11 @@ export default function CompanyCard({ company, className = '' }: Props) {
                 alt={`${company.name} banner`}
                 className="w-full h-full object-cover"
                 onError={() => setBannerError(true)}
+                suppressHydrationWarning
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
-                <img
-                  src="/images/banner-placeholder.svg"
-                  alt="Banner placeholder"
-                  className="w-full h-full object-cover"
-                />
+                <span className="text-gray-400 text-sm">Banner não disponível</span>
               </div>
             )}
           </div>
@@ -91,6 +113,7 @@ export default function CompanyCard({ company, className = '' }: Props) {
                       alt={name}
                       className="w-12 h-12 rounded-full border object-cover bg-gray-100"
                       onError={() => setLogoError(true)}
+                      suppressHydrationWarning
                     />
                   </div>
                 ) : (
@@ -99,10 +122,11 @@ export default function CompanyCard({ company, className = '' }: Props) {
                       src="/images/logo-placeholder.svg"
                       alt="Logo placeholder"
                       className="w-6 h-6 rounded-full"
+                      suppressHydrationWarning
                     />
                   </div>
                 )}
-                <h3 className="text-lg font-semibold">{name}</h3>
+                <h3 className="text-lg font-semibold" suppressHydrationWarning>{name}</h3>
               </div>
               {rating && (
                 <div className="flex items-center text-sm">
@@ -121,7 +145,7 @@ export default function CompanyCard({ company, className = '' }: Props) {
             )}
 
             {/* Descrição */}
-            <p className="text-gray-600 text-sm mt-2 line-clamp-2">{about || description || 'No description'}</p>
+            <p className="text-gray-600 text-sm mt-2 line-clamp-2">{description || 'No description'}</p>
 
             {/* Info extra */}
             {workingHours && <Info icon={Clock} text={workingHours} />}

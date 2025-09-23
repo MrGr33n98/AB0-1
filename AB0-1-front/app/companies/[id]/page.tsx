@@ -10,9 +10,22 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
-    const company = await companiesApiSafe.getById(parseInt(params.id));
+    // Log the ID being requested
+    console.log('Fetching company with ID:', params.id);
+    const companyId = parseInt(params.id);
+    
+    // Check if the ID is valid
+    if (isNaN(companyId)) {
+      console.error('Invalid company ID:', params.id);
+      return {
+        title: 'Empresa não encontrada | Compare Solar',
+      };
+    }
+
+    const company = await companiesApiSafe.getById(companyId);
 
     if (!company) {
+      console.log('Company not found for ID:', companyId);
       return {
         title: 'Empresa não encontrada | Compare Solar',
       };
@@ -46,15 +59,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CompanyDetailPage({ params }: Props) {
   try {
-    const company = await companiesApiSafe.getById(parseInt(params.id));
+    // Log the ID being requested
+    console.log('Loading company with ID:', params.id);
+    const companyId = parseInt(params.id);
+    
+    // Check if the ID is valid
+    if (isNaN(companyId)) {
+      console.error('Invalid company ID:', params.id);
+      notFound();
+    }
+
+    const company = await companiesApiSafe.getById(companyId);
 
     if (!company) {
+      console.log('Company not found for ID:', companyId);
       notFound();
     }
 
     return <CompanyDetailClient company={company} />;
   } catch (error) {
     console.error('Erro ao carregar company:', error);
+    // Check if it's a NEXT_NOT_FOUND error, if so re-throw it
+    if (error instanceof Error && error.message.includes('NEXT_NOT_FOUND')) {
+      throw error;
+    }
     notFound();
   }
 }

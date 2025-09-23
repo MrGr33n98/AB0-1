@@ -18,6 +18,13 @@
 
 @layer base {
   :root {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+}
+
+@layer base {
+  :root {
     --background: 210 40% 96.1%; /* Light gray */
     --foreground: 222.2 47.4% 11.2%; /* Deep Blue-Gray */
 

@@ -1,27 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import {
-  Star, 
-  MapPin, 
-  Phone, 
-  Globe, 
-  Shield, 
-  Award, 
-  Users, 
+  Star,
+  MapPin,
+  Phone,
+  Globe,
+  Shield,
+  Award,
+  Users,
   Calendar,
   MessageCircle,
   ChevronsRight,
   ArrowLeft,
-  Building
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Company, productsApi, reviewsApi, Product, Review } from '@/lib/api';
+import { Company, Product, Review } from '@/lib/api';
+import { productsApiSafe, reviewsApiSafe } from '@/lib/api-client';
 import ProductCard from '@/components/ProductCard';
 import ReviewCard from '@/components/ReviewCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -38,27 +39,19 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
   const [error, setError] = useState<string | null>(null);
   const [bannerError, setBannerError] = useState(false);
   const [logoError, setLogoError] = useState(false);
-  const [bannerLoading, setBannerLoading] = useState(true);
-  const [logoLoading, setLogoLoading] = useState(true);
   const router = useRouter();
-  
+
   // Função para garantir que as URLs das imagens sejam absolutas
   const getFullImageUrl = (url: string | null | undefined): string | null => {
     if (!url) return null;
-    
-    // Verifica se a URL já é absoluta
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    
-    // Adiciona o host da API para URLs relativas
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
     return `${apiBaseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
   };
-  
-  // Prepara as URLs das imagens
-  const bannerUrl = getFullImageUrl(company?.banner_url);
-  const logoUrl = getFullImageUrl(company?.logo_url);
+
+  // Memoização das URLs
+  const bannerUrl = useMemo(() => getFullImageUrl(company?.banner_url), [company?.banner_url]);
+  const logoUrl = useMemo(() => getFullImageUrl(company?.logo_url), [company?.logo_url]);
 
   useEffect(() => {
     if (!company?.id) {
@@ -70,30 +63,38 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
 
     const fetchCompanyData = async () => {
       try {
-        const [productsResponse, reviewsResponse] = await Promise.allSettled([
-          productsApi.getAll({ company_id: company.id }),
-          reviewsApi.getAll({ company_id: company.id })
-        ]);
+        // Primeiro tenta pegar cache
+        const cachedProducts = sessionStorage.getItem(`products_${company.id}`);
+        const cachedReviews = sessionStorage.getItem(`reviews_${company.id}`);
 
-        // Processa produtos
-        if (productsResponse.status === 'fulfilled') {
-          setProducts(productsResponse.value || []);
-        } else {
-          console.error('Erro ao carregar produtos:', productsResponse.reason);
-          setProducts([]);
+        if (cachedProducts) {
+          setProducts(JSON.parse(cachedProducts));
+          setProductsLoading(false);
+        }
+        if (cachedReviews) {
+          setReviews(JSON.parse(cachedReviews));
+          setReviewsLoading(false);
         }
 
-        // Processa reviews
+        // Busca os dados mais recentes em paralelo
+        const [productsResponse, reviewsResponse] = await Promise.allSettled([
+          productsApiSafe.getAll({ company_id: company.id }),
+          reviewsApiSafe.getAll({ company_id: company.id }),
+        ]);
+
+        if (productsResponse.status === 'fulfilled') {
+          setProducts(productsResponse.value || []);
+          sessionStorage.setItem(`products_${company.id}`, JSON.stringify(productsResponse.value));
+        }
+
         if (reviewsResponse.status === 'fulfilled') {
           setReviews(reviewsResponse.value || []);
-        } else {
-          console.error('Erro ao carregar avaliações:', reviewsResponse.reason);
-          setReviews([]);
+          sessionStorage.setItem(`reviews_${company.id}`, JSON.stringify(reviewsResponse.value));
         }
 
         setError(null);
       } catch (error) {
-        console.error('Error fetching company data:', error);
+        console.error('Erro ao buscar dados da empresa:', error);
         setError('Erro ao carregar dados da empresa');
       } finally {
         setProductsLoading(false);
@@ -116,14 +117,13 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
   }
 
   // Estatísticas da empresa
-  const avgRating = reviews.length > 0
-    ? reviews.reduce((acc, rev) => acc + rev.rating, 0) / reviews.length
-    : 0;
+  const avgRating =
+    reviews.length > 0 ? reviews.reduce((acc, rev) => acc + rev.rating, 0) / reviews.length : 0;
 
   const companyStats = {
     rating: avgRating,
     reviewCount: reviews.length,
-    completedProjects: products.length * 10, 
+    completedProjects: products.length * 10,
     yearsInBusiness: new Date().getFullYear() - new Date(company.created_at).getFullYear(),
     services: [
       'Instalação Residencial',
@@ -136,9 +136,13 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
     stats: [
       { label: 'Produtos', value: `${products.length}+`, icon: Award },
       { label: 'Avaliações', value: `${reviews.length}`, icon: Users },
-      { label: 'Anos no Mercado', value: `${new Date().getFullYear() - new Date(company.created_at).getFullYear()}+`, icon: Calendar },
+      {
+        label: 'Anos no Mercado',
+        value: `${new Date().getFullYear() - new Date(company.created_at).getFullYear()}+`,
+        icon: Calendar,
+      },
       { label: 'Avaliação Média', value: `${avgRating.toFixed(1)}/5`, icon: Star },
-    ]
+    ],
   };
 
   return (
@@ -147,8 +151,8 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Botão de Voltar */}
           <div className="mb-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="group text-muted-foreground hover:text-foreground border-border hover:bg-muted transition-colors"
               onClick={() => router.back()}
             >
@@ -161,30 +165,18 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
           <div className="relative w-full mb-8">
             <div className="relative w-full h-[180px] sm:h-[200px] md:h-[220px]">
               {bannerUrl && !bannerError ? (
-                <>
-                  {bannerLoading && (
-                    <div className="absolute inset-0 bg-muted animate-pulse rounded-2xl" />
-                  )}
-                  <img 
-                    src={bannerUrl}
-                    alt={`${company.name} banner`}
-                    className="w-full h-full object-cover rounded-2xl shadow-lg"
-                    onError={() => {
-                      console.error('Erro ao carregar banner:', bannerUrl);
-                      setBannerError(true);
-                    }}
-                    onLoad={() => setBannerLoading(false)}
-                    style={{ display: bannerLoading ? 'none' : 'block' }}
-                  />
-                </>
+                <Image
+                  src={bannerUrl}
+                  alt={`${company.name} banner`}
+                  fill
+                  priority
+                  className="object-cover rounded-2xl shadow-lg"
+                  sizes="100vw"
+                  onError={() => setBannerError(true)}
+                />
               ) : (
-                <div className="w-full h-full bg-gradient-to-r from-gray-200 to-gray-300 rounded-2xl flex items-center justify-center shadow-lg">
-                  <div className="text-center">
-                    <Globe className="w-12 h-12 text-muted-foreground/50 mx-auto mb-2" />
-                    <span className="text-muted-foreground text-lg">
-                      {bannerError ? 'Erro ao carregar banner' : 'Sem imagem de banner disponível'}
-                    </span>
-                  </div>
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-200 rounded-2xl">
+                  <span className="text-gray-500">Banner não disponível</span>
                 </div>
               )}
             </div>
@@ -195,39 +187,32 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
             <div className="bg-card p-6 rounded-2xl shadow-xl border border-border flex items-center">
               <div className="mr-6">
                 {logoUrl && !logoError ? (
-                  <div className="relative w-24 h-24">
-                    {logoLoading && (
-                      <div className="absolute inset-0 bg-muted animate-pulse rounded-full" />
-                    )}
-                    <img 
-                      src={logoUrl}
-                      alt={`${company.name} logo`}
-                      className="w-24 h-24 rounded-full object-cover border-2 border-border shadow-sm"
-                      onError={() => {
-                        console.error('Erro ao carregar logo:', logoUrl);
-                        setLogoError(true);
-                      }}
-                      onLoad={() => setLogoLoading(false)}
-                      style={{ display: logoLoading ? 'none' : 'block' }}
-                    />
-                  </div>
+                  <Image
+                    src={logoUrl}
+                    alt={company.name}
+                    width={96}
+                    height={96}
+                    className="w-24 h-24 rounded-full border object-cover bg-gray-100 shadow-sm"
+                    onError={() => setLogoError(true)}
+                  />
                 ) : (
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-r from-primary/10 to-primary/20 flex items-center justify-center border-2 border-border shadow-sm">
-                    <Building className="w-12 h-12 text-primary/40" />
-                    {logoError && (
-                      <span className="sr-only">Erro ao carregar logo</span>
-                    )}
+                  <div className="w-24 h-24 rounded-full mr-3 bg-gray-200 flex items-center justify-center border">
+                    <Image
+                      src="/images/logo-placeholder.svg"
+                      alt="Logo placeholder"
+                      width={48}
+                      height={48}
+                      className="w-12 h-12 rounded-full"
+                    />
                   </div>
                 )}
               </div>
-              ) : null}
-              
+
               <div>
                 <h1 className="text-4xl font-extrabold text-foreground mb-2">{company.name}</h1>
                 <p className="text-lg text-muted-foreground">{company.description}</p>
-                
+
                 <div className="flex items-center mt-4 space-x-6">
-                  {/* Rating */}
                   <div className="flex items-center">
                     <div className="flex items-center mr-2">
                       {[...Array(5)].map((_, i) => (
@@ -241,19 +226,30 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                         />
                       ))}
                     </div>
-                    <span className="text-xl font-bold text-foreground">{companyStats.rating.toFixed(1)}</span>
-                    <span className="text-muted-foreground ml-1">({companyStats.reviewCount} reviews)</span>
+                    <span className="text-xl font-bold text-foreground">
+                      {companyStats.rating.toFixed(1)}
+                    </span>
+                    <span className="text-muted-foreground ml-1">
+                      ({companyStats.reviewCount} reviews)
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 transition-colors shadow-md text-primary-foreground">
+              <Button
+                size="lg"
+                className="bg-primary hover:bg-primary/90 transition-colors shadow-md text-primary-foreground"
+              >
                 <MessageCircle className="mr-2 h-5 w-5" />
                 Solicitar Orçamento
               </Button>
-              <Button size="lg" variant="outline" className="border-border hover:bg-muted transition-colors text-foreground">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-border hover:bg-muted transition-colors text-foreground"
+              >
                 <Phone className="mr-2 h-5 w-5 text-primary" />
                 {company.phone}
               </Button>
@@ -270,7 +266,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                 <TabsTrigger value="gallery">Galeria</TabsTrigger>
                 <TabsTrigger value="stats">Estatísticas</TabsTrigger>
               </TabsList>
-            
+
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-2">
                   {/* Overview */}
@@ -280,7 +276,9 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                         <CardTitle>Sobre a Empresa</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-muted-foreground leading-relaxed mb-6">{company.description}</p>
+                        <p className="text-muted-foreground leading-relaxed mb-6">
+                          {company.description}
+                        </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div>
                             <h4 className="font-semibold mb-3">Serviços Oferecidos</h4>
@@ -344,7 +342,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                           size="sm"
                           className="bg-primary text-primary-foreground hover:bg-primary/90"
                           onClick={() => {
-                            console.log("Abrir formulário de avaliação para empresa", company.id);
+                            console.log('Abrir formulário de avaliação para empresa', company.id);
                           }}
                         >
                           + Deixar Avaliação
@@ -369,7 +367,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                             <Button
                               className="bg-primary text-primary-foreground hover:bg-primary/90"
                               onClick={() => {
-                                console.log("Abrir formulário de avaliação para empresa", company.id);
+                                console.log('Abrir formulário de avaliação para empresa', company.id);
                               }}
                             >
                               Seja o primeiro a avaliar

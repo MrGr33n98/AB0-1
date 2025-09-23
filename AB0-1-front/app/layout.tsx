@@ -6,9 +6,9 @@ import Footer from '@/components/Footer';
 import ClientBody from '@/components/ClientBody';
 import Script from 'next/script';
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
-  display: 'swap' // Improved font loading
+  display: 'swap', // This helps with font loading
 });
 
 export const metadata: Metadata = {
@@ -66,42 +66,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
-      <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <meta name="theme-color" content="#3b82f6" />
-      </head>
-      <body className={`${inter.className} antialiased`} suppressHydrationWarning>
-        <ClientBody>
-          <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main className="flex-1">
-              {children}
-            </main>
-            <Footer />
-          </div>
-        </ClientBody>
-        {/* Structured data for organization */}
-        <Script
-          id="organization-schema"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              "name": "Compare Solar",
-              "url": "https://www.comparesolar.com.br",
-              "logo": "https://www.comparesolar.com.br/images/category-placeholder.jpg", // ✅ ajustado aqui também
-              "description": "O maior marketplace de energia solar do Brasil.",
-              "sameAs": [
-                "https://www.facebook.com/comparesolar",
-                "https://www.instagram.com/comparesolar",
-                "https://www.linkedin.com/company/comparesolar"
-              ]
-            })
-          }}
-        />
+    <html lang="en" className={inter.className}>
+      <body>
+        <ClientBody>{children}</ClientBody>
       </body>
     </html>
   );

@@ -212,29 +212,45 @@ export interface City {
 // =======================
 // Axios Config
 // =======================
-const API_BASE_URL =
-  `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1` ||
-  (process.env.NODE_ENV === 'development'
-    ? 'http://localhost:3001/api/v1'
-    : 'https://api.avaliasolar.com.br/api/v1');
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1`;
 
-console.log('[API] Base URL configurada:', API_BASE_URL);
+// Update the api configuration
+export const api = {
+  baseUrl: API_BASE_URL,
+  
+  request: async function<T>(config: any): Promise<{ data: T }> {
+    try {
+      // Fix URL construction to prevent double slashes
+      const basePath = this.baseUrl.replace(/\/+$/, ''); // Remove trailing slashes
+      const endpoint = config.url.replace(/^\/+/, ''); // Remove leading slashes
+      const url = `${basePath}/${endpoint}`;
+      
+      console.log('[API] Request ->', config.method, url, config.params || '');
+      
+      const response = await fetch(url, {
+        method: config.method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...config.headers,
+        },
+        body: config.data ? JSON.stringify(config.data) : undefined,
+      });
 
-export const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
-  withCredentials: true, // precisa casar com o cors.rb
-});
+      if (!response.ok) {
+        throw new Error(`[${response.status}] ${response.statusText}`);
+      }
 
-api.interceptors.request.use((config) => {
-  const token =
-    typeof window !== 'undefined'
-      ? localStorage.getItem('auth_token')
-      : null;
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  console.log('[API] Request ->', config.method?.toUpperCase(), config.baseURL + config.url);
-  return config;
-});
+      const data = await response.json();
+      return { data };
+    } catch (error) {
+      console.error('[API] Error:', error);
+      throw error;
+    }
+  }
+};
+
+// Removed axios interceptor code that was causing errors
 
 // =======================
 // Generic fetch wrapper
@@ -278,30 +294,85 @@ export const dashboardApi = {
 };
 
 export const companiesApi = {
-  getAll: (params?: any): Promise<Company[]> =>
-    fetchApi('/companies', { params }),
-  getById: (id: number): Promise<Company> =>
-    fetchApi(`/companies/${id}`),
-  getReviews: (id: number, params?: any) =>
-    fetchApi(`/companies/${id}/reviews`, { params }),
-  getProducts: (id: number, params?: any) =>
-    fetchApi(`/companies/${id}/products`, { params }),
-  create: (company: Partial<Company>) =>
-    fetchApi('/companies', {
-      method: 'POST',
-      body: JSON.stringify({ company }),
-    }),
-  update: (id: number, company: Partial<Company>) =>
-    fetchApi(`/companies/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ company }),
-    }),
-  delete: (id: number) =>
-    fetchApi(`/companies/${id}`, { method: 'DELETE' }),
-  search: (query: string, filters?: any) =>
-    fetchApi(`/companies/search?q=${encodeURIComponent(query)}`, {
-      params: filters,
-    }),
+  getAll: async (params?: any): Promise<Company[]> => {
+    try {
+      const response = await fetchApi<Company[]>('/companies', { params });
+      return response || [];
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+      // Return empty array on error to prevent breaking the UI
+      return [];
+    }
+  },
+  getById: async (id: number): Promise<Company | null> => {
+    try {
+      const response = await fetchApi<{ company: Company }>(`/companies/${id}`);
+      return response?.company || null;
+    } catch (error) {
+      console.error(`Error fetching company with ID ${id}:`, error);
+      // Return null on error to prevent breaking the UI
+      return null;
+    }
+  },
+  getReviews: (id: number, params?: any) => {
+    try {
+      return fetchApi(`/companies/${id}/reviews`, { params });
+    } catch (error) {
+      console.error(`Error fetching reviews for company with ID ${id}:`, error);
+      // Return empty array on error to prevent breaking the UI
+      return Promise.resolve([]);
+    }
+  },
+  getProducts: (id: number, params?: any) => {
+    try {
+      return fetchApi(`/companies/${id}/products`, { params });
+    } catch (error) {
+      console.error(`Error fetching products for company with ID ${id}:`, error);
+      // Return empty array on error to prevent breaking the UI
+      return Promise.resolve([]);
+    }
+  },
+  create: (company: Partial<Company>) => {
+    try {
+      return fetchApi('/companies', {
+        method: 'POST',
+        body: JSON.stringify({ company }),
+      });
+    } catch (error) {
+      console.error('Error creating company:', error);
+      throw error;
+    }
+  },
+  update: (id: number, company: Partial<Company>) => {
+    try {
+      return fetchApi(`/companies/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ company }),
+      });
+    } catch (error) {
+      console.error(`Error updating company with ID ${id}:`, error);
+      throw error;
+    }
+  },
+  delete: (id: number) => {
+    try {
+      return fetchApi(`/companies/${id}`, { method: 'DELETE' });
+    } catch (error) {
+      console.error(`Error deleting company with ID ${id}:`, error);
+      throw error;
+    }
+  },
+  search: (query: string, filters?: any) => {
+    try {
+      return fetchApi(`/companies/search?q=${encodeURIComponent(query)}`, {
+        params: filters,
+      });
+    } catch (error) {
+      console.error('Error searching companies:', error);
+      // Return empty array on error to prevent breaking the UI
+      return Promise.resolve({ companies: [], meta: {} });
+    }
+  },
 };
 
 export const productsApi = {

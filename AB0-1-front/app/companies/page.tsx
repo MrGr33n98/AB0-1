@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Filter, MapPin, Grid, List } from 'lucide-react';
 import CompanyCard from '@/components/CompanyCard';
-import { companiesApi, categoriesApi, type Company, type Category } from '@/lib/api';
+import { companiesApiSafe, categoriesApiSafe, type Company, type Category } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,14 +19,19 @@ export default function CompaniesPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log('[CompaniesPage] Fetching companies and categories...');
         const [companiesData, categoriesData] = await Promise.all([
-          companiesApi.getAll(),
-          categoriesApi.getAll()
+          companiesApiSafe.getAll(),
+          categoriesApiSafe.getAll()
         ]);
+
+        console.log('[CompaniesPage] Received companies:', companiesData);
+        console.log('[CompaniesPage] Received categories:', categoriesData);
 
         setCompanies(companiesData || []);
         setCategories(categoriesData || []);
       } catch (err) {
+        console.error('[CompaniesPage] Error loading data:', err);
         setError(err instanceof Error ? err.message : 'Erro ao carregar dados');
       } finally {
         setLoading(false);

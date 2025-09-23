@@ -6,7 +6,6 @@ import { useCompaniesSafe } from '@/hooks/useCompaniesSafe';
 import { useCategories } from '@/hooks/useCategories';
 import { reviewsApiSafe } from '@/lib/api-client';
 import Script from 'next/script';
-import { useAuth } from '@/contexts/AuthContext';
 
 // Componentes da UI
 import Hero from '@/components/Hero';
@@ -29,11 +28,14 @@ interface Review {
 }
 
 export default function Home() {
-  const { companies, loading: companiesLoading } = useCompaniesSafe();
+  const { companies, loading: companiesLoading } = useCompaniesSafe({ featured: true, status: 'active' });
   const { categories, loading: categoriesLoading } = useCategories();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
-  const { isAuthenticated } = useAuth();
+  
+  // Debug companies
+  console.log('Companies:', companies);
+  console.log('Companies loading:', companiesLoading);
 
   // Buscar reviews
   useEffect(() => {
@@ -60,7 +62,11 @@ export default function Home() {
   }, []);
 
   const featuredCompanies = useMemo(
-    () => companies.filter((company) => company.featured).slice(0, 6),
+    () => {
+      const filtered = companies.slice(0, 6);
+      console.log('Featured companies:', filtered);
+      return filtered;
+    },
     [companies]
   );
 

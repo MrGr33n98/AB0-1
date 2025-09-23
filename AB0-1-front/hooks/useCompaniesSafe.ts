@@ -33,15 +33,11 @@ export function useCompaniesSafe(params?: UseCompaniesSafeParams) {
       const data = await companiesApiSafe.getAll({
         status: params?.status || 'active',
         featured: params?.featured ?? true,
-        sort: 'rating',
         limit: params?.limit || 12,
         category_id: params?.category_id,
       });
 
-      // 🔑 Normaliza o retorno
-      const companiesArray = Array.isArray(data) ? data : data?.companies || [];
-
-      setCompanies(companiesArray);
+      setCompanies(data);
     } catch (err) {
       console.error('Erro ao buscar empresas:', err);
       setError(err instanceof Error ? err.message : 'Falha ao carregar empresas');
@@ -71,12 +67,9 @@ export function usePartnerLogos() {
           featured: true,
           status: 'active',
           limit: 5,
-          sort: 'rating',
         });
 
-        const companiesArray = Array.isArray(data) ? data : data?.companies || [];
-
-        const partnerLogos = companiesArray
+        const partnerLogos = data
           .filter(c => c.status === 'active' && c.logo_url)
           .map(({ id, name, logo_url }) => ({ id, name, logo_url }));
 
@@ -116,7 +109,7 @@ export function useCompanySafe(id: number) {
       const data = await companiesApiSafe.getById(companyId);
 
       // 🔑 Normaliza o retorno
-      setCompany(data?.company || data || null);
+      setCompany(data || null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao carregar empresa');
       setCompany(null);
