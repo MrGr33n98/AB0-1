@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Category } from '@/lib/api';
 import { categoriesApiSafe } from '@/lib/api-client';
 
-export function useCategory(id: number) {
+export function useCategory(identifier: number | string) {
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -13,20 +13,28 @@ export function useCategory(id: number) {
     const fetchCategory = async () => {
       try {
         setLoading(true);
-        const data = await categoriesApiSafe.getById(id);
+        let data;
+        if (typeof identifier === 'number') {
+          data = await categoriesApiSafe.getById(identifier);
+        } else {
+          data = await categoriesApiSafe.getBySlug(identifier);
+        }
         setCategory(data);
       } catch (err) {
-        setError(err instanceof Error ? err : new Error(`Falha ao buscar categoria ${id}`));
-        console.error(`Erro ao buscar categoria ${id}:`, err);
+        setError(err instanceof Error ? err : new Error(`Falha ao buscar categoria ${identifier}`));
+        console.error(`Erro ao buscar categoria ${identifier}:`, err);
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) {
+    if (identifier) {
       fetchCategory();
+    } else {
+      setLoading(false);
+      setCategory(null);
     }
-  }, [id]);
+  }, [identifier]);
 
   return { category, loading, error };
 }

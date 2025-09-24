@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { categoriesApiSafe } from '@/lib/api-client';
 import { Category } from '@/lib/api';
 
-export function useCategories() {
+export function useCategories(fetchAll: boolean = false) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -13,12 +13,12 @@ export function useCategories() {
     try {
       setLoading(true);
       setError(null);
-      const data = await categoriesApiSafe.getAll({
-        featured: true,
-        status: 'active',
-        limit: 8,
-        include_subcategories: true,
-      });
+      
+      const params = fetchAll 
+        ? { status: 'active', include_subcategories: true } 
+        : { featured: true, status: 'active', limit: 8, include_subcategories: true };
+      
+      const data = await categoriesApiSafe.getAll(params);
       if (!data || data.length === 0) {
         console.warn('Nenhuma categoria encontrada');
         setCategories([]);
@@ -32,7 +32,7 @@ export function useCategories() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchAll]);
 
   useEffect(() => {
     loadCategories();

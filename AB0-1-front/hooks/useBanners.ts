@@ -1,12 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { fetchApi } from '@/lib/api';
 
 interface Banner {
   id: number;
   image_url: string;
   link?: string;
   title?: string;
+  banner_type: 'rectangular_large' | 'rectangular_small';
+  position: 'navbar' | 'sidebar';
+  sponsored?: boolean;
 }
 
 export function useBanners() {
@@ -18,9 +22,7 @@ export function useBanners() {
     async function fetchBanners() {
       try {
         setLoading(true);
-        const res = await fetch('http://localhost:3001/api/v1/banners');
-        if (!res.ok) throw new Error(`Erro: ${res.status}`);
-        const data = await res.json();
+        const data = await fetchApi<Banner[]>('/banners');
         setBanners(data);
       } catch (err: any) {
         setError(err.message);

@@ -148,6 +148,15 @@ export const categoriesApiSafe = {
       return null;
     }
   },
+  getBySlug: async (slug: string): Promise<Category | null> => {
+    try {
+      return await fetchApiSafe<Category>(`categories/by_slug/${slug}`);
+    } catch (error) {
+      console.error(`Error fetching category with slug ${slug}:`, error);
+      // Return null on error to prevent breaking the UI
+      return null;
+    }
+  },
 };
 
 // Avaliações (Reviews)

@@ -67,7 +67,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.className}>
+    <html lang="pt-BR" className={`${inter.className} light`}>
       <body>
         <Navbar />
         <ClientBody>{children}</ClientBody>

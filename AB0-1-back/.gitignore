@@ -36,4 +36,6 @@
 
 # Ignorar scripts locais
 /scripts/*
+.env
 .env.production
+/node_modules
