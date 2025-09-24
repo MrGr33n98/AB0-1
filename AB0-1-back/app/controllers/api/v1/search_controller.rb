@@ -9,8 +9,9 @@ module Api
         sort  = params[:sort].presence # 'rating' | 'name' | 'created_at'
         page  = (params[:page] || 1).to_i
         per   = (params[:per_page] || 10).to_i
+        category_id = params[:category_id].presence
 
-        results = SearchService.new(query, state: state, city: city).call
+        results = SearchService.new(query, state: state, city: city, category_id: category_id).call
 
         # ordenação simples sem quebrar nada
         case sort

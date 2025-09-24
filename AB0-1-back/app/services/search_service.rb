@@ -1,9 +1,10 @@
 # app/services/search_service.rb
 class SearchService
-  def initialize(query, state: nil, city: nil)
+  def initialize(query, state: nil, city: nil, category_id: nil)
     @query = query
     @state = state
     @city = city
+    @category_id = category_id
   end
 
   def call
@@ -26,6 +27,7 @@ class SearchService
   def search_companies
     scope = Company.where("name ILIKE :q OR description ILIKE :q OR state ILIKE :q OR city ILIKE :q", q: "%#{@query}%")
     scope = scope.by_state(@state).by_city(@city)
+    scope = scope.joins(:categories).where(categories: { id: @category_id }) if @category_id.present?
     scope
   end
 

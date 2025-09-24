@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
+ActiveRecord::Schema[7.0].define(version: 2025_09_23_164759) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -103,6 +103,13 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
     t.index ["category_id"], name: "index_badges_on_category_id"
   end
 
+  create_table "banner_globals", force: :cascade do |t|
+    t.string "title", null: false
+    t.string "link", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "banners", force: :cascade do |t|
     t.string "title"
     t.string "image_url"
@@ -110,6 +117,11 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
     t.boolean "active"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "category_id"
+    t.boolean "sponsored", default: false
+    t.string "banner_type"
+    t.string "position"
+    t.index ["category_id"], name: "index_banners_on_category_id"
   end
 
   create_table "campaign_reviews", force: :cascade do |t|
@@ -229,6 +241,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
     t.text "financing_options"
     t.string "response_time_sla"
     t.text "languages"
+    t.jsonb "social_media", default: {}
   end
 
   create_table "contents", force: :cascade do |t|
@@ -439,6 +452,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_20_000003) do
   add_foreign_key "articles", "categories"
   add_foreign_key "articles", "products"
   add_foreign_key "badges", "categories"
+  add_foreign_key "banners", "categories"
   add_foreign_key "campaign_reviews", "products"
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
