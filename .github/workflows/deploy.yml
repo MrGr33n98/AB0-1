@@ -3,7 +3,7 @@ name: CI/CD Deploy
 on:
   push:
     branches:
-      - main   # dispara no push para main
+      - main
       - master-frontend
 
 jobs:
@@ -14,13 +14,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # LOGIN GITHUB CONTAINER REGISTRY
+      # LOGIN GHCR COM PERSONAL ACCESS TOKEN
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GH_PAT }}
 
       # Build & Push Images
       - name: Fix Registry Names and Deploy Images
@@ -32,23 +32,6 @@ jobs:
           ./script/fix-registry-names.sh
 
       # DEPLOY NA VM
-      - name: Check SSH Connection
-        env:
-          VM_HOST: ${{ secrets.VM_HOST }}
-          VM_USER: ${{ secrets.VM_USER }}
-          VM_KEY: ${{ secrets.VM_KEY }}
-        run: |
-          chmod +x ./script/check_ssh_connection.sh
-          if [[ -z "$VM_HOST" ]]; then
-            echo "Error: VM_HOST secret is not set"
-            exit 1
-          fi
-          if [[ -z "$VM_USER" ]]; then
-            echo "Error: VM_USER secret is not set"
-            exit 1
-          fi
-          ./script/check_ssh_connection.sh "$VM_HOST" "$VM_USER" "$VM_KEY"
-
       - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -56,9 +39,12 @@ jobs:
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_KEY }}
           port: 22
-          command_timeout: 15m
-          timeout: 15m
+          command_timeout: 30m
+          timeout: 30m
           script_stop: true
+          # vai exportar todos esses secrets como envs disponíveis no script remoto
+          envs: POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,POSTGRES_HOST,DATABASE_URL,RAILS_MASTER_KEY,SECRET_KEY_BASE,JWT_SECRET,CORS_ORIGINS,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_SITE_URL
+          debug: true
           script: |
             set -e
 
@@ -84,7 +70,7 @@ jobs:
                   - "5432:5432"
 
               backend:
-                image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/ab0-1-backend:latest
+                image: ghcr.io/felipemorais/ab0-1-backend:latest
                 container_name: ab0-backend
                 depends_on:
                   - db
@@ -92,24 +78,25 @@ jobs:
                   RAILS_ENV: production
                   DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
                   RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+                  SECRET_KEY_BASE: ${SECRET_KEY_BASE}
                   JWT_SECRET: ${JWT_SECRET}
                   POSTGRES_HOST: db
                   POSTGRES_USER: ${POSTGRES_USER}
                   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
                   POSTGRES_DB: ${POSTGRES_DB}
-                  CORS_ORIGINS: https://www.avaliasolar.com.br,https://api.avaliasolar.com.br
+                  CORS_ORIGINS: ${CORS_ORIGINS}
                 ports:
                   - "3001:3001"
 
               frontend:
-                image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/ab0-frontend:latest
+                image: ghcr.io/felipemorais/ab0-frontend:latest
                 container_name: ab0-frontend
                 depends_on:
                   - backend
                 environment:
                   NODE_ENV: production
-                  NEXT_PUBLIC_API_URL: https://api.avaliasolar.com.br
-                  NEXT_PUBLIC_SITE_URL: https://www.avaliasolar.com.br
+                  NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+                  NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
                 ports:
                   - "3000:3000"
 
@@ -119,13 +106,17 @@ jobs:
 
             echo "==> Criando arquivo .env"
             cat > .env <<EOF
-            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-            RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            NEXT_PUBLIC_API_URL=https://api.avaliasolar.com.br
-            NEXT_PUBLIC_SITE_URL=https://www.avaliasolar.com.br
+            POSTGRES_USER=${POSTGRES_USER}
+            POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            POSTGRES_DB=${POSTGRES_DB}
+            POSTGRES_HOST=${POSTGRES_HOST}
+            DATABASE_URL=${DATABASE_URL}
+            RAILS_MASTER_KEY=${RAILS_MASTER_KEY}
+            SECRET_KEY_BASE=${SECRET_KEY_BASE}
+            JWT_SECRET=${JWT_SECRET}
+            CORS_ORIGINS=${CORS_ORIGINS}
+            NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+            NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
             EOF
 
             echo "==> Subindo containers atualizados"

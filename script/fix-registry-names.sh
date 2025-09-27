@@ -8,9 +8,8 @@ to_lowercase() {
 }
 
 # Configurações
-GH_USERNAME=$(to_lowercase "$GITHUB_REPOSITORY_OWNER")
-BACKEND_IMAGE="ghcr.io/${GH_USERNAME}/ab0-1-backend"
-FRONTEND_IMAGE="ghcr.io/${GH_USERNAME}/ab0-1-frontend"
+BACKEND_IMAGE="ghcr.io/felipemorais/ab0-1-backend"
+FRONTEND_IMAGE="ghcr.io/felipemorais/ab0-1-frontend"
 
 # Converte os nomes das imagens para minúsculas
 BACKEND_IMAGE=$(to_lowercase "$BACKEND_IMAGE")
