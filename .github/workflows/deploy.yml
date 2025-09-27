@@ -38,7 +38,8 @@ jobs:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_KEY }}
-          command_timeout: 20m
+          command_timeout: 40m
+          timeout: 60s
           script_stop: true
           script: |
             set -e
