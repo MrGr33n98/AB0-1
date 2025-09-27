@@ -43,10 +43,8 @@ jobs:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_KEY }}
-          command_timeout: 40m
+          command_timeout: 15m
           timeout: 15m
-          retries: 5
-          retry_on_error: true
           script_stop: true
           script: |
             set -e
