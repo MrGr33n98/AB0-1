@@ -38,4 +38,5 @@
 /scripts/*
 .env
 .env.production
+.env.secrets
 /node_modules

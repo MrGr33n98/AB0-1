@@ -55,6 +55,7 @@ jobs:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_KEY }}
+          port: 22
           command_timeout: 15m
           timeout: 15m
           script_stop: true
@@ -62,10 +63,10 @@ jobs:
             set -e
 
             echo "==> Atualizando projeto em produção"
-            cd ~/ab0-app || mkdir -p ~/ab0-app && cd ~/ab0-app
+            mkdir -p ~/ab0-app && cd ~/ab0-app
 
             echo "==> Criando/atualizando docker-compose.yml"
-            cat > docker-compose.yml <<EOF
+            cat > docker-compose.yml <<'EOF'
             version: "3.9"
 
             services:
@@ -74,34 +75,34 @@ jobs:
                 container_name: ab0-postgres
                 restart: always
                 environment:
-                  POSTGRES_USER: \${POSTGRES_USER}
-                  POSTGRES_PASSWORD: \${POSTGRES_PASSWORD}
-                  POSTGRES_DB: \${POSTGRES_DB}
+                  POSTGRES_USER: ${POSTGRES_USER}
+                  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+                  POSTGRES_DB: ${POSTGRES_DB}
                 volumes:
                   - db_data:/var/lib/postgresql/data
                 ports:
                   - "5432:5432"
 
               backend:
-                image: ghcr.io/${{ github.repository_owner }}/ab0-1-backend:latest
+                image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/ab0-1-backend:latest
                 container_name: ab0-backend
                 depends_on:
                   - db
                 environment:
                   RAILS_ENV: production
-                  DATABASE_URL: postgresql://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@db:5432/\${POSTGRES_DB}
-                  RAILS_MASTER_KEY: \${RAILS_MASTER_KEY}
-                  JWT_SECRET: \${JWT_SECRET}
+                  DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+                  RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+                  JWT_SECRET: ${JWT_SECRET}
                   POSTGRES_HOST: db
-                  POSTGRES_USER: \${POSTGRES_USER}
-                  POSTGRES_PASSWORD: \${POSTGRES_PASSWORD}
-                  POSTGRES_DB: \${POSTGRES_DB}
+                  POSTGRES_USER: ${POSTGRES_USER}
+                  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+                  POSTGRES_DB: ${POSTGRES_DB}
                   CORS_ORIGINS: https://www.avaliasolar.com.br,https://api.avaliasolar.com.br
                 ports:
                   - "3001:3001"
 
               frontend:
-                image: ghcr.io/${{ github.repository_owner }}/ab0-frontend:latest
+                image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/ab0-frontend:latest
                 container_name: ab0-frontend
                 depends_on:
                   - backend
