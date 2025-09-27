@@ -14,6 +14,23 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      # Atualizar firewall com IPs do GitHub Actions
+      - name: Install doctl
+        run: sudo snap install doctl
+
+      - name: Auth doctl
+        run: doctl auth init -t ${{ secrets.DO_TOKEN }}
+
+      - name: Update Firewall with GitHub Actions IPs
+        run: |
+          FIREWALL_NAME=ab0-firewall
+          IPS=$(curl -s https://api.github.com/meta | jq -r '.actions[]')
+          for ip in $IPS; do
+            echo "Adding $ip to firewall $FIREWALL_NAME"
+            doctl compute firewall add-rules $FIREWALL_NAME \
+              --inbound-rules "protocol:tcp,ports:22,address:$ip" || true
+          done
+
       # LOGIN GHCR COM PERSONAL ACCESS TOKEN
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -42,7 +59,6 @@ jobs:
           command_timeout: 30m
           timeout: 30m
           script_stop: true
-          # vai exportar todos esses secrets como envs disponíveis no script remoto
           envs: POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,POSTGRES_HOST,DATABASE_URL,RAILS_MASTER_KEY,SECRET_KEY_BASE,JWT_SECRET,CORS_ORIGINS,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_SITE_URL
           debug: true
           script: |
@@ -54,7 +70,6 @@ jobs:
             echo "==> Criando/atualizando docker-compose.yml"
             cat > docker-compose.yml <<'EOF'
             version: "3.9"
-
             services:
               db:
                 image: postgres:14
