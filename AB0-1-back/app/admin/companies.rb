@@ -10,6 +10,7 @@ ActiveAdmin.register Company do
                 :financing_options, :response_time_sla, :languages,
                 :email_public, :phone_alt, :facebook, :instagram,
                 :linkedin, :description,
+                :plan_id, :plan_expires_at, :plan_status,
                 category_ids: []
 
   form do |f|
@@ -19,6 +20,12 @@ ActiveAdmin.register Company do
       f.input :status, as: :select, collection: %w[active inactive pending blocked]
       f.input :featured
       f.input :verified
+    end
+
+    f.inputs "Plan Subscription" do
+      f.input :plan, as: :select, collection: -> { Plan.all.map { |p| [p.name, p.id] } }
+      f.input :plan_status, as: :select, collection: %w[active inactive suspended cancelled]
+      f.input :plan_expires_at, as: :datetime_picker
     end
 
     f.inputs "Contact & Location" do
@@ -91,6 +98,11 @@ ActiveAdmin.register Company do
       row :featured
       row :verified
       row :status
+      row :plan do |company|
+        company.plan&.name || "Nenhum plano"
+      end
+      row :plan_status
+      row :plan_expires_at
       row :average_rating
       row :reviews_count
       row :categories do |company|
@@ -119,6 +131,8 @@ ActiveAdmin.register Company do
   filter :featured
   filter :verified
   filter :status
+  filter :plan
+  filter :plan_status
   filter :created_at
   filter :categories
 
@@ -126,6 +140,10 @@ ActiveAdmin.register Company do
     selectable_column
     id_column
     column :name
+    column :plan do |company|
+      company.plan&.name
+    end
+    column :plan_status
     column :state
     column :city
     column :featured

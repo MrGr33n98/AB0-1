@@ -106,7 +106,7 @@ export default function Hero() {
                 {['Painel Solar', 'Inversor', 'Bateria', 'Instalação'].map((tag) => (
                   <span
                     key={tag}
-                    className="px-3 py-1 text-sm bg-card rounded-full text-muted-foreground border border-border hover:border-accent-dark cursor-pointer transition-colors"
+                    className="px-3 py-1 text-sm bg-card rounded-full text-muted-foreground border border-border hover:border-accent-dark cursor-pointer transition-colors mr-2"
                   >
                     {tag}
                   </span>
@@ -141,7 +141,7 @@ export default function Hero() {
               </>
             ) : (
               <>
-                <Link href="/register">
+                <Link href="/register" className="mr-4">
                   <Button
                     size="lg"
                     className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground px-8 py-3 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"

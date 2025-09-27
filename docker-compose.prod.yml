@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:14
+    container_name: ab0-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - ab0-network
+
+  backend:
+    image: ghcr.io/felipemorais/ab0-backend:latest # Image from GitHub Container Registry
+    container_name: ab0-backend
+    restart: always
+    depends_on:
+      - db
+    environment:
+      RAILS_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE} # Using SECRET_KEY_BASE
+      JWT_SECRET: ${JWT_SECRET}
+      POSTGRES_HOST: db
+      CORS_ORIGINS: "https://your-production-domain.com" # Change this to your actual domain
+    ports:
+      - "3001:3001"
+    networks:
+      - ab0-network
+
+  frontend:
+    image: ghcr.io/felipemorais/ab0-frontend:latest # Image from GitHub Container Registry
+    container_name: ab0-frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: "https://your-api-domain.com/api/v1" # Change this to your actual API domain
+      NEXT_PUBLIC_SITE_URL: "https://your-production-domain.com" # Change this to your actual domain
+    ports:
+      - "3000:3000"
+    networks:
+      - ab0-network
+
+volumes:
+  db_data:
+
+networks:
+  ab0-network:
+    driver: bridge

@@ -107,20 +107,20 @@ export const companiesApiSafe = {
       return [];
     } catch (error) {
       console.error('Error fetching companies:', error);
-      // Return empty array on error to prevent breaking the UI
-      return [];
+      // Re-throw the error to be handled by the calling hook
+      throw error;
     }
   },
 
   // 🔥 Corrigido para desembrulhar o objeto { company: { ... } }
   getById: async (id: number): Promise<Company | null> => {
     try {
-      const response = await fetchApiSafe<Company>(`companies/${id}`);
-      return response || null;
+      const response = await fetchApiSafe<{ company: Company }>(`companies/${id}`);
+      return response?.company || null;
     } catch (error) {
       console.error(`Error fetching company with ID ${id}:`, error);
-      // Return null on error to prevent breaking the UI
-      return null;
+      // Re-throw the error to be handled by the calling hook
+      throw error;
     }
   },
 };

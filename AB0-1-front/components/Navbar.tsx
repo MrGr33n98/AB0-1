@@ -86,13 +86,14 @@ export default function Navbar() {
           </div>
 
           {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-gray-700 hover:text-primary"
-            >
-              {link.label}
-            </Link>
+            <span key={link.href} className="mr-4">
+              <Link
+                href={link.href}
+                className="text-sm font-medium text-gray-700 hover:text-primary"
+              >
+                {link.label}
+              </Link>
+            </span>
           ))}
 
           <Link href="/login">

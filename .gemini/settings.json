@@ -1,0 +1,34 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "chrome-devtools-mcp@latest",
+        "--executablePath=/Applications/Google Chrome 10.42.24.app/Contents/MacOS/Google Chrome"
+      ]
+    },
+    "shadcn-ui-server": {
+      "command": "/path/to/shadcn-ui-server/build/index.js"
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp",
+        "--api-key",
+        "ctx7sk-cfb779fa-c3de-4a4e-8096-7091d3affc95"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    },
+    "firecrawl-mcp": {
+      "command": "npx",
+      "args": ["-y", "firecrawl-mcp"],
+      "env": {
+        "FIRECRAWL_API_KEY": "fc-3787a994f87a4ae9b572b2cafa89bc85"
+      }
+    }
+  }
+}

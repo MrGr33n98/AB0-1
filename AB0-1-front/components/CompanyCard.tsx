@@ -94,6 +94,7 @@ export default function CompanyCard({ company, className = '' }: Props) {
                 className="w-full h-full object-cover"
                 onError={() => setBannerError(true)}
                 suppressHydrationWarning
+                crossOrigin="anonymous"
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
@@ -114,6 +115,7 @@ export default function CompanyCard({ company, className = '' }: Props) {
                       className="w-12 h-12 rounded-full border object-cover bg-gray-100"
                       onError={() => setLogoError(true)}
                       suppressHydrationWarning
+                      crossOrigin="anonymous"
                     />
                   </div>
                 ) : (

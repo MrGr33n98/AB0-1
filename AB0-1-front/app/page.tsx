@@ -28,7 +28,7 @@ interface Review {
 }
 
 export default function Home() {
-  const { companies, loading: companiesLoading } = useCompaniesSafe({ featured: true, status: 'active' });
+  const { companies, loading: companiesLoading, error: companiesError } = useCompaniesSafe({ featured: true, status: 'active' });
   const { categories, loading: categoriesLoading } = useCategories();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
@@ -208,6 +208,11 @@ export default function Home() {
                 {[...Array(6)].map((_, i) => (
                   <Skeleton key={i} className="h-96 rounded-2xl bg-muted" />
                 ))}
+              </div>
+            ) : companiesError ? (
+              <div className="text-center text-red-500">
+                <p>Ocorreu um erro ao carregar as empresas. Tente novamente mais tarde.</p>
+                <p>{companiesError}</p>
               </div>
             ) : (
               <motion.div

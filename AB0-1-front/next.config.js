@@ -44,25 +44,7 @@ const nextConfig = {
   assetPrefix: '',
 
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'www.avaliasolar.com.br',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.avaliasolar.com.br',
-        pathname: '/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '3001',
-        pathname: '/rails/active_storage/blobs/**',
-      },
-    ],
-    unoptimized: true,
+    unoptimized: true, // Isso permite imagens de qualquer origem
   },
 
   trailingSlash: false,

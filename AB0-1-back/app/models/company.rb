@@ -10,6 +10,8 @@ class Company < ApplicationRecord
   # =========================
   has_and_belongs_to_many :categories, join_table: :categories_companies
   has_many :reviews, dependent: :destroy
+  has_many :leads, dependent: :destroy
+  belongs_to :plan, optional: true
 
   # =========================
   # Validations
@@ -51,12 +53,12 @@ class Company < ApplicationRecord
       featured verified cnpj email_public instagram facebook linkedin
       working_hours payment_methods certifications status
       founded_year employees_count rating_avg rating_count
-      created_at updated_at
+      created_at updated_at plan_id
     ]
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[categories reviews]
+    %w[categories reviews plan]
   end
 
   # =========================

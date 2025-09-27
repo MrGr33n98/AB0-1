@@ -1,6 +1,10 @@
-FROM ruby:3.2.2
+# Dockerfile for AB0-1-back (Rails)
 
-# Install system dependencies
+# --- Builder Stage ---
+# This stage installs dependencies and builds the application assets.
+FROM ruby:3.2.2 as builder
+
+# Install essential build-time system dependencies
 RUN apt-get update -qq && \
     apt-get install -y --no-install-recommends \
       build-essential \
@@ -11,39 +15,61 @@ RUN apt-get update -qq && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# Set the working directory
 WORKDIR /app
 
-# Install specific bundler version
-RUN gem install bundler:2.4.22
+# Install the exact bundler version from Gemfile.lock for reproducibility
+COPY Gemfile.lock .
+RUN gem install bundler -v $(grep -A 1 "BUNDLED WITH" Gemfile.lock | tail -n 1 | tr -d " ")
 
-# Copy Gemfile and install dependencies
-COPY Gemfile Gemfile.lock ./
-RUN bundle install --jobs 4 --retry 3
+# Copy Gemfile and install gems
+# This is done in a separate step to leverage Docker layer caching.
+# Gem installation will only be re-run if Gemfile or Gemfile.lock changes.
+COPY Gemfile .
+RUN bundle install --jobs $(nproc) --retry 3
 
-# Copy application code
+# Copy the rest of the application code
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p tmp/pids tmp/storage public/assets log
+# Precompile assets for production
+# A dummy secret key is provided here just for the asset compilation step.
+# The real secret key will be provided by the environment in the runner stage.
+# Skip database check during asset precompilation
+RUN SECRET_KEY_BASE=dummy RAILS_ENV=production SKIP_DB_CHECK=1 bundle exec rails assets:precompile
 
-# Set environment variables
-ENV RAILS_ENV=production \
-    PATH="/app/bin:${PATH}"
+# --- Runner Stage ---
+# This stage creates the final, smaller, and more secure image.
+FROM ruby:3.2.2 as runner
 
-# Create database.yml
-RUN echo "production:\n\
-  adapter: postgresql\n\
-  encoding: unicode\n\
-  pool: 5\n\
-  url: <%= ENV['DATABASE_URL'] %>" > config/database.yml
+# Install only essential runtime system dependencies
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+      postgresql-client \
+      # Add any other runtime-specific packages here (e.g., for image processing)
+      imagemagick && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
+# Create a non-root user to run the application for better security
+RUN useradd --create-home --shell /bin/bash appuser
+WORKDIR /home/appuser/app
+
+# Copy installed gems from the builder stage
+COPY --from=builder /usr/local/bundle/ /usr/local/bundle/
+
+# Copy the precompiled assets and application code from the builder stage
+COPY --from=builder --chown=appuser:appuser /app .
+
+# Grant ownership to the app user
+USER appuser
+
+# Expose the port the app runs on
 EXPOSE 3001
 
-# Start the server
-# Add entrypoint script
-COPY entrypoint.sh /usr/bin/
+# Copy and set up the entrypoint
+COPY --from=builder --chown=appuser:appuser /app/entrypoint.sh /usr/bin/
 RUN chmod +x /usr/bin/entrypoint.sh
-
 ENTRYPOINT ["/usr/bin/entrypoint.sh"]
+
+# Set the default command to start the Rails server
 CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3001"]

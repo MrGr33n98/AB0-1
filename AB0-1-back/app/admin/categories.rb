@@ -68,7 +68,7 @@ ActiveAdmin.register Category, namespace: :admin do
       f.input :featured
       f.input :status, as: :select, collection: ['active', 'inactive']
       f.input :kind, as: :select, collection: ['main', 'sub']
-      f.input :parent_id, as: :select, collection: Category.where.not(id: f.object.id).map { |c| [c.name, c.id] }, include_blank: 'None'
+      f.input :parent_id, as: :select, collection: -> { Category.where.not(id: f.object.id).map { |c| [c.name, c.id] } }, include_blank: 'None'
       
       # Add banner image upload
       f.input :banner, as: :file, hint: f.object.banner.attached? ? image_tag(url_for(f.object.banner), style: 'max-width: 300px') : content_tag(:span, "No banner uploaded yet")

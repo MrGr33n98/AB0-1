@@ -6,6 +6,16 @@ import axios from 'axios';
 // =======================
 // API Response Types
 // =======================
+export interface Plan {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  features: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Company {
   id: number;
   name: string;
@@ -63,6 +73,15 @@ export interface Company {
   cta_utm_medium?: string;
   cta_utm_campaign?: string;
   ctas_json?: Record<string, any>;
+  // Campos relacionados ao plano
+  plan_id?: number;
+  plan_name?: string;
+  plan_features?: string[];
+  plan_expires_at?: string;
+  // Campos de perfis
+  profile_complete?: boolean;
+  verified?: boolean;
+  // CTAs personalizados
   social_links?: {
     facebook?: string;
     instagram?: string;
@@ -80,6 +99,30 @@ export interface Company {
     priority: number;
     analytics_event?: string;
   }[];
+}
+
+export interface Lead {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  company_name?: string;
+  message: string;
+  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost';
+  source: string;
+  company_id?: number;
+  user_id?: number;
+  created_at: string;
+  updated_at: string;
+  // Informações adicionais
+  project_type?: string;
+  budget_range?: string;
+  timeline?: string;
+  location?: string;
+  company?: {
+    id: number;
+    name: string;
+  };
 }
 
 export interface Product {
@@ -179,6 +222,7 @@ export interface DashboardStats {
   reviews_count: number;
   active_campaigns: number;
   monthly_revenue: number;
+  average_rating?: number;
 }
 
 export interface User {
@@ -222,9 +266,8 @@ export const api = {
   
   request: async function<T>(config: any): Promise<{ data: T }> {
     try {
-      // Fix URL construction to prevent double slashes
-      const basePath = this.baseUrl.replace(/\/+$/, ''); // Remove trailing slashes
-      const endpoint = config.url.replace(/^\/+/, ''); // Remove leading slashes
+      const basePath = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+      const endpoint = config.url.startsWith('/') ? config.url.slice(1) : config.url;
       const url = `${basePath}/${endpoint}`;
       
       console.log('[API] Request ->', config.method, url, config.params || '');
@@ -236,14 +279,14 @@ export const api = {
           'Accept': 'application/json',
           ...config.headers,
         },
-        body: config.data ? JSON.stringify(config.data) : undefined,
+        body: config.data ? JSON.stringify(config.data) : config.body ? JSON.stringify(config.body) : undefined,
       });
 
       if (!response.ok) {
         throw new Error(`[${response.status}] ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       return { data };
     } catch (error) {
       console.error('[API] Error:', error);
@@ -334,6 +377,26 @@ export const companiesApi = {
       return Promise.resolve([]);
     }
   },
+  getLeads: (id: number, params?: any) => {
+    try {
+      return fetchApi(`/companies/${id}/leads`, { params });
+    } catch (error) {
+      console.error(`Error fetching leads for company with ID ${id}:`, error);
+      // Return empty array on error to prevent breaking the UI
+      return Promise.resolve({ leads: [], meta: {} });
+    }
+  },
+  updateLeadStatus: (companyId: number, leadId: number, status: Lead['status']) => {
+    try {
+      return fetchApi(`/companies/${companyId}/leads/${leadId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+    } catch (error) {
+      console.error(`Error updating lead status:`, error);
+      throw error;
+    }
+  },
   create: (company: Partial<Company>) => {
     try {
       return fetchApi('/companies', {
@@ -418,7 +481,8 @@ export const categoriesApi = {
 };
 
 export const leadsApi = {
-  getAll: () => fetchApi('/leads'),
+  getAll: (params?: any) => fetchApi('/leads', { params }),
+  getByCompany: (companyId: number, params?: any) => fetchApi(`/companies/${companyId}/leads`, { params }),
   getById: (id: number) => fetchApi(`/leads/${id}`),
   create: (lead: Partial<Lead>) =>
     fetchApi('/leads', {
@@ -431,6 +495,11 @@ export const leadsApi = {
       body: JSON.stringify({ lead }),
     }),
   delete: (id: number) => fetchApi(`/leads/${id}`, { method: 'DELETE' }),
+  changeStatus: (id: number, status: Lead['status']) => 
+    fetchApi(`/leads/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
 };
 
 export const reviewsApi = {
@@ -447,22 +516,6 @@ export const reviewsApi = {
       body: JSON.stringify({ review }),
     }),
   delete: (id: number) => fetchApi(`/reviews/${id}`, { method: 'DELETE' }),
-};
-
-export const plansApi = {
-  getAll: () => fetchApi('/plans'),
-  getById: (id: number) => fetchApi(`/plans/${id}`),
-  create: (plan: Partial<Plan>) =>
-    fetchApi('/plans', {
-      method: 'POST',
-      body: JSON.stringify({ plan }),
-    }),
-  update: (id: number, plan: Partial<Plan>) =>
-    fetchApi(`/plans/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ plan }),
-    }),
-  delete: (id: number) => fetchApi(`/plans/${id}`, { method: 'DELETE' }),
 };
 
 export const articlesApi = {
@@ -517,7 +570,7 @@ export const authApi = {
   login: (email: string, password: string) =>
     fetchApi('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email: email, password: password }),
     }),
   register: (userData: { name: string; email: string; password: string }) =>
     fetchApi('/auth/register', {
@@ -594,3 +647,17 @@ export const adminApi = {
 };
 
 // End of API endpoints
+
+export async function login(email: string, password: string): Promise<{ user: User }> {
+  try {
+    const response = await fetchApi('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return { user: response.user };
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
+  }
+}

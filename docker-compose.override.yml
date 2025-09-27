@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+  backend:
+    environment:
+      RAILS_ENV: development
+  frontend:
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: "http://localhost:3001/api/v1"

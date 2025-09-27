@@ -1,58 +1,96 @@
-name: CI/CD Deploy
+# GitHub Actions CI/CD Workflow
+# This workflow automates testing, building, and deploying the application.
+
+name: CI/CD - Build and Deploy
 
 on:
   push:
     branches:
-      - main   # dispara no push para main
-      - master-frontend
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build-and-deploy:
+  # ====================================================================
+  # CI Job: Run linters and tests
+  # ====================================================================
+  ci:
+    name: Run Linters & Tests
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Placeholder for Backend Tests (e.g., RSpec)
+      - name: Run Backend Linter & Tests
+        run: |
+          echo "==> Setting up Ruby environment"
+          # In a real scenario, you would set up Ruby and run:
+          # bundle install
+          # bundle exec rubocop
+          # bundle exec rspec
+          echo "==> Skipping backend tests for now."
+
+      # Placeholder for Frontend Tests (e.g., Jest)
+      - name: Run Frontend Linter & Tests
+        run: |
+          echo "==> Setting up Node.js environment"
+          # In a real scenario, you would set up Node.js and run:
+          # npm install
+          # npm run lint
+          # npm run test
+          echo "==> Skipping frontend tests for now."
+
+  # ====================================================================
+  # Build & Push Job: Build images and push to GitHub Container Registry
+  # ====================================================================
+  build-and-push:
+    name: Build & Push to GHCR
+    needs: ci # This job depends on the 'ci' job
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Only run on push to main
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Needed to push to GitHub Container Registry
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # LOGIN DOCKER HUB
-      - name: Login to DockerHub
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # BACKEND - Build & Push
-      - name: Build & Push Backend
+      - name: Build and Push Backend Image
         run: |
-          IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/ab0-backend
-          docker build -t $IMAGE:latest -t $IMAGE:${{ github.sha }} ./AB0-1-back
-          docker push $IMAGE:latest
-          docker push $IMAGE:${{ github.sha }}
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/ab0-backend
+          # Use lowercase for image name
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[:upper:]' '[:lower:]')
+          docker build -t $IMAGE_ID:latest -t $IMAGE_ID:${{ github.sha }} ./AB0-1-back
+          docker push $IMAGE_ID --all-tags
 
-          # mantém só as 2 últimas tags (latest + SHA mais novo)
-          IMAGES=$(curl -s -u "${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" \
-            "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ab0-backend/tags/?page_size=100" \
-            | jq -r '.results[].name' | grep -v latest | sort -r)
-          echo "$IMAGES" | tail -n +3 | xargs -I {} curl -s -u "${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" \
-            -X DELETE "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ab0-backend/tags/{}/"
-
-      # FRONTEND - Build & Push
-      - name: Build & Push Frontend
+      - name: Build and Push Frontend Image
         run: |
-          IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/ab0-frontend
-          docker build -t $IMAGE:latest -t $IMAGE:${{ github.sha }} ./AB0-1-front
-          docker push $IMAGE:latest
-          docker push $IMAGE:${{ github.sha }}
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/ab0-frontend
+          # Use lowercase for image name
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[:upper:]' '[:lower:]')
+          docker build -t $IMAGE_ID:latest -t $IMAGE_ID:${{ github.sha }} ./AB0-1-front
+          docker push $IMAGE_ID --all-tags
 
-          # mantém só as 2 últimas tags
-          IMAGES=$(curl -s -u "${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" \
-            "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ab0-frontend/tags/?page_size=100" \
-            | jq -r '.results[].name' | grep -v latest | sort -r)
-          echo "$IMAGES" | tail -n +3 | xargs -I {} curl -s -u "${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" \
-            -X DELETE "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/ab0-frontend/tags/{}/"
+  # ====================================================================
+  # Deploy Job: Deploy to the production VM
+  # ====================================================================
+  deploy:
+    name: Deploy to VM
+    needs: build-and-push # This job depends on the 'build-and-push' job
+    runs-on: ubuntu-latest
 
-      # DEPLOY NA VM
-      - name: Deploy on VPS
+    steps:
+      - name: Deploy to VM via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VM_HOST }}
@@ -60,77 +98,22 @@ jobs:
           key: ${{ secrets.VM_KEY }}
           script: |
             set -e
+            echo "==> Navigating to app directory"
+            cd ~/ab0-app
 
-            echo "==> Atualizando projeto em produção"
-            cd ~/ab0-app || mkdir -p ~/ab0-app && cd ~/ab0-app
+            echo "==> Logging in to GitHub Container Registry"
+            echo ${{ secrets.GH_PAT }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
-            echo "==> Criando/atualizando docker-compose.yml"
-            cat > docker-compose.yml <<'EOF'
-            version: "3.9"
-
-            services:
-              db:
-                image: postgres:14
-                container_name: ab0-postgres
-                restart: always
-                environment:
-                  POSTGRES_USER: ${POSTGRES_USER}
-                  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-                  POSTGRES_DB: ${POSTGRES_DB}
-                volumes:
-                  - db_data:/var/lib/postgresql/data
-                ports:
-                  - "5432:5432"
-
-              backend:
-                image: ${{ secrets.DOCKERHUB_USERNAME }}/ab0-backend:latest
-                container_name: ab0-backend
-                depends_on:
-                  - db
-                environment:
-                  RAILS_ENV: production
-                  DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-                  RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
-                  JWT_SECRET: ${JWT_SECRET}
-                  POSTGRES_HOST: db
-                  POSTGRES_USER: ${POSTGRES_USER}
-                  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-                  POSTGRES_DB: ${POSTGRES_DB}
-                  CORS_ORIGINS: http://64.225.59.107:3000
-                ports:
-                  - "3001:3001"
-
-              frontend:
-                image: ${{ secrets.DOCKERHUB_USERNAME }}/ab0-frontend:latest
-                container_name: ab0-frontend
-                depends_on:
-                  - backend
-                environment:
-                  NODE_ENV: production
-                  NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-                  NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
-                ports:
-                  - "3000:3000"
-
-            volumes:
-              db_data:
-            EOF
-
-            echo "==> Criando arquivo .env"
-            cat > .env <<EOF
-            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-            RAILS_MASTER_KEY=${{ secrets.RAILS_MASTER_KEY }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
-            NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
-            EOF
-
-            echo "==> Subindo containers atualizados"
+            echo "==> Pulling latest images"
             docker compose pull
-            docker compose down
-            docker compose up -d --remove-orphans
 
-            echo "==> Limpando imagens antigas não usadas"
+            echo "==> Restarting services with new images"
+            docker compose up -d --force-recreate --remove-orphans
+
+            echo "==> Running database migrations"
+            docker compose exec backend rails db:migrate
+
+            echo "==> Cleaning up old images"
             docker image prune -af
+
+            echo "==> Deployment successful!"

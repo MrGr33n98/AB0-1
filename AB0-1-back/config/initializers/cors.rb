@@ -11,15 +11,19 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
     )
 
     # API resources
-    resource '/api/v1/*',
+    resource '*',
       headers: :any,
       expose: ['access-token', 'expiry', 'token-type', 'uid', 'client'],
       methods: [:get, :post, :put, :patch, :delete, :options, :head],
       credentials: true
+  end
 
-    # Active Storage resources
+  # Active Storage configuration
+  allow do
+    origins '*'
     resource '/rails/active_storage/*',
       headers: :any,
-      methods: [:get, :options, :head]
+      methods: [:get, :post, :put, :patch, :delete, :options, :head],
+      credentials: false
   end
 end

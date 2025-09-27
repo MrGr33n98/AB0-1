@@ -1,45 +1,56 @@
-# Build stage
+# Dockerfile for AB0-1-front (Next.js)
+
+# --- Builder Stage ---
+# This stage installs dependencies and builds the Next.js application.
 FROM node:18-alpine AS builder
 
+# Set the working directory
 WORKDIR /app
 
-# Add package files
+# Copy package manager files
 COPY package*.json ./
 
-# Install dependencies with retry mechanism
-RUN --mount=type=cache,target=/root/.npm \
-    npm config set registry https://registry.npmjs.org/ && \
-    npm config set fetch-retry-maxtimeout 600000 && \
-    npm config set fetch-retry-mintimeout 10000 && \
-    npm config set fetch-retries 5 && \
-    npm install -g npm@10.2.4 && \
-    npm install --legacy-peer-deps --no-audit --network-timeout=600000
+# Install dependencies
+# Using --legacy-peer-deps as it was in the original file.
+# Consider resolving peer dependency conflicts for a cleaner build.
+RUN npm install --legacy-peer-deps
 
-# Add app files
+# Copy the rest of the application source code
 COPY . .
 
-# Build app
+# Disable Next.js telemetry
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_ENV=production
+
+# Build the Next.js application
 RUN npm run build
 
-# Production stage
-FROM node:18-alpine
+# --- Runner Stage ---
+# This stage creates the final, minimal image for production.
+FROM node:18-alpine AS runner
 
 WORKDIR /app
 
-# Copy built assets
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.js ./next.config.js
-COPY --from=builder /app/node_modules ./node_modules
+# Create a non-root user for security
+RUN addgroup --system --gid 1001 nextjs
+RUN adduser --system --uid 1001 nextjs
 
-# Set production environment
+# Set production environment variables
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Start the app with standalone configuration
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+# Copy the standalone output from the builder stage.
+# This includes the server, node_modules, and other necessary files.
+COPY --from=builder --chown=nextjs:nextjs /app/.next/standalone ./
+
+# Copy the public assets and static files
+COPY --from=builder --chown=nextjs:nextjs /app/public ./public
+COPY --from=builder --chown=nextjs:nextjs /app/.next/static ./.next/static
+
+# Set the user to the non-root user
+USER nextjs
+
+# Expose the port the app will run on
+EXPOSE 3000
+
+# The command to start the Next.js server
 CMD ["node", "server.js"]

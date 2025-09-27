@@ -114,7 +114,7 @@ export default function Footer() {
         <div className="mt-16 pt-8 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
             <div className="text-gray-400 text-sm">
-              © 2025 Compare Solar. Todos os direitos reservados.
+              © {new Date().getFullYear()} Compare Solar. Todos os direitos reservados.
             </div>
             <div className="flex space-x-5">
               {socialLinks.map((social) => (

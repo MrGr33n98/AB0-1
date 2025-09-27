@@ -10,10 +10,12 @@ class CompanySerializer < ActiveModel::Serializer
   attribute :ctas, if: -> { @instance_options[:include_ctas] }
 
   def banner_url
+    Rails.logger.info "[CompanySerializer] Checking for banner attachment. Attached: #{object.banner.attached?}"
     generate_attachment_url(object.banner)
   end
 
   def logo_url
+    Rails.logger.info "[CompanySerializer] Checking for logo attachment. Attached: #{object.logo.attached?}"
     generate_attachment_url(object.logo)
   end
 

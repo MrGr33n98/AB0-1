@@ -11,8 +11,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-app_db}
     volumes:
       - db_data:/var/lib/postgresql/data
-    networks:
-      - ab0-network
 
   backend:
     build:
@@ -21,10 +19,12 @@ services:
     container_name: ab0-backend
     depends_on:
       - db
+    env_file:
+      - ./AB0-1-back/.env.secrets
     environment:
       RAILS_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
       JWT_SECRET: ${JWT_SECRET}
       POSTGRES_HOST: db
       POSTGRES_USER: ${POSTGRES_USER}
@@ -35,8 +35,6 @@ services:
       - ./AB0-1-back:/app
     ports:
       - "3001:3001"
-    networks:
-      - ab0-network
 
   frontend:
     build:
@@ -51,12 +49,6 @@ services:
     ports:
       - "3000:3000"
     command: ["node", "server.js"]
-    networks:
-      - ab0-network
 
 volumes:
   db_data:
-
-networks:
-  ab0-network:
-    external: true
