@@ -9,8 +9,12 @@ to_lowercase() {
 
 # Configurações
 GH_USERNAME=$(to_lowercase "$GITHUB_REPOSITORY_OWNER")
-BACKEND_IMAGE=$(to_lowercase "ghcr.io/${GH_USERNAME}/ab0-1-backend")
-FRONTEND_IMAGE=$(to_lowercase "ghcr.io/${GH_USERNAME}/ab0-1-frontend")
+BACKEND_IMAGE="ghcr.io/${GH_USERNAME}/ab0-1-backend"
+FRONTEND_IMAGE="ghcr.io/${GH_USERNAME}/ab0-1-frontend"
+
+# Converte os nomes das imagens para minúsculas
+BACKEND_IMAGE=$(to_lowercase "$BACKEND_IMAGE")
+FRONTEND_IMAGE=$(to_lowercase "$FRONTEND_IMAGE")
 
 # Função para atualizar as tags das imagens
 update_image_tags() {
