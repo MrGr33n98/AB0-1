@@ -14,28 +14,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Atualizar firewall com IPs do GitHub Actions
-      - name: Install doctl
-        run: sudo snap install doctl
-
-      - name: Auth doctl
-        run: doctl auth init -t ${{ secrets.DO_TOKEN }}
-
-      - name: Update Firewall with GitHub Actions IPs
-        run: |
-          # Pega o ID do firewall pelo nome
-          FIREWALL_ID=$(doctl compute firewall list --no-header --format ID,Name | grep ab0-firewall | awk '{print $1}')
-
-          # Lista de IPs que o GitHub Actions usa para rodar workflows
-          IPS=$(curl -s https://api.github.com/meta | jq -r '.actions[]')
-
-          # Adiciona os IPs ao firewall
-          for ip in $IPS; do
-            echo "Adding $ip to firewall $FIREWALL_ID"
-            doctl compute firewall add-rules $FIREWALL_ID \
-              --inbound-rules "protocol:tcp,ports:22,address:$ip" || true
-          done
-
       # LOGIN GHCR COM PERSONAL ACCESS TOKEN
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
