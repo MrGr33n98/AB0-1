@@ -22,33 +22,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GH_PAT }}
 
-      # BACKEND - Build & Push
-      - name: Build & Push Backend
+      # Build & Push Images
+      - name: Fix Registry Names and Deploy Images
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
         run: |
-          IMAGE=ghcr.io/${{ github.repository_owner }}/ab0-backend
-          docker build -t $IMAGE:latest -t $IMAGE:${{ github.sha }} ./AB0-1-back
-          docker push $IMAGE:latest
-          docker push $IMAGE:${{ github.sha }}
-
-          # mantém só as 2 últimas tags (latest + SHA mais novo)
-          TAGS=$(gh api /user/packages/container/ab0-backend/versions --paginate | jq -r '.[].metadata.container.tags[]' | grep -v latest | sort -r)
-          echo "$TAGS" | tail -n +3 | while read -r tag; do
-            gh api --method DELETE /user/packages/container/ab0-backend/versions/$tag
-          done
-
-      # FRONTEND - Build & Push
-      - name: Build & Push Frontend
-        run: |
-          IMAGE=ghcr.io/${{ github.repository_owner }}/ab0-frontend
-          docker build -t $IMAGE:latest -t $IMAGE:${{ github.sha }} ./AB0-1-front
-          docker push $IMAGE:latest
-          docker push $IMAGE:${{ github.sha }}
-
-          # mantém só as 2 últimas tags
-          TAGS=$(gh api /user/packages/container/ab0-frontend/versions --paginate | jq -r '.[].metadata.container.tags[]' | grep -v latest | sort -r)
-          echo "$TAGS" | tail -n +3 | while read -r tag; do
-            gh api --method DELETE /user/packages/container/ab0-frontend/versions/$tag
-          done
+          chmod +x ./script/fix-registry-names.sh
+          ./script/fix-registry-names.sh
 
       # DEPLOY NA VM
       - name: Deploy on VPS
@@ -82,7 +63,7 @@ jobs:
                   - "5432:5432"
 
               backend:
-                image: ghcr.io/${{ github.repository_owner }}/ab0-backend:latest
+                image: ghcr.io/${{ github.repository_owner }}/ab0-1-backend:latest
                 container_name: ab0-backend
                 depends_on:
                   - db
