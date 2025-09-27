@@ -1,7 +1,9 @@
-// ... existing code ...
+import Link from 'next/link';
+import Image from 'next/image';
 
-<div className="flex items-center">
-  <Link href="/" className="flex items-center">
+const Header = () => (
+  <div className="flex items-center">
+    <Link href="/" className="flex items-center">
     <img 
       src="/images/logo.png" 
       alt="Logo" 

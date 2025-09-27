@@ -72,14 +72,32 @@ def run_rubocop_auto_correct
     check_dependencies
     backup_files(rails_root)
     
-    # Executa o RuboCop com a flag -a para correção automática
-    system('bundle exec rubocop -a')
+    timestamp = Time.now.strftime('%Y%m%d_%H%M%S')
+    report_file = File.join('script', "lint_fixes_report_#{timestamp}.txt")
+    
+    # Executa o RuboCop com a flag -A para correção automática agressiva
+    puts "\n🔧 Aplicando correções automáticas..."
+    before_fixes = `bundle exec rubocop --format json`
+    output = `bundle exec rubocop -A 2>&1`
+    after_fixes = `bundle exec rubocop --format json`
+    
+    # Prepara o relatório com informações detalhadas
+    report = "Relatório de Correções do RuboCop\n"
+    report << "Data: #{Time.now}\n\n"
+    report << "Saída do RuboCop:\n#{output}\n\n"
+    
+    # Cria o diretório script se não existir e adiciona o output ao arquivo de relatório
+    FileUtils.mkdir_p('script')
+    File.write(report_file, report)
     
     if $?.success?
       puts "\n✅ Correções automáticas concluídas com sucesso!\n"
+      puts "📊 Estatísticas:\n"
+      puts "📝 Relatório detalhado salvo em: #{report_file}\n"
     else
-      puts "\n⚠️  Algumas correções foram aplicadas, mas ainda existem problemas que precisam ser corrigidos manualmente.\n"
-      puts "Execute 'bundle exec rubocop' para ver os problemas restantes.\n"
+      puts "\n⚠️  Correções automáticas aplicadas, mas alguns problemas podem precisar de correção manual.\n"
+      puts "📝 Relatório completo salvo em: #{report_file}\n"
+      puts "💡 Dica: Execute 'bundle exec rubocop' para verificar o estado atual.\n"
     end
   end
 end

@@ -302,7 +302,7 @@ export default function SearchBar({
           {/* Nenhum resultado */}
           {!loading && !error && query && !hasResults && (
             <div className="p-6 text-center text-gray-500">
-              Nenhum resultado encontrado para "<span className="font-medium">{query}</span>"
+              Nenhum resultado encontrado para &quot;<span className="font-medium">{query}</span>&quot;
             </div>
           )}
 
