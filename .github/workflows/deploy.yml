@@ -7,14 +7,13 @@ on:
       - master-frontend
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # LOGIN GHCR COM PERSONAL ACCESS TOKEN
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -22,16 +21,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GH_PAT }}
 
-      # Build & Push Images
-      - name: Fix Registry Names and Deploy Images
-        env:
-          GITHUB_SHA: ${{ github.sha }}
-          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+      - name: Build & Push Images
         run: |
           chmod +x ./script/fix-registry-names.sh
           ./script/fix-registry-names.sh
 
-      # DEPLOY NA VM
       - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -39,25 +33,18 @@ jobs:
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_KEY }}
           port: 22
-          command_timeout: 60m
-          timeout: 60m
           script_stop: true
           envs: POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,POSTGRES_HOST,DATABASE_URL,RAILS_MASTER_KEY,SECRET_KEY_BASE,JWT_SECRET,CORS_ORIGINS,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_SITE_URL
-          debug: true
-          proxy_timeout: 60m
           script: |
             set -e
+            cd ~/ab0-app || mkdir -p ~/ab0-app && cd ~/ab0-app
 
-            echo "==> Atualizando projeto em produção"
-            mkdir -p ~/ab0-app && cd ~/ab0-app
-
-            echo "==> Criando/atualizando docker-compose.yml"
+            # docker-compose.yml
             cat > docker-compose.yml <<'EOF'
             version: "3.9"
             services:
               db:
                 image: postgres:14
-                container_name: ab0-postgres
                 restart: always
                 environment:
                   POSTGRES_USER: ${POSTGRES_USER}
@@ -70,7 +57,6 @@ jobs:
 
               backend:
                 image: ghcr.io/felipemorais/ab0-1-backend:latest
-                container_name: ab0-backend
                 depends_on:
                   - db
                 environment:
@@ -89,7 +75,6 @@ jobs:
 
               frontend:
                 image: ghcr.io/felipemorais/ab0-frontend:latest
-                container_name: ab0-frontend
                 depends_on:
                   - backend
                 environment:
@@ -103,7 +88,7 @@ jobs:
               db_data:
             EOF
 
-            echo "==> Criando arquivo .env"
+            # .env
             cat > .env <<EOF
             POSTGRES_USER=${POSTGRES_USER}
             POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -118,10 +103,8 @@ jobs:
             NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
             EOF
 
-            echo "==> Subindo containers atualizados"
+            # Restart containers
             docker compose pull
             docker compose down
             docker compose up -d --remove-orphans
-
-            echo "==> Limpando imagens antigas não usadas"
             docker image prune -af
