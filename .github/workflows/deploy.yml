@@ -45,8 +45,6 @@ jobs:
           envs: POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,POSTGRES_HOST,DATABASE_URL,RAILS_MASTER_KEY,SECRET_KEY_BASE,JWT_SECRET,CORS_ORIGINS,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_SITE_URL
           debug: true
           proxy_timeout: 60m
-          proxy_retry_count: 5
-          proxy_retry_sleep: 10
           script: |
             set -e
 
