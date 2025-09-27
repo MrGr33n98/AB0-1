@@ -32,6 +32,11 @@ jobs:
           ./script/fix-registry-names.sh
 
       # DEPLOY NA VM
+      - name: Check SSH Connection
+        run: |
+          chmod +x ./script/check_ssh_connection.sh
+          ./script/check_ssh_connection.sh "${{ secrets.VM_HOST }}" "${{ secrets.VM_USER }}" "${{ secrets.VM_KEY }}"
+
       - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -39,7 +44,9 @@ jobs:
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_KEY }}
           command_timeout: 40m
-          timeout: 60s
+          timeout: 15m
+          retries: 5
+          retry_on_error: true
           script_stop: true
           script: |
             set -e
