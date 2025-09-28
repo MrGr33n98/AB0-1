@@ -22,38 +22,26 @@ jobs:
         envs: POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,POSTGRES_HOST,DATABASE_URL,RAILS_MASTER_KEY,SECRET_KEY_BASE,JWT_SECRET,CORS_ORIGINS,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_SITE_URL
         script: |
           set -e
-
+          
           # Verificar se todas as variáveis de ambiente necessárias estão definidas
-          required_vars=(
-            "POSTGRES_USER"
-            "POSTGRES_PASSWORD"
-            "POSTGRES_DB"
-            "POSTGRES_HOST"
-            "DATABASE_URL"
-            "RAILS_MASTER_KEY"
-            "SECRET_KEY_BASE"
-            "JWT_SECRET"
-            "CORS_ORIGINS"
-            "NEXT_PUBLIC_API_URL"
-            "NEXT_PUBLIC_SITE_URL"
-          )
+          required_vars=("POSTGRES_USER" "POSTGRES_PASSWORD" "POSTGRES_DB" "POSTGRES_HOST" "DATABASE_URL" "RAILS_MASTER_KEY" "SECRET_KEY_BASE" "JWT_SECRET" "CORS_ORIGINS" "NEXT_PUBLIC_API_URL" "NEXT_PUBLIC_SITE_URL")
           for var in "${required_vars[@]}"; do
             if [ -z "${!var}" ]; then
               echo "❌ Erro: Variável de ambiente $var não está definida"
               exit 1
             fi
           done
-
+          
           echo "🚀 Iniciando deploy na VPS..."
           mkdir -p ~/ab0-app
           cd ~/ab0-app
-
+          
           # Verificar se o Docker está rodando
           if ! docker info > /dev/null 2>&1; then
             echo "❌ Erro: Docker não está rodando"
             exit 1
           fi
-
+          
           echo "📦 Criando docker-compose.yml..."
           cat > docker-compose.yml <<'EOF'
           version: "3.9"
@@ -69,7 +57,7 @@ jobs:
                 - db_data:/var/lib/postgresql/data
               ports:
                 - "5432:5432"
-
+          
             backend:
               image: ghcr.io/felipemorais/ab0-1-backend:latest
               depends_on:
@@ -87,7 +75,7 @@ jobs:
                 CORS_ORIGINS: ${CORS_ORIGINS}
               ports:
                 - "3001:3001"
-
+          
             frontend:
               image: ghcr.io/felipemorais/ab0-frontend:latest
               depends_on:
@@ -98,43 +86,41 @@ jobs:
                 NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
               ports:
                 - "3000:3000"
-
+          
           volumes:
             db_data:
           EOF
-
+          
           echo "📝 Criando arquivo .env..."
-          cat > .env <<EOF
-          POSTGRES_USER=\${POSTGRES_USER}
-          POSTGRES_PASSWORD=\${POSTGRES_PASSWORD}
-          POSTGRES_DB=\${POSTGRES_DB}
-          POSTGRES_HOST=\${POSTGRES_HOST}
-          DATABASE_URL=\${DATABASE_URL}
-          RAILS_MASTER_KEY=\${RAILS_MASTER_KEY}
-          SECRET_KEY_BASE=\${SECRET_KEY_BASE}
-          JWT_SECRET=\${JWT_SECRET}
-          CORS_ORIGINS=\${CORS_ORIGINS}
-          NEXT_PUBLIC_API_URL=\${NEXT_PUBLIC_API_URL}
-          NEXT_PUBLIC_SITE_URL=\${NEXT_PUBLIC_SITE_URL}
-          EOF
-
+          echo "POSTGRES_USER=${POSTGRES_USER}" > .env
+          echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" >> .env
+          echo "POSTGRES_DB=${POSTGRES_DB}" >> .env
+          echo "POSTGRES_HOST=${POSTGRES_HOST}" >> .env
+          echo "DATABASE_URL=${DATABASE_URL}" >> .env
+          echo "RAILS_MASTER_KEY=${RAILS_MASTER_KEY}" >> .env
+          echo "SECRET_KEY_BASE=${SECRET_KEY_BASE}" >> .env
+          echo "JWT_SECRET=${JWT_SECRET}" >> .env
+          echo "CORS_ORIGINS=${CORS_ORIGINS}" >> .env
+          echo "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}" >> .env
+          echo "NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}" >> .env
+          
           echo "🐳 Atualizando containers..."
           if ! docker compose pull; then
             echo "❌ Erro ao baixar as imagens dos containers"
             exit 1
           fi
-
+          
           docker compose down --remove-orphans
-
+          
           if ! docker compose up -d; then
             echo "❌ Erro ao iniciar os containers"
             exit 1
           fi
-
+          
           # Aguardar e verificar a saúde dos serviços
           echo "🔍 Verificando a saúde dos serviços..."
           sleep 60
-
+          
           # Verificar se o backend está respondendo (tentativas múltiplas)
           attempts=0
           max_attempts=10
@@ -155,7 +141,7 @@ jobs:
             docker compose logs backend
             exit 1
           fi
-
+          
           # Verificar se o frontend está respondendo (tentativas múltiplas)
           attempts=0
           max_attempts=10
@@ -176,17 +162,17 @@ jobs:
             docker compose logs frontend
             exit 1
           fi
-
+          
           # Verificar se o banco de dados está respondendo
           if ! docker compose exec -T db pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"; then
             echo "❌ Erro: Banco de dados não está respondendo"
             docker compose logs db
             exit 1
           fi
-
+          
           # Limpar imagens antigas
           docker image prune -af
-
+          
           echo "✅ Deploy finalizado com sucesso!"
           echo "🌐 Serviços disponíveis em:"
           echo "   Frontend: http://localhost:3000"
