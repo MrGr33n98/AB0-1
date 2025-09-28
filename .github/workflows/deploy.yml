@@ -5,8 +5,22 @@ on:
     branches: [ main ]
 
 jobs:
+  connectivity-check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check connectivity to VM
+      run: |
+        echo "Checking connectivity to VM host: ${{ secrets.VM_HOST }}"
+        timeout 10 bash -c "cat < /dev/null > /dev/tcp/${{ secrets.VM_HOST }}/22" 2> /dev/null || echo "Port 22 on VM_HOST is not accessible"
+        if nc -z -w 10 ${{ secrets.VM_HOST }} 22; then
+          echo "✅ Port 22 is open"
+        else
+          echo "❌ Port 22 is not accessible - this is likely the source of the connection timeout"
+        fi
+
   deploy:
     runs-on: ubuntu-latest
+    needs: connectivity-check
     steps:
     - name: Deploy to VPS
       uses: appleboy/ssh-action@v1.0.3
@@ -15,14 +29,13 @@ jobs:
         username: ${{ secrets.VM_USER }}
         key: ${{ secrets.VM_KEY }}
         port: 22
-        timeout: 60s
+        timeout: 10s
         command_timeout: 20m
+        debug: true
+        script_stop: true
         envs: POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,POSTGRES_HOST,DATABASE_URL,RAILS_MASTER_KEY,SECRET_KEY_BASE,JWT_SECRET,CORS_ORIGINS,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_SITE_URL
         script: |
           set -e
-
-          # Aguardar um pouco antes de tentar conectar
-          sleep 10
 
           # Verificar se todas as variáveis de ambiente necessárias estão definidas
           required_vars=(
