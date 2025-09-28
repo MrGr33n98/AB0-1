@@ -110,11 +110,14 @@ jobs:
               echo "🔍 Verificando existência da imagem: $image"
               
               # Tenta fazer pull da imagem e verifica o resultado
-              if docker manifest inspect "$image" > /dev/null 2>&1; then
-                echo "✅ Imagem $image existe"
+              # O timeout é necessário para evitar que o pull fique travado caso a imagem não exista
+              if timeout 30s docker pull "$image" > /dev/null 2>&1; then
+                echo "✅ Imagem $image existe e foi baixada"
+                # Remover a imagem após o teste para economizar espaço
+                docker rmi "$image" > /dev/null 2>&1 || true
                 return 0
               else
-                echo "❌ Imagem $image NÃO existe"
+                echo "❌ Imagem $image NÃO existe ou não pôde ser baixada"
                 return 1
               fi
             }
