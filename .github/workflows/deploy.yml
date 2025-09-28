@@ -110,8 +110,14 @@ jobs:
               echo "🔍 Verificando existência da imagem: $image"
               
               # Tenta fazer pull da imagem e verifica o resultado
-              # O timeout é necessário para evitar que o pull fique travado caso a imagem não exista
-              if timeout 30s docker pull "$image" > /dev/null 2>&1; then
+              # Usar uma combinação de timeout via subshell com execução em background
+              # para evitar que o processo fique travado caso a imagem não exista
+              (docker pull "$image" > /dev/null 2>&1 & pid=$!; 
+               (sleep 30; kill $pid > /dev/null 2>&1) & watcher=$!;
+               wait $pid > /dev/null 2>&1; ret=$?;
+               kill $watcher > /dev/null 2>&1) > /dev/null 2>&1
+              
+              if [ $ret -eq 0 ]; then
                 echo "✅ Imagem $image existe e foi baixada"
                 # Remover a imagem após o teste para economizar espaço
                 docker rmi "$image" > /dev/null 2>&1 || true
