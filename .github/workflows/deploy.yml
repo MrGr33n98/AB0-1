@@ -8,6 +8,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+    - name: Clean SSH Cache
+      run: |
+        ssh-keygen -R ${{ secrets.VM_HOST }}
+        ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
+
     - name: Deploy to VPS
       uses: appleboy/ssh-action@v1.0.3
       with:
