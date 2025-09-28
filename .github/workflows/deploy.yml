@@ -104,6 +104,61 @@ jobs:
             echo "🔐 Autenticando no GitHub Container Registry..."
             echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
             
+            # Função para verificar existência de imagem
+            check_image_exists() {
+              local image=$1
+              echo "🔍 Verificando existência da imagem: $image"
+              
+              # Tenta fazer pull da imagem e verifica o resultado
+              if docker manifest inspect "$image" > /dev/null 2>&1; then
+                echo "✅ Imagem $image existe"
+                return 0
+              else
+                echo "❌ Imagem $image NÃO existe"
+                return 1
+              fi
+            }
+            
+            # Verificar se as imagens existem antes de prosseguir
+            MAX_ATTEMPTS=10
+            WAIT_TIME=30
+            
+            echo "⏳ Aguardando disponibilidade das imagens..."
+            for attempt in $(seq 1 $MAX_ATTEMPTS); do
+              backend_exists=0
+              frontend_exists=0
+              db_exists=0
+              
+              if check_image_exists "ghcr.io/felipemorais/ab0-1-backend:latest"; then
+                backend_exists=1
+              fi
+              
+              if check_image_exists "ghcr.io/felipemorais/ab0-1-frontend:latest"; then
+                frontend_exists=1
+              fi
+              
+              if check_image_exists "postgres:14"; then
+                db_exists=1
+              fi
+              
+              # Se todas as imagens necessárias existirem, podemos continuar
+              if [ $backend_exists -eq 1 ] && [ $frontend_exists -eq 1 ] && [ $db_exists -eq 1 ]; then
+                echo "✅ Todas as imagens estão disponíveis"
+                break
+              else
+                echo "⏳ Tentativa $attempt/$MAX_ATTEMPTS - Aguardando mais $WAIT_TIME segundos..."
+                sleep $WAIT_TIME
+              fi
+            done
+            
+            # Se após todas as tentativas as imagens ainda não estiverem disponíveis, falha
+            if [ $backend_exists -eq 0 ] || [ $frontend_exists -eq 0 ]; then
+              echo "❌ Algumas imagens não estão disponíveis após $MAX_ATTEMPTS tentativas"
+              echo "❌ Backend disponível: $backend_exists"
+              echo "❌ Frontend disponível: $frontend_exists"
+              exit 1
+            fi
+            
             # Atualizar e iniciar os containers
             echo "🐳 Atualizando containers..."
             docker compose pull
