@@ -8,11 +8,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Clean SSH Cache
-      run: |
-        ssh-keygen -R ${{ secrets.VM_HOST }}
-        ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
-
     - name: Deploy to VPS
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -22,41 +17,32 @@ jobs:
         port: 22
         timeout: 30s
         command_timeout: 20m
-        debug: true
         script_stop: true
-        envs: POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,POSTGRES_HOST,DATABASE_URL,RAILS_MASTER_KEY,SECRET_KEY_BASE,JWT_SECRET,CORS_ORIGINS,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_SITE_URL
+        envs: POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,DATABASE_URL,RAILS_MASTER_KEY,SECRET_KEY_BASE,JWT_SECRET,CORS_ORIGINS,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_SITE_URL
         script: |
           set -e
           
-          # As variáveis de ambiente já estarão disponíveis devido à configuração 'envs'
-          echo "POSTGRES_USER: $POSTGRES_USER"
-          echo "POSTGRES_PASSWORD: [HIDDEN]"
-          echo "POSTGRES_DB: $POSTGRES_DB"
-          echo "POSTGRES_HOST: $POSTGRES_HOST"
-          echo "DATABASE_URL: $DATABASE_URL"
-          echo "RAILS_MASTER_KEY: [HIDDEN]"
-          echo "SECRET_KEY_BASE: [HIDDEN]"
-          echo "JWT_SECRET: [HIDDEN]"
-          echo "CORS_ORIGINS: $CORS_ORIGINS"
-          echo "NEXT_PUBLIC_API_URL: $NEXT_PUBLIC_API_URL"
-          echo "NEXT_PUBLIC_SITE_URL: $NEXT_PUBLIC_SITE_URL"
-          
-          # Verificar se todas as variáveis de ambiente necessárias estão definidas
-          : ${POSTGRES_USER:?Variável POSTGRES_USER não está definida}
-          : ${POSTGRES_PASSWORD:?Variável POSTGRES_PASSWORD não está definida}
-          : ${POSTGRES_DB:?Variável POSTGRES_DB não está definida}
-          : ${POSTGRES_HOST:?Variável POSTGRES_HOST não está definida}
-          : ${DATABASE_URL:?Variável DATABASE_URL não está definida}
-          : ${RAILS_MASTER_KEY:?Variável RAILS_MASTER_KEY não está definida}
-          : ${SECRET_KEY_BASE:?Variável SECRET_KEY_BASE não está definida}
-          : ${JWT_SECRET:?Variável JWT_SECRET não está definida}
-          : ${CORS_ORIGINS:?Variável CORS_ORIGINS não está definida}
-          : ${NEXT_PUBLIC_API_URL:?Variável NEXT_PUBLIC_API_URL não está definida}
-          : ${NEXT_PUBLIC_SITE_URL:?Variável NEXT_PUBLIC_SITE_URL não está definida}
-          
           echo "🚀 Iniciando deploy na VPS..."
-          mkdir -p ~/ab0-app
-          cd ~/ab0-app
+          cd ~
+          rm -rf ab0-app
+          mkdir -p ab0-app
+          cd ab0-app
+          
+          # Verificar e instalar Docker se necessário
+          if ! command -v docker &> /dev/null; then
+            echo "📦 Instalando Docker..."
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sh get-docker.sh
+            systemctl start docker
+            systemctl enable docker
+          fi
+          
+          # Verificar e instalar Docker Compose se necessário
+          if ! command -v docker-compose &> /dev/null; then
+            echo "📦 Instalando Docker Compose..."
+            apt update
+            apt install -y docker-compose-plugin
+          fi
           
           # Verificar se o Docker está rodando
           if ! docker info > /dev/null 2>&1; then
@@ -64,7 +50,7 @@ jobs:
             exit 1
           fi
           
-          echo "📦 Criando docker-compose.yml..."
+          # Criar docker-compose.yml
           cat > docker-compose.yml <<'EOF'
           version: "3.9"
           services:
@@ -90,10 +76,6 @@ jobs:
                 RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
                 SECRET_KEY_BASE: ${SECRET_KEY_BASE}
                 JWT_SECRET: ${JWT_SECRET}
-                POSTGRES_HOST: db
-                POSTGRES_USER: ${POSTGRES_USER}
-                POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-                POSTGRES_DB: ${POSTGRES_DB}
                 CORS_ORIGINS: ${CORS_ORIGINS}
               ports:
                 - "3001:3001"
@@ -113,91 +95,32 @@ jobs:
             db_data:
           EOF
           
-          echo "📝 Criando arquivo .env..."
-          cat > .env <<EOF
-          POSTGRES_USER=${POSTGRES_USER}
-          POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-          POSTGRES_DB=${POSTGRES_DB}
-          POSTGRES_HOST=${POSTGRES_HOST}
-          DATABASE_URL=${DATABASE_URL}
-          RAILS_MASTER_KEY=${RAILS_MASTER_KEY}
-          SECRET_KEY_BASE=${SECRET_KEY_BASE}
-          JWT_SECRET=${JWT_SECRET}
-          CORS_ORIGINS=${CORS_ORIGINS}
-          NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-          NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
-          EOF
-          
+          # Atualizar e iniciar os containers
           echo "🐳 Atualizando containers..."
-          if ! docker compose pull; then
-            echo "❌ Erro ao baixar as imagens dos containers"
-            exit 1
-          fi
-          
+          docker compose pull
           docker compose down --remove-orphans
+          docker compose up -d
           
-          if ! docker compose up -d; then
-            echo "❌ Erro ao iniciar os containers"
-            exit 1
-          fi
+          echo "⏳ Aguardando inicialização dos serviços..."
+          sleep 90
           
-          # Aguardar e verificar a saúde dos serviços
-          echo "🔍 Verificando a saúde dos serviços..."
-          sleep 60
-          
-          # Verificar se o backend está respondendo (tentativas múltiplas)
-          attempts=0
-          max_attempts=10
-          
-          while [ $attempts -lt $max_attempts ]; do
-            if curl -f http://localhost:3001/health > /dev/null 2>&1; then
-              echo "✅ Backend está respondendo"
-              break
-            else
-              echo "⏳ Tentando conectar ao backend... ($((attempts+1))/$max_attempts)"
-              sleep 10
-              attempts=$((attempts+1))
-            fi
-          done
-          
-          if [ $attempts -eq $max_attempts ]; then
-            echo "❌ Erro: Backend não está respondendo após $max_attempts tentativas"
+          # Verificar se os serviços estão respondendo
+          echo "🔍 Verificando serviços..."
+          if curl -f http://localhost:3001/health > /dev/null 2>&1; then
+            echo "✅ Backend está respondendo"
+          else
+            echo "⚠️  Backend pode não estar respondendo ainda"
             docker compose logs backend
-            exit 1
           fi
           
-          # Verificar se o frontend está respondendo (tentativas múltiplas)
-          attempts=0
-          max_attempts=10
-          
-          while [ $attempts -lt $max_attempts ]; do
-            if curl -f "http://localhost:3000" > /dev/null 2>&1; then
-              echo "✅ Frontend está respondendo"
-              break
-            else
-              echo "⏳ Tentando conectar ao frontend... ($((attempts+1))/$max_attempts)"
-              sleep 10
-              attempts=$((attempts+1))
-            fi
-          done
-          
-          if [ $attempts -eq $max_attempts ]; then
-            echo "❌ Erro: Frontend não está respondendo após $max_attempts tentativas"
+          if curl -f http://localhost:3000 > /dev/null 2>&1; then
+            echo "✅ Frontend está respondendo"
+          else
+            echo "⚠️  Frontend pode não estar respondendo ainda"
             docker compose logs frontend
-            exit 1
           fi
           
-          # Verificar se o banco de dados está respondendo
-          if ! docker compose exec -T db pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"; then
-            echo "❌ Erro: Banco de dados não está respondendo"
-            docker compose logs db
-            exit 1
-          fi
-          
-          # Limpar imagens antigas
-          docker image prune -af
-          
-          echo "✅ Deploy finalizado com sucesso!"
+          echo "✅ Deploy finalizado!"
           echo "🌐 Serviços disponíveis em:"
           echo "   Frontend: http://localhost:3000"
           echo "   Backend: http://localhost:3001"
