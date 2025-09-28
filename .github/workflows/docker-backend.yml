@@ -6,6 +6,13 @@ on:
     paths:
       - 'AB0-1-back/**'
       - '.github/workflows/docker-backend.yml'
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Force rebuild and push of the image'
+        required: false
+        type: boolean
+        default: false
 
 env:
   REGISTRY: ghcr.io
