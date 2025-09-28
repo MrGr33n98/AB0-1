@@ -33,7 +33,7 @@ jobs:
             ports:
               - "3001:3001"
           frontend:
-            image: ghcr.io/felipemorais/ab0-frontend:latest
+            image: ghcr.io/felipemorais/ab0-1-frontend:latest
             depends_on:
               - backend
             environment:
