@@ -7,7 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOCKER_COMPOSE_CONTENT: |
-        version: "3.9"
         services:
           db:
             image: postgres:14
@@ -45,6 +44,17 @@ jobs:
               - "3000:3000"
         volumes:
           db_data: {}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+      SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
+      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+      NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_ACTOR: ${{ github.actor }}
     steps:
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.3
@@ -56,7 +66,7 @@ jobs:
           timeout: 60s
           command_timeout: 30m
           script_stop: true
-          envs: DOCKER_COMPOSE_CONTENT
+          envs: DOCKER_COMPOSE_CONTENT,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,RAILS_MASTER_KEY,SECRET_KEY_BASE,JWT_SECRET,CORS_ORIGINS,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_SITE_URL,GITHUB_TOKEN,GITHUB_ACTOR
           script: |
             set -e
             
@@ -83,6 +93,10 @@ jobs:
             
             # Criar docker-compose.yml com valores de ambiente
             echo "$DOCKER_COMPOSE_CONTENT" > docker-compose.yml
+            
+            # Autenticar no GHCR
+            echo "🔐 Autenticando no GitHub Container Registry..."
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
             
             # Atualizar e iniciar os containers
             echo "🐳 Atualizando containers..."
