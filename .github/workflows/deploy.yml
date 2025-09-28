@@ -5,6 +5,46 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      DOCKER_COMPOSE_CONTENT: |
+        version: "3.9"
+        services:
+          db:
+            image: postgres:14
+            restart: always
+            environment:
+              POSTGRES_USER: ${POSTGRES_USER}
+              POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+              POSTGRES_DB: ${POSTGRES_DB}
+            volumes:
+              - db_data:/var/lib/postgresql/data
+            ports:
+              - "5432:5432"
+          backend:
+            image: ghcr.io/felipemorais/ab0-1-backend:latest
+            depends_on:
+              - db
+            environment:
+              RAILS_ENV: production
+              DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+              RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+              SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+              JWT_SECRET: ${JWT_SECRET}
+              CORS_ORIGINS: ${CORS_ORIGINS}
+            ports:
+              - "3001:3001"
+          frontend:
+            image: ghcr.io/felipemorais/ab0-frontend:latest
+            depends_on:
+              - backend
+            environment:
+              NODE_ENV: production
+              NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+              NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+            ports:
+              - "3000:3000"
+        volumes:
+          db_data: {}
     steps:
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.3
@@ -16,6 +56,7 @@ jobs:
           timeout: 60s
           command_timeout: 30m
           script_stop: true
+          envs: DOCKER_COMPOSE_CONTENT
           script: |
             set -e
             
@@ -41,46 +82,7 @@ jobs:
             fi
             
             # Criar docker-compose.yml com valores de ambiente
-            cat > docker-compose.yml <<'CUSTOMEOF'
-version: "3.9"
-services:
-  db:
-    image: postgres:14
-    restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-  backend:
-    image: ghcr.io/felipemorais/ab0-1-backend:latest
-    depends_on:
-      - db
-    environment:
-      RAILS_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
-      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
-      JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: ${CORS_ORIGINS}
-    ports:
-      - "3001:3001"
-  frontend:
-    image: ghcr.io/felipemorais/ab0-frontend:latest
-    depends_on:
-      - backend
-    environment:
-      NODE_ENV: production
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
-    ports:
-      - "3000:3000"
-volumes:
-  db_data: {}
-CUSTOMEOF
+            echo "$DOCKER_COMPOSE_CONTENT" > docker-compose.yml
             
             # Atualizar e iniciar os containers
             echo "🐳 Atualizando containers..."
