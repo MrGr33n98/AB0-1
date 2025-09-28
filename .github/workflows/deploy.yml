@@ -120,6 +120,8 @@ jobs:
             echo "🔍 Verificando existência da imagem: $image"
             
             # Tenta fazer pull da imagem com timeout de 60s
+            # O tempo limite (timeout) garante que o comando não fique bloqueado indefinidamente
+            # caso o GHCR esteja temporariamente indisponível ou lento.
             if timeout 60s docker pull "$image" > /dev/null 2>&1; then
               echo "✅ Imagem $image existe e foi baixada"
               docker rmi "$image" > /dev/null 2>&1 || true # Remove a imagem após o teste
