@@ -1,116 +1,125 @@
 name: Deploy on VPS
-
 on:
   push:
-    branches: [ main ]
-
+    branches: [main]
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Deploy to VPS
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.VM_HOST }}
-        username: ${{ secrets.VM_USER }}
-        key: ${{ secrets.VM_KEY }}
-        port: 22
-        timeout: 30s
-        command_timeout: 20m
-        script_stop: true
-        script: |
-          set -e
-          
-          echo "🚀 Iniciando deploy na VPS..."
-          cd ~
-          rm -rf ab0-app
-          mkdir -p ab0-app
-          cd ab0-app
-          
-          # Verificar se o Docker está rodando
-          if ! docker info > /dev/null 2>&1; then
-            echo "❌ Erro: Docker não está rodando"
-            exit 1
-          fi
-          
-          # Verificar se o Docker Compose Plugin está instalado
-          if ! docker compose version > /dev/null 2>&1; then
-            echo "📦 Instalando Docker Compose Plugin..."
-            apt update
-            apt install -y docker-compose-plugin
-          fi
-          
-          # Criar docker-compose.yml com valores de ambiente
-          cat > docker-compose.yml <<'CUSTOMEOF'
-          version: "3.9"
-          services:
-            db:
-              image: postgres:14
-              restart: always
-              environment:
-                POSTGRES_USER: ${POSTGRES_USER}
-                POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-                POSTGRES_DB: ${POSTGRES_DB}
-              volumes:
-                - db_data:/var/lib/postgresql/data
-              ports:
-                - "5432:5432"
-          
-            backend:
-              image: ghcr.io/felipemorais/ab0-1-backend:latest
-              depends_on:
-                - db
-              environment:
-                RAILS_ENV: production
-                DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-                RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
-                SECRET_KEY_BASE: ${SECRET_KEY_BASE}
-                JWT_SECRET: ${JWT_SECRET}
-                CORS_ORIGINS: ${CORS_ORIGINS}
-              ports:
-                - "3001:3001"
-          
-            frontend:
-              image: ghcr.io/felipemorais/ab0-frontend:latest
-              depends_on:
-                - backend
-              environment:
-                NODE_ENV: production
-                NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-                NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
-              ports:
-                - "3000:3000"
-          
-          volumes:
-            db_data:
-          CUSTOMEOF
-          
-          # Atualizar e iniciar os containers
-          echo "🐳 Atualizando containers..."
-          docker compose pull
-          docker compose down --remove-orphans
-          docker compose up -d
-          
-          echo "⏳ Aguardando inicialização dos serviços..."
-          sleep 90
-          
-          # Verificar se os serviços estão respondendo
-          echo "🔍 Verificando serviços..."
-          if curl -f http://localhost:3001/health > /dev/null 2>&1; then
-            echo "✅ Backend está respondendo"
-          else
-            echo "⚠️  Backend pode não estar respondendo ainda"
-            docker compose logs backend
-          fi
-          
-          if curl -f http://localhost:3000 > /dev/null 2>&1; then
-            echo "✅ Frontend está respondendo"
-          else
-            echo "⚠️  Frontend pode não estar respondendo ainda"
-            docker compose logs frontend
-          fi
-          
-          echo "✅ Deploy finalizado!"
-          echo "🌐 Serviços disponíveis em:"
-          echo "   Frontend: http://localhost:3000"
-          echo "   Backend: http://localhost:3001"
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 30m
+          script_stop: true
+          script: |
+            set -e
+            
+            echo "🚀 Iniciando deploy na VPS..."
+            cd ~
+            rm -rf ab0-app
+            mkdir -p ab0-app
+            cd ab0-app
+            
+            # Verificar dependências necessárias
+            echo "🔍 Verificando dependências..."
+            
+            # Verificar se o Docker está rodando
+            if ! docker info > /dev/null 2>&1; then
+              echo "❌ Erro: Docker não está rodando"
+              exit 1
+            fi
+            
+            # Verificar se o Docker Compose Plugin está instalado
+            if ! docker compose version > /dev/null 2>&1; then
+              echo "📦 Instalando Docker Compose Plugin..."
+              apt update && apt install -y docker-compose-plugin
+            fi
+            
+            # Criar docker-compose.yml com valores de ambiente
+            cat > docker-compose.yml <<'CUSTOMEOF'
+            version: "3.9"
+            services:
+              db:
+                image: postgres:14
+                restart: always
+                environment:
+                  POSTGRES_USER: ${POSTGRES_USER}
+                  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+                  POSTGRES_DB: ${POSTGRES_DB}
+                volumes:
+                  - db_data:/var/lib/postgresql/data
+                ports:
+                  - "5432:5432"
+            
+              backend:
+                image: ghcr.io/felipemorais/ab0-1-backend:latest
+                depends_on:
+                  - db
+                environment:
+                  RAILS_ENV: production
+                  DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+                  RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+                  SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+                  JWT_SECRET: ${JWT_SECRET}
+                  CORS_ORIGINS: ${CORS_ORIGINS}
+                ports:
+                  - "3001:3001"
+            
+              frontend:
+                image: ghcr.io/felipemorais/ab0-frontend:latest
+                depends_on:
+                  - backend
+                environment:
+                  NODE_ENV: production
+                  NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+                  NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+                ports:
+                  - "3000:3000"
+            
+            volumes:
+              db_data: {}
+            CUSTOMEOF
+            
+            # Atualizar e iniciar os containers
+            echo "🐳 Atualizando containers..."
+            docker compose pull
+            docker compose down --remove-orphans
+            docker compose up -d
+            
+            echo "⏳ Aguardando inicialização dos serviços..."
+            
+            # Função para verificar a saúde do serviço
+            check_service() {
+              local service=$1
+              local url=$2
+              local max_attempts=10
+              local wait_time=15
+              
+              echo "🔍 Verificando $service..."
+              for ((i=1; i<=$max_attempts; i++)); do
+                if curl -f "$url" > /dev/null 2>&1; then
+                  echo "✅ $service está respondendo"
+                  return 0
+                fi
+                echo "⏳ Tentativa $i/$max_attempts - Aguardando $wait_time segundos..."
+                sleep $wait_time
+              done
+              
+              echo "⚠️ $service não está respondendo após todas as tentativas"
+              docker compose logs $service
+              return 1
+            }
+            
+            # Verificar serviços
+            check_service "Backend" "http://localhost:3001/health"
+            check_service "Frontend" "http://localhost:3000"
+            
+            echo "✅ Deploy finalizado!"
+            echo "🌐 Serviços disponíveis em:"
+            echo "   Frontend: http://localhost:3000"
+            echo "   Backend: http://localhost:3001"
