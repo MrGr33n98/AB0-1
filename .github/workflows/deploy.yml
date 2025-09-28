@@ -18,25 +18,15 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Login no GitHub Container Registry usando GITHUB_TOKEN
+      # Login GHCR com GITHUB_TOKEN
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      # Build & Push das imagens
+      # Build & Push Images
       - name: Build & Push Images
         run: |
           chmod +x ./script/fix-registry-names.sh
           ./script/fix-registry-names.sh
-
-      # Teste simples de conexão SSH
-      - name: Test SSH connection
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.VM_KEY }}
-          port: 22
-          script: echo "✅ Consegui conectar na VPS!"
 
       # Deploy na VPS
       - name: Deploy on VPS
@@ -50,9 +40,12 @@ jobs:
           envs: POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,POSTGRES_HOST,DATABASE_URL,RAILS_MASTER_KEY,SECRET_KEY_BASE,JWT_SECRET,CORS_ORIGINS,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_SITE_URL
           script: |
             set -e
-            cd ~/ab0-app || mkdir -p ~/ab0-app && cd ~/ab0-app
+            echo "🚀 Iniciando deploy na VPS..."
 
-            # docker-compose.yml
+            mkdir -p ~/ab0-app
+            cd ~/ab0-app
+
+            echo "📦 Criando docker-compose.yml..."
             cat > docker-compose.yml <<'EOF'
             version: "3.9"
             services:
@@ -101,7 +94,7 @@ jobs:
               db_data:
             EOF
 
-            # .env
+            echo "📝 Criando arquivo .env..."
             cat > .env <<EOF
             POSTGRES_USER=${POSTGRES_USER}
             POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -116,8 +109,10 @@ jobs:
             NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
             EOF
 
-            # Restart containers
+            echo "🐳 Atualizando containers..."
             docker compose pull
             docker compose down
             docker compose up -d --remove-orphans
             docker image prune -af
+
+            echo "✅ Deploy finalizado com sucesso!"
