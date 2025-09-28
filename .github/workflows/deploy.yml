@@ -1,4 +1,5 @@
 name: Deploy on VPS
+
 on:
   push:
     branches: [main]
@@ -12,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
     env:
+      # Conteúdo do docker-compose.yml, injetado como variável de ambiente
       DOCKER_COMPOSE_CONTENT: |
         services:
           db:
@@ -50,6 +52,7 @@ jobs:
               - "3000:3000"
         volumes:
           db_data: {}
+      # Variáveis de ambiente secretas e de contexto do GitHub
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
@@ -70,7 +73,7 @@ jobs:
           key: ${{ secrets.VM_KEY }}
           port: 22
           timeout: 60s
-          command_timeout: 30m
+          command_timeout: 30m # Aumentado para acomodar o script de deploy
           script_stop: true
           envs: DOCKER_COMPOSE_CONTENT,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,RAILS_MASTER_KEY,SECRET_KEY_BASE,JWT_SECRET,CORS_ORIGINS,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_SITE_URL,GITHUB_TOKEN,GITHUB_ACTOR
           script: |
@@ -78,86 +81,85 @@ jobs:
             
             echo "🚀 Iniciando deploy na VPS..."
             cd ~
-            rm -rf ab0-app
+            
+            # Limpar e preparar o diretório de deploy
+            # Verifica se o diretório existe e limpa o docker-compose antes de remover tudo
+            if [ -d "ab0-app" ]; then
+                cd ab0-app
+                docker compose down --remove-orphans || true # Derruba containers existentes antes de remover
+                cd ..
+                rm -rf ab0-app
+            fi
+            
             mkdir -p ab0-app
             cd ab0-app
             
-            # Verificar dependências necessárias
+            # 🔍 Verificar e Instalar dependências
             echo "🔍 Verificando dependências..."
             
-            # Verificar se o Docker está rodando
-            if ! docker info > /dev/null 2>&1; then
-              echo "❌ Erro: Docker não está rodando"
+            # Verificar se o Docker está instalado
+            if ! command -v docker &> /dev/null; then
+              echo "❌ Erro: Docker não encontrado. Instale o Docker."
               exit 1
             fi
             
-            # Verificar se o Docker Compose Plugin está instalado
-            if ! docker compose version > /dev/null 2>&1; then
+            # Verificar se o Docker está rodando
+            if ! docker info > /dev/null 2>&1; then
+              echo "❌ Erro: Docker não está rodando. Inicie o serviço Docker."
+              exit 1
+            fi
+            
+            # Verificar se o Docker Compose Plugin está instalado e instalar se não estiver
+            if ! docker compose version &> /dev/null; then
               echo "📦 Instalando Docker Compose Plugin..."
-              apt update && apt install -y docker-compose-plugin
+              sudo apt update && sudo apt install -y docker-compose-plugin
             fi
             
             # Criar docker-compose.yml com valores de ambiente
+            echo "📝 Criando docker-compose.yml..."
             echo "$DOCKER_COMPOSE_CONTENT" > docker-compose.yml
             
-            # Autenticar no GHCR
+            # 🔐 Autenticar no GitHub Container Registry (GHCR)
             echo "🔐 Autenticando no GitHub Container Registry..."
             echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
             
-            # Função para verificar existência de imagem
-            check_image_exists() {
+            # Função Simplificada e Robusta para verificar a existência de uma imagem no GHCR
+            # Retorna 0 se a imagem existe e pode ser baixada, 1 caso contrário.
+            check_ghcr_image_exists() {
               local image=$1
               echo "🔍 Verificando existência da imagem: $image"
               
-              # Verificar se a imagem tem um formato válido
-              if [ -z "$image" ] || [ "$image" = ":" ]; then
-                echo "❌ Imagem com formato inválido ou vazia: '$image'"
-                return 1
-              fi
-              
-              # Tentar fazer pull da imagem com timeout
-              # Usar diretamente o comando timeout para evitar problemas com aspas e subshells
-              if timeout 30s docker pull "$image" > /dev/null 2>&1; then
+              # Tenta fazer pull da imagem com timeout de 60s
+              if timeout 60s docker pull "$image" > /dev/null 2>&1; then
                 echo "✅ Imagem $image existe e foi baixada"
-                # Remover a imagem após o teste para economizar espaço
-                docker rmi "$image" > /dev/null 2>&1 || true
+                docker rmi "$image" > /dev/null 2>&1 || true # Remove a imagem após o teste
                 return 0
               else
-                echo "❌ Imagem $image NÃO existe ou não pôde ser baixada"
+                echo "❌ Imagem $image NÃO existe ou não pôde ser baixada do GHCR."
                 return 1
               fi
             }
             
-            # Verificar se as imagens existem antes de prosseguir
+            # ⏳ Aguardar disponibilidade das imagens customizadas (GHCR)
             MAX_ATTEMPTS=10
-            WAIT_TIME=30
+            WAIT_TIME=15 # Tempo de espera entre as tentativas
             
-            echo "⏳ Aguardando disponibilidade das imagens..."
+            echo "⏳ Aguardando disponibilidade das imagens customizadas no GHCR..."
             for attempt in $(seq 1 $MAX_ATTEMPTS); do
-              backend_exists=0
-              frontend_exists=0
-              db_exists=0
+              backend_ready=0
+              frontend_ready=0
               
-              if check_image_exists "ghcr.io/felipemorais/ab0-1-backend:latest"; then
-                backend_exists=1
+              # Apenas checamos as imagens customizadas que construímos e enviamos
+              if check_ghcr_image_exists "ghcr.io/felipemorais/ab0-1-backend:latest"; then
+                backend_ready=1
               fi
               
-              if check_image_exists "ghcr.io/felipemorais/ab0-1-frontend:latest"; then
-                frontend_exists=1
+              if check_ghcr_image_exists "ghcr.io/felipemorais/ab0-1-frontend:latest"; then
+                frontend_ready=1
               fi
               
-              if check_image_exists "postgres:14"; then
-                db_exists=1
-              else
-                # Se a imagem postgres:14 não estiver disponível, ainda podemos continuar
-                # pois o banco de dados será iniciado a partir do docker-compose.yml
-                echo "ℹ️  Imagem postgres:14 não está disponível como imagem individual, mas será iniciada via docker-compose"
-                db_exists=1
-              fi
-              
-              # Se todas as imagens necessárias existirem, podemos continuar
-              if [ $backend_exists -eq 1 ] && [ $frontend_exists -eq 1 ] && [ $db_exists -eq 1 ]; then
-                echo "✅ Todas as imagens estão disponíveis"
+              if [ $backend_ready -eq 1 ] && [ $frontend_ready -eq 1 ]; then
+                echo "✅ Todas as imagens customizadas estão disponíveis no GHCR."
                 break
               else
                 echo "⏳ Tentativa $attempt/$MAX_ATTEMPTS - Aguardando mais $WAIT_TIME segundos..."
@@ -165,50 +167,68 @@ jobs:
               fi
             done
             
-            # Se após todas as tentativas as imagens ainda não estiverem disponíveis, falha
-            if [ $backend_exists -eq 0 ] || [ $frontend_exists -eq 0 ]; then
-              echo "❌ Algumas imagens não estão disponíveis após $MAX_ATTEMPTS tentativas"
-              echo "❌ Backend disponível: $backend_exists"
-              echo "❌ Frontend disponível: $frontend_exists"
-              echo "❌ DB disponível: $db_exists"
+            # Falha se as imagens customizadas não estiverem prontas após todas as tentativas
+            if [ $backend_ready -eq 0 ] || [ $frontend_ready -eq 0 ]; then
+              echo "❌ Falha crítica: Imagens customizadas não disponíveis no GHCR após $MAX_ATTEMPTS tentativas."
               exit 1
             fi
             
-            # Atualizar e iniciar os containers
-            echo "🐳 Atualizando containers..."
-            timeout 120s docker compose pull || echo "⚠️ Pull command completed with timeout or error"
-            timeout 60s docker compose down --remove-orphans || echo "⚠️ Down command completed with timeout or error"
-            timeout 120s docker compose up -d || echo "⚠️ Up command completed with timeout or error"
+            # --- 🐳 Iniciar o Deploy Docker Compose ---
+            echo "🐳 Iniciando deploy com Docker Compose..."
             
-            echo "⏳ Aguardando inicialização dos serviços..."
+            # Realizar pull das imagens (incluindo postgres:14 e as do GHCR)
+            # Aumentei o timeout para pull, pois pode demorar
+            timeout 180s docker compose pull || { echo "⚠️ Erro ou timeout ao fazer pull das imagens."; exit 1; }
             
-            # Função para verificar a saúde do serviço
-            check_service() {
-              local service=$1
+            # Derrubar e remover containers, redes e volumes órfãos
+            timeout 90s docker compose down --remove-orphans || { echo "⚠️ Erro ou timeout ao derrubar containers antigos."; exit 1; }
+            
+            # Subir os novos containers em background
+            # Use --build se quiser reconstruir imagens localmente antes de subir (normalmente não para deploy)
+            timeout 180s docker compose up -d || { echo "❌ Erro ou timeout ao subir os containers."; exit 1; }
+            
+            # 🏃‍♀️ Rodar migrações do banco de dados (crucial para aplicações Rails)
+            echo "✨ Rodando migrações do banco de dados para o Backend..."
+            # Espera um pouco antes das migrações para o DB ter tempo de subir
+            sleep 15
+            docker compose run --rm backend bundle exec rails db:migrate || { echo "❌ Erro ao rodar migrações do Backend."; docker compose logs db backend; exit 1; }
+            
+            # Opcional: Rodar seeds do banco de dados
+            # echo "🌱 Rodando seeds do banco de dados (opcional)..."
+            # docker compose run --rm backend bundle exec rails db:seed || echo "⚠️ Aviso: Erro ao rodar seeds ou seeds não existiam."
+            
+            echo "⏳ Aguardando inicialização e saúde dos serviços..."
+            
+            # Função para verificar a saúde do serviço HTTP
+            check_service_health() {
+              local service_name=$1
               local url=$2
-              local max_attempts=10
-              local wait_time=15
+              local max_attempts=20 # Aumentado para dar mais tempo ao Rails
+              local wait_time=10 # Espera entre tentativas
+              local curl_timeout=10 # Timeout para cada requisição curl
               
-              echo "🔍 Verificando $service..."
+              echo "🔍 Verificando saúde do serviço '$service_name' em $url..."
               for ((i=1; i<=$max_attempts; i++)); do
-                if timeout 10s curl -f --max-time 10 "$url" > /dev/null 2>&1; then
-                  echo "✅ $service está respondendo"
+                # Curl com flags para silenciar saída (-s), falhar em erros HTTP (-f), e timeout
+                if curl -s -f --max-time "$curl_timeout" "$url" > /dev/null; then
+                  echo "✅ Serviço '$service_name' está respondendo com sucesso."
                   return 0
                 fi
-                echo "⏳ Tentativa $i/$max_attempts - Aguardando $wait_time segundos..."
+                echo "⏳ Tentativa $i/$max_attempts - Aguardando $wait_time segundos para '$service_name'..."
                 sleep $wait_time
               done
               
-              echo "⚠️ $service não está respondendo após todas as tentativas"
-              timeout 30s docker compose logs "$service" || echo "Could not retrieve logs for $service"
+              echo "❌ Serviço '$service_name' NÃO respondeu após $max_attempts tentativas."
+              echo "--- Logs do serviço '$service_name' ---"
+              docker compose logs "$service_name" || echo "Não foi possível recuperar logs para '$service_name'."
               return 1
             }
             
-            # Verificar serviços
-            check_service "Backend" "http://localhost:3001/health"
-            check_service "Frontend" "http://localhost:3000"
+            # 💖 Verificar saúde dos serviços principais
+            check_service_health "backend" "http://localhost:3001/health"
+            check_service_health "frontend" "http://localhost:3000"
             
-            echo "✅ Deploy finalizado!"
-            echo "🌐 Serviços disponíveis em:"
-            echo "   Frontend: http://localhost:3000"
-            echo "   Backend: http://localhost:3001"
+            echo "✅ Deploy finalizado com sucesso!"
+            echo "🌐 Serviços deverão estar disponíveis em:"
+            echo "   Frontend: http://localhost:3000 (na VPS)"
+            echo "   Backend: http://localhost:3001 (na VPS)"
