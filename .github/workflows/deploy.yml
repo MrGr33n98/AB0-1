@@ -115,32 +115,9 @@ jobs:
                 return 1
               fi
               
-              # Tenta fazer pull da imagem com um timeout mais simples
-              # Usando uma abordagem diferente para evitar problemas com subshells
-              timeout_cmd() {
-                local cmd="$1"
-                local timeout="$2"
-                
-                # Executar o comando em background
-                $cmd &
-                local pid=$!
-                
-                # Iniciar timer
-                (sleep $timeout; kill $pid 2>/dev/null) &
-                local timer_pid=$!
-                
-                # Aguardar o comando terminar
-                wait $pid 2>/dev/null
-                local exit_code=$?
-                
-                # Parar timer
-                kill $timer_pid 2>/dev/null
-                
-                return $exit_code
-              }
-              
-              # Tentar fazer pull com timeout
-              if timeout_cmd "docker pull '$image'" 30; then
+              # Tentar fazer pull da imagem com timeout
+              # Usar diretamente o comando timeout para evitar problemas com aspas e subshells
+              if timeout 30s docker pull "$image" > /dev/null 2>&1; then
                 echo "✅ Imagem $image existe e foi baixada"
                 # Remover a imagem após o teste para economizar espaço
                 docker rmi "$image" > /dev/null 2>&1 || true
@@ -199,9 +176,9 @@ jobs:
             
             # Atualizar e iniciar os containers
             echo "🐳 Atualizando containers..."
-            docker compose pull
-            docker compose down --remove-orphans
-            docker compose up -d
+            timeout 120s docker compose pull || echo "⚠️ Pull command completed with timeout or error"
+            timeout 60s docker compose down --remove-orphans || echo "⚠️ Down command completed with timeout or error"
+            timeout 120s docker compose up -d || echo "⚠️ Up command completed with timeout or error"
             
             echo "⏳ Aguardando inicialização dos serviços..."
             
@@ -214,7 +191,7 @@ jobs:
               
               echo "🔍 Verificando $service..."
               for ((i=1; i<=$max_attempts; i++)); do
-                if curl -f "$url" > /dev/null 2>&1; then
+                if timeout 10s curl -f --max-time 10 "$url" > /dev/null 2>&1; then
                   echo "✅ $service está respondendo"
                   return 0
                 fi
@@ -223,7 +200,7 @@ jobs:
               done
               
               echo "⚠️ $service não está respondendo após todas as tentativas"
-              docker compose logs $service
+              timeout 30s docker compose logs "$service" || echo "Could not retrieve logs for $service"
               return 1
             }
             
