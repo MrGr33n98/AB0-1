@@ -18,7 +18,6 @@ jobs:
         timeout: 30s
         command_timeout: 20m
         script_stop: true
-        envs: POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,DATABASE_URL,RAILS_MASTER_KEY,SECRET_KEY_BASE,JWT_SECRET,CORS_ORIGINS,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_SITE_URL
         script: |
           set -e
           
@@ -28,30 +27,21 @@ jobs:
           mkdir -p ab0-app
           cd ab0-app
           
-          # Verificar e instalar Docker se necessário
-          if ! command -v docker &> /dev/null; then
-            echo "📦 Instalando Docker..."
-            curl -fsSL https://get.docker.com -o get-docker.sh
-            sh get-docker.sh
-            systemctl start docker
-            systemctl enable docker
-          fi
-          
-          # Verificar e instalar Docker Compose se necessário
-          if ! command -v docker-compose &> /dev/null; then
-            echo "📦 Instalando Docker Compose..."
-            apt update
-            apt install -y docker-compose-plugin
-          fi
-          
           # Verificar se o Docker está rodando
           if ! docker info > /dev/null 2>&1; then
             echo "❌ Erro: Docker não está rodando"
             exit 1
           fi
           
-          # Criar docker-compose.yml
-          cat > docker-compose.yml <<'EOF'
+          # Verificar se o Docker Compose Plugin está instalado
+          if ! docker compose version > /dev/null 2>&1; then
+            echo "📦 Instalando Docker Compose Plugin..."
+            apt update
+            apt install -y docker-compose-plugin
+          fi
+          
+          # Criar docker-compose.yml com valores de ambiente
+          cat > docker-compose.yml <<'CUSTOMEOF'
           version: "3.9"
           services:
             db:
@@ -93,7 +83,7 @@ jobs:
           
           volumes:
             db_data:
-          EOF
+          CUSTOMEOF
           
           # Atualizar e iniciar os containers
           echo "🐳 Atualizando containers..."
