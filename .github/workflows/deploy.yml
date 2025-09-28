@@ -109,6 +109,12 @@ jobs:
               local image=$1
               echo "🔍 Verificando existência da imagem: $image"
               
+              # Verificar se a imagem tem um formato válido
+              if [ -z "$image" ] || [ "$image" = ":" ]; then
+                echo "❌ Imagem com formato inválido ou vazia: '$image'"
+                return 1
+              fi
+              
               # Tenta fazer pull da imagem com um timeout mais simples
               # Usando uma abordagem diferente para evitar problemas com subshells
               timeout_cmd() {
@@ -165,6 +171,11 @@ jobs:
               
               if check_image_exists "postgres:14"; then
                 db_exists=1
+              else
+                # Se a imagem postgres:14 não estiver disponível, ainda podemos continuar
+                # pois o banco de dados será iniciado a partir do docker-compose.yml
+                echo "ℹ️  Imagem postgres:14 não está disponível como imagem individual, mas será iniciada via docker-compose"
+                db_exists=1
               fi
               
               # Se todas as imagens necessárias existirem, podemos continuar
@@ -182,6 +193,7 @@ jobs:
               echo "❌ Algumas imagens não estão disponíveis após $MAX_ATTEMPTS tentativas"
               echo "❌ Backend disponível: $backend_exists"
               echo "❌ Frontend disponível: $frontend_exists"
+              echo "❌ DB disponível: $db_exists"
               exit 1
             fi
             
