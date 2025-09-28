@@ -109,15 +109,32 @@ jobs:
               local image=$1
               echo "🔍 Verificando existência da imagem: $image"
               
-              # Tenta fazer pull da imagem e verifica o resultado
-              # Usar uma combinação de timeout via subshell com execução em background
-              # para evitar que o processo fique travado caso a imagem não exista
-              (docker pull "$image" > /dev/null 2>&1 & pid=$!; 
-               (sleep 30; kill $pid > /dev/null 2>&1) & watcher=$!;
-               wait $pid > /dev/null 2>&1; ret=$?;
-               kill $watcher > /dev/null 2>&1) > /dev/null 2>&1
+              # Tenta fazer pull da imagem com um timeout mais simples
+              # Usando uma abordagem diferente para evitar problemas com subshells
+              timeout_cmd() {
+                local cmd="$1"
+                local timeout="$2"
+                
+                # Executar o comando em background
+                $cmd &
+                local pid=$!
+                
+                # Iniciar timer
+                (sleep $timeout; kill $pid 2>/dev/null) &
+                local timer_pid=$!
+                
+                # Aguardar o comando terminar
+                wait $pid 2>/dev/null
+                local exit_code=$?
+                
+                # Parar timer
+                kill $timer_pid 2>/dev/null
+                
+                return $exit_code
+              }
               
-              if [ $ret -eq 0 ]; then
+              # Tentar fazer pull com timeout
+              if timeout_cmd "docker pull '$image'" 30; then
                 echo "✅ Imagem $image existe e foi baixada"
                 # Remover a imagem após o teste para economizar espaço
                 docker rmi "$image" > /dev/null 2>&1 || true
