@@ -15,12 +15,14 @@ jobs:
         username: ${{ secrets.VM_USER }}
         key: ${{ secrets.VM_KEY }}
         port: 22
-        script_stop: true
-        timeout: 20m
+        timeout: 60s
         command_timeout: 20m
         envs: POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,POSTGRES_HOST,DATABASE_URL,RAILS_MASTER_KEY,SECRET_KEY_BASE,JWT_SECRET,CORS_ORIGINS,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_SITE_URL
         script: |
           set -e
+
+          # Aguardar um pouco antes de tentar conectar
+          sleep 10
 
           # Verificar se todas as variáveis de ambiente necessárias estão definidas
           required_vars=(
@@ -132,26 +134,54 @@ jobs:
 
           # Aguardar e verificar a saúde dos serviços
           echo "🔍 Verificando a saúde dos serviços..."
-          sleep 30
+          sleep 60
+
+          # Verificar se o backend está respondendo (tentativas múltiplas)
+          attempts=0
+          max_attempts=10
+          
+          while [ $attempts -lt $max_attempts ]; do
+            if curl -f http://localhost:3001/health > /dev/null 2>&1; then
+              echo "✅ Backend está respondendo"
+              break
+            else
+              echo "⏳ Tentando conectar ao backend... ($((attempts+1))/$max_attempts)"
+              sleep 10
+              attempts=$((attempts+1))
+            fi
+          done
+          
+          if [ $attempts -eq $max_attempts ]; then
+            echo "❌ Erro: Backend não está respondendo após $max_attempts tentativas"
+            docker compose logs backend
+            exit 1
+          fi
+
+          # Verificar se o frontend está respondendo (tentativas múltiplas)
+          attempts=0
+          max_attempts=10
+          
+          while [ $attempts -lt $max_attempts ]; do
+            if curl -f "http://localhost:3000" > /dev/null 2>&1; then
+              echo "✅ Frontend está respondendo"
+              break
+            else
+              echo "⏳ Tentando conectar ao frontend... ($((attempts+1))/$max_attempts)"
+              sleep 10
+              attempts=$((attempts+1))
+            fi
+          done
+          
+          if [ $attempts -eq $max_attempts ]; then
+            echo "❌ Erro: Frontend não está respondendo após $max_attempts tentativas"
+            docker compose logs frontend
+            exit 1
+          fi
 
           # Verificar se o banco de dados está respondendo
           if ! docker compose exec -T db pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"; then
             echo "❌ Erro: Banco de dados não está respondendo"
             docker compose logs db
-            exit 1
-          fi
-
-          # Verificar se o backend está respondendo
-          if ! curl -f http://localhost:3001/health > /dev/null 2>&1; then
-            echo "❌ Erro: Backend não está respondendo"
-            docker compose logs backend
-            exit 1
-          fi
-
-          # Verificar se o frontend está respondendo
-          if ! curl -f "http://localhost:3000" > /dev/null 2>&1; then
-            echo "❌ Erro: Frontend não está respondendo"
-            docker compose logs frontend
             exit 1
           fi
 
