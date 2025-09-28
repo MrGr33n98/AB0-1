@@ -28,7 +28,7 @@ jobs:
             ports:
               - "5432:5432"
           backend:
-            image: ghcr.io/felipemorais/ab0-1-backend:latest
+            image: ghcr.io/MrGr33n98/ab0-1-backend:latest
             depends_on:
               - db
             environment:
@@ -41,7 +41,7 @@ jobs:
             ports:
               - "3001:3001"
           frontend:
-            image: ghcr.io/felipemorais/ab0-1-frontend:latest
+            image: ghcr.io/MrGr33n98/ab0-1-frontend:latest
             depends_on:
               - backend
             environment:
@@ -140,13 +140,13 @@ jobs:
             frontend_ready=0
             
             # Apenas checamos as imagens customizadas que construímos e enviamos
-            if check_ghcr_image_exists "ghcr.io/felipemorais/ab0-1-backend:latest"; then
-              backend_ready=1
-            fi
-            
-            if check_ghcr_image_exists "ghcr.io/felipemorais/ab0-1-frontend:latest"; then
-              frontend_ready=1
-            fi
+              if check_ghcr_image_exists "ghcr.io/MrGr33n98/ab0-1-backend:latest"; then
+                backend_ready=1
+              fi
+              
+              if check_ghcr_image_exists "ghcr.io/MrGr33n98/ab0-1-frontend:latest"; then
+                frontend_ready=1
+              fi
             
             if [ $backend_ready -eq 1 ] && [ $frontend_ready -eq 1 ]; then
               echo "✅ Todas as imagens customizadas estão disponíveis no GHCR."
