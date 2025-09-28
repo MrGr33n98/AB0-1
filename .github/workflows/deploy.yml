@@ -2,9 +2,15 @@ name: Deploy on VPS
 on:
   push:
     branches: [main]
+  workflow_run:
+    workflows: ["Build and Push Backend Docker Image", "Build and Push Frontend Docker Image"]
+    types:
+      - completed
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
     env:
       DOCKER_COMPOSE_CONTENT: |
         services:
