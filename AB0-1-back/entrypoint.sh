@@ -5,15 +5,17 @@ set -e
 rm -f tmp/pids/server.pid
 rm -f tmp/pids/*.pid
 
-# Wait for database
+# Espera o Postgres ficar pronto
+echo "⏳ Aguardando o Postgres em $POSTGRES_DB..."
 until PGPASSWORD=$POSTGRES_PASSWORD psql -h "db" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c '\q'; do
-  echo "Postgres is unavailable - sleeping"
-  sleep 1
+  echo "Postgres não disponível ainda - tentando novamente..."
+  sleep 2
 done
+echo "✅ Postgres disponível!"
 
-# Setup database if needed
-bundle exec rails db:migrate:status || bundle exec rails db:setup
-bundle exec rails db:migrate
+# Cria ou migra o banco de dados
+echo "🔄 Rodando migrations..."
+bundle exec rails db:prepare
 
-# Then exec the container's main process
+# Executa o processo principal do container (ex.: puma, sidekiq, etc.)
 exec "$@"
