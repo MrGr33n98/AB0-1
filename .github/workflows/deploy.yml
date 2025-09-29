@@ -20,9 +20,9 @@ jobs:
             image: postgres:14
             restart: always
             environment:
-              POSTGRES_USER: ${POSTGRES_USER}
-              POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-              POSTGRES_DB: ${POSTGRES_DB}
+              POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+              POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+              POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
             volumes:
               - db_data:/var/lib/postgresql/data
             ports:
@@ -130,5 +130,5 @@ jobs:
           }
 
           echo "✅ Deploy finalizado com sucesso!"
-          echo "🌐 Frontend: http://<SEU_IP_OU_DOMINIO>:3000"
-          echo "🌐 Backend: http://<SEU_IP_OU_DOMINIO>:3001"
+          echo "🌐 Frontend: http://64.225.59.107:3000"
+          echo "🌐 Backend: http://64.225.59.107:3001"
