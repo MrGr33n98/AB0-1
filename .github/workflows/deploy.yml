@@ -11,10 +11,6 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
-    # A permissão 'packages: write' não é mais necessária aqui, pois usaremos GHCR_PAT
-    # permissions:
-    #   contents: read # Permissão padrão para checkout do código
-    #   packages: write # Concede permissão de leitura e escrita para pacotes (incluindo GHCR)
     if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
 
     env:
@@ -74,26 +70,11 @@ jobs:
       CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
       NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
       NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
-      # GHCR_PAT e GITHUB_ACTOR são adicionados de volta ao env para uso direto no comando docker login
-      GHCR_PAT: ${{ secrets.GHCR_PAT }}
-      GITHUB_ACTOR: ${{ github.actor }}
 
     steps:
-      # O passo 'Login to GitHub Container Registry' usando a ação docker/login-action@v3 será removido
-      # - name: Login to GitHub Container Registry
-      #   uses: docker/login-action@v3
-      #   with:
-      #     registry: ghcr.io
-      #     username: ${{ github.actor }}
-      #     password: ${{ secrets.GITHUB_TOKEN }} # Alterado para usar GITHUB_TOKEN
-
-      - name: Deploy Application
+      - name: Check dependencies and start Docker
         run: |
           set -e
-          echo "🚀 Iniciando deploy na VPS..."
-          cd ~/ab0-app || mkdir -p ~/ab0-app && cd ~/ab0-app
-
-          # Verificar dependências
           echo "🔍 Verificando dependências..."
           if ! command -v docker &> /dev/null; then
             echo "❌ Erro: Docker não encontrado."
@@ -101,30 +82,40 @@ jobs:
           fi
 
           if ! docker info > /dev/null 2>&1; then
-            echo "❌ Erro: Docker não está rodando."
-            exit 1
+            echo "ℹ️ Docker não está rodando. Tentando iniciar..."
+            sudo systemctl start docker
+            sleep 5
+            if ! docker info > /dev/null 2>&1; then
+              echo "❌ Erro: Falha ao iniciar o Docker."
+              exit 1
+            fi
+            echo "✅ Docker iniciado com sucesso."
           fi
 
           if ! docker compose version &> /dev/null; then
             echo "📦 Instalando Docker Compose Plugin..."
-            sudo apt update && sudo apt install -y docker-compose-plugin
+            sudo apt-get update && sudo apt-get install -y docker-compose-plugin
           fi
 
-          # Criar/atualizar docker-compose.yml
+      - name: Login to GitHub Container Registry
+        run: |
+          echo "🔐 Autenticando no GitHub Container Registry..."
+          echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Deploy Application
+        run: |
+          set -e
+          echo "🚀 Iniciando deploy na VPS..."
+          cd ~/ab0-app || mkdir -p ~/ab0-app && cd ~/ab0-app
+
           echo "📝 Criando docker-compose.yml..."
           echo "$DOCKER_COMPOSE_CONTENT" > docker-compose.yml
 
-          # Adicionando o comando manual de login do Docker com GHCR_PAT
-          echo "🔐 Autenticando no GitHub Container Registry..."
-          echo "$GHCR_PAT" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-
-          # Pull e subir containers
           echo "🐳 Atualizando containers..."
           timeout 180s docker compose pull
           timeout 90s docker compose down --remove-orphans
           timeout 180s docker compose up -d
 
-          # Migrações Rails
           echo "✨ Rodando migrações..."
           docker compose run --rm backend bundle exec rails db:migrate || {
             echo "❌ Erro ao rodar migrações"
