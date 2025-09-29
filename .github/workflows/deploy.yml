@@ -10,10 +10,11 @@ on:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: self-hosted # Usando o runner auto-hospedado
     if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
 
     env:
+      # O conteúdo do docker-compose.yml é gerado aqui, interpolando diretamente os secrets do GitHub.
       DOCKER_COMPOSE_CONTENT: |
         services:
           db:
@@ -27,37 +28,35 @@ jobs:
               - db_data:/var/lib/postgresql/data
             ports:
               - "5432:5432"
-            healthcheck:
-              test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+            healthcheck: # Adicionado healthcheck para o DB
+              test: ["CMD-SHELL", "pg_isready -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.POSTGRES_DB }}"]
               interval: 5s
+              timeout: 5s
               retries: 10
+              start_period: 10s # Dê um tempo para o DB iniciar antes de verificar
 
           backend:
             image: ghcr.io/mrgr33n98/ab0-1-backend:latest
             depends_on:
               db:
-                condition: service_healthy
+                condition: service_healthy # Espera o DB estar healthy
             environment:
               RAILS_ENV: production
               # Referencie os secrets diretamente aqui para garantir a interpolação correta
-              POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-              POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
               DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@db:5432/${{ secrets.POSTGRES_DB }}
               RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
               SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
               JWT_SECRET: ${{ secrets.JWT_SECRET }}
-              # CORS_ORIGINS também pode usar VM_HOST se for o caso
-              CORS_ORIGINS: http://${{ secrets.VM_HOST }}:3000 # Exemplo: se o frontend estiver em 3000
+              CORS_ORIGINS: http://${{ secrets.VM_HOST }}:3000,http://localhost:3000 # Adicione localhost para desenvolvimento local, se necessário
             ports:
               - "3001:3001"
 
           frontend:
             image: ghcr.io/mrgr33n98/ab0-1-frontend:latest
             depends_on:
-              - backend
+              - backend # O frontend não precisa esperar o backend estar "healthy" para apenas iniciar o container
             environment:
               NODE_ENV: production
-              # Construindo os URLs a partir de VM_HOST
               NEXT_PUBLIC_API_URL: http://${{ secrets.VM_HOST }}:3001
               NEXT_PUBLIC_SITE_URL: http://${{ secrets.VM_HOST }}:3000
             ports:
@@ -66,18 +65,12 @@ jobs:
         volumes:
           db_data: {}
 
-      # Estas variáveis de ambiente no nível do job são para uso em 'run' steps,
-      # mas não são automaticamente interpoladas em outras variáveis 'env' como DOCKER_COMPOSE_CONTENT.
-      # Mantenha-as para o passo de depuração 'Debugging DB connection in backend container'
-      # e para qualquer outro 'run' step que as utilize diretamente.
-      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-      RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
-      SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
+      # As variáveis de ambiente do job são usadas diretamente nos 'run' steps do workflow
+      # e não precisam ser duplicadas para o DOCKER_COMPOSE_CONTENT se já foram interpoladas lá.
+      # Mantenha apenas o que for realmente usado fora do DOCKER_COMPOSE_CONTENT.
+      GHCR_USERNAME: mrgr33n98 # Explicitamente definido para o login GHCR
       VM_HOST: ${{ secrets.VM_HOST }}
+      # Os outros secrets são passados diretamente para DOCKER_COMPOSE_CONTENT, não precisam ser listados aqui novamente.
 
     steps:
       - name: Check dependencies and start Docker
@@ -93,7 +86,7 @@ jobs:
           if ! docker info > /dev/null 2>&1; then
             echo "ℹ️ Docker não está rodando. Tentando iniciar..."
             sudo systemctl start docker
-            sleep 5
+            sleep 5 # Dê um breve tempo para o Docker iniciar
             if ! docker info > /dev/null 2>&1; then
               echo "❌ Erro: Falha ao iniciar o Docker."
               exit 1
@@ -112,37 +105,83 @@ jobs:
       - name: Login to GitHub Container Registry
         run: |
           echo "🔐 Autenticando no GitHub Container Registry..."
-          # É crucial que o GHCR_PAT seja gerado pela conta 'mrgr33n98'
-          # e que o username usado no login seja 'mrgr33n98' para acessar os pacotes.
-          echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u mrgr33n98 --password-stdin
+          # Usando o GHCR_USERNAME definido no 'env' do job e o token
+          echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ env.GHCR_USERNAME }} --password-stdin
 
       - name: Deploy Application
         run: |
           set -e
           echo "🚀 Iniciando deploy na VPS..."
-          cd ~/ab0-app || mkdir -p ~/ab0-app && cd ~/ab0-app
+          # Garante que o diretório ab0-app existe e limpa instalações anteriores
+          if [ -d "~/ab0-app" ]; then
+              cd ~/ab0-app
+              docker compose down --remove-orphans || true # Derruba containers antigos de forma suave
+              cd ~
+              rm -rf ~/ab0-app
+          fi
+          mkdir -p ~/ab0-app
+          cd ~/ab0-app
+
 
           echo "📝 Criando docker-compose.yml..."
           # Desabilita a expansão de histórico para evitar problemas com '!' na senha
           set +H
           echo "$DOCKER_COMPOSE_CONTENT" > docker-compose.yml
-          # Reabilita a expansão de histórico (opcional, mas boa prática)
+          # Reabilita a expansão de histórico (boa prática)
           set -H
 
           echo "🐳 Atualizando containers..."
-          timeout 180s docker compose pull
-          timeout 90s docker compose down --remove-orphans
-          timeout 180s docker compose up -d
+          timeout 180s docker compose pull || { echo "⚠️ Erro ou timeout ao fazer pull das imagens."; exit 1; }
+          timeout 90s docker compose up -d || { echo "❌ Erro ou timeout ao subir os containers."; exit 1; }
+
 
           echo "✨ Rodando migrações..."
-          # PASSO DE DEPURACAO: Verifique as variaveis de ambiente do banco de dados dentro do container backend
-          docker compose run --rm backend bash -c "echo '--- Debugging DB connection in backend container ---' && env | grep -E 'DATABASE_URL|POSTGRES_USER|POSTGRES_PASSWORD|POSTGRES_DB' && echo '---------------------------------------------------'"
-          docker compose run --rm backend bundle exec rails db:migrate || {
+          # PASSO DE DEPURACAO CRÍTICO:
+          # Exibe as variáveis de ambiente relacionadas ao DB que o container backend está a ver.
+          # Isso é essencial para verificar a senha.
+          echo "--- Debugging DB connection in backend container ---"
+          docker compose run --rm backend bash -c "env | grep -E 'DATABASE_URL|POSTGRES_USER|POSTGRES_PASSWORD|POSTGRES_DB'"
+          echo "---------------------------------------------------"
+
+          # Rodar migrações, esperando que o DB esteja HEALTHY devido ao healthcheck e depends_on
+          docker compose run --rm -T backend bundle exec rails db:migrate || {
             echo "❌ Erro ao rodar migrações"
-            docker compose logs db backend
+            docker compose logs db backend # Mostra logs do DB e backend para debug
             exit 1
           }
 
+          echo "⏳ Aguardando inicialização e saúde dos serviços..."
+
+          # Função para verificar a saúde do serviço HTTP
+          check_service_health() {
+            local service_name=$1
+            local url=$2
+            local max_attempts=20 # Aumentado para dar mais tempo ao Rails
+            local wait_time=10 # Espera entre tentativas
+            local curl_timeout=10 # Timeout para cada requisição curl
+            
+            echo "🔍 Verificando saúde do serviço '$service_name' em $url..."
+            for ((i=1; i<=$max_attempts; i++)); do
+              if curl -s -f --max-time "$curl_timeout" "$url" > /dev/null; then
+                echo "✅ Serviço '$service_name' está respondendo com sucesso."
+                return 0
+              fi
+              echo "⏳ Tentativa $i/$max_attempts - Aguardando $wait_time segundos para '$service_name'..."
+              sleep $wait_time
+            done
+            
+            echo "❌ Serviço '$service_name' NÃO respondeu após $max_attempts tentativas."
+            echo "--- Logs do serviço '$service_name' ---"
+            docker compose logs "$service_name" || echo "Não foi possível recuperar logs para '$service_name'."
+            return 1
+          }
+          
+          # Verificar saúde dos serviços principais
+          # Agora usando VM_HOST para as URLs
+          check_service_health "backend" "http://${{ secrets.VM_HOST }}:3001/health" || exit 1
+          check_service_health "frontend" "http://${{ secrets.VM_HOST }}:3000" || exit 1
+
           echo "✅ Deploy finalizado com sucesso!"
-          echo "🌐 Frontend: http://64.225.59.107:3000"
-          echo "🌐 Backend: http://64.225.59.107:3001"
+          echo "🌐 Serviços disponíveis:"
+          echo "   Frontend: http://${{ secrets.VM_HOST }}:3000"
+          echo "   Backend: http://${{ secrets.VM_HOST }}:3001"
