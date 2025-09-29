@@ -39,15 +39,15 @@ jobs:
                 condition: service_healthy
             environment:
               RAILS_ENV: production
-              # Adicione POSTGRES_USER e POSTGRES_PASSWORD aqui para que o entrypoint.sh possa usá-los
-              POSTGRES_USER: ${POSTGRES_USER} # <--- ESTA LINHA PRECISA SER ADICIONADA
-              POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-              DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-              RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
-              SECRET_KEY_BASE: ${SECRET_KEY_BASE}
-              JWT_SECRET: ${JWT_SECRET}
+              # Referencie os secrets diretamente aqui para garantir a interpolação correta
+              POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+              POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+              DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@db:5432/${{ secrets.POSTGRES_DB }}
+              RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+              SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
+              JWT_SECRET: ${{ secrets.JWT_SECRET }}
               # CORS_ORIGINS também pode usar VM_HOST se for o caso
-              CORS_ORIGINS: http://${VM_HOST}:3000 # Exemplo: se o frontend estiver em 3000
+              CORS_ORIGINS: http://${{ secrets.VM_HOST }}:3000 # Exemplo: se o frontend estiver em 3000
             ports:
               - "3001:3001"
 
@@ -58,14 +58,18 @@ jobs:
             environment:
               NODE_ENV: production
               # Construindo os URLs a partir de VM_HOST
-              NEXT_PUBLIC_API_URL: http://${VM_HOST}:3001
-              NEXT_PUBLIC_SITE_URL: http://${VM_HOST}:3000
+              NEXT_PUBLIC_API_URL: http://${{ secrets.VM_HOST }}:3001
+              NEXT_PUBLIC_SITE_URL: http://${{ secrets.VM_HOST }}:3000
             ports:
               - "3000:3000"
 
         volumes:
           db_data: {}
 
+      # Estas variáveis de ambiente no nível do job são para uso em 'run' steps,
+      # mas não são automaticamente interpoladas em outras variáveis 'env' como DOCKER_COMPOSE_CONTENT.
+      # Mantenha-as para o passo de depuração 'Debugging DB connection in backend container'
+      # e para qualquer outro 'run' step que as utilize diretamente.
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
@@ -73,10 +77,6 @@ jobs:
       SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
-      # Remova NEXT_PUBLIC_API_URL e NEXT_PUBLIC_SITE_URL daqui, pois serão construídos
-      # NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-      # NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
-      # Adicione o novo segredo VM_HOST
       VM_HOST: ${{ secrets.VM_HOST }}
 
     steps:
