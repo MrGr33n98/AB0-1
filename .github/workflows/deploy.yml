@@ -70,10 +70,18 @@ jobs:
       CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
       NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
       NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
-      GHCR_PAT: ${{ secrets.GHCR_PAT }}
-      GITHUB_ACTOR: ${{ github.actor }}
+      # GHCR_PAT and GITHUB_ACTOR are removed from env as they are passed directly to the login action
+      # GHCR_PAT: ${{ secrets.GHCR_PAT }}
+      # GITHUB_ACTOR: ${{ github.actor }}
 
     steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+
       - name: Deploy Application
         run: |
           set -e
@@ -101,9 +109,9 @@ jobs:
           echo "📝 Criando docker-compose.yml..."
           echo "$DOCKER_COMPOSE_CONTENT" > docker-compose.yml
 
-          # Login no GHCR
-          echo "🔐 Autenticando no GitHub Container Registry..."
-          echo "$GHCR_PAT" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          # The manual docker login command is removed, as the dedicated action handles it
+          # echo "🔐 Autenticando no GitHub Container Registry..."
+          # echo "$GHCR_PAT" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
           # Pull e subir containers
           echo "🐳 Atualizando containers..."
