@@ -11,9 +11,10 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
-    permissions:
-      contents: read # Permissão padrão para checkout do código
-      packages: write # Concede permissão de leitura e escrita para pacotes (incluindo GHCR)
+    # A permissão 'packages: write' não é mais necessária aqui, pois usaremos GHCR_PAT
+    # permissions:
+    #   contents: read # Permissão padrão para checkout do código
+    #   packages: write # Concede permissão de leitura e escrita para pacotes (incluindo GHCR)
     if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
 
     env:
@@ -73,17 +74,18 @@ jobs:
       CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
       NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
       NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
-      # GHCR_PAT and GITHUB_ACTOR are removed from env as they are passed directly to the login action
-      # GHCR_PAT: ${{ secrets.GHCR_PAT }}
-      # GITHUB_ACTOR: ${{ github.actor }}
+      # GHCR_PAT e GITHUB_ACTOR são adicionados de volta ao env para uso direto no comando docker login
+      GHCR_PAT: ${{ secrets.GHCR_PAT }}
+      GITHUB_ACTOR: ${{ github.actor }}
 
     steps:
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }} # Alterado para usar GITHUB_TOKEN
+      # O passo 'Login to GitHub Container Registry' usando a ação docker/login-action@v3 será removido
+      # - name: Login to GitHub Container Registry
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ghcr.io
+      #     username: ${{ github.actor }}
+      #     password: ${{ secrets.GITHUB_TOKEN }} # Alterado para usar GITHUB_TOKEN
 
       - name: Deploy Application
         run: |
@@ -112,9 +114,9 @@ jobs:
           echo "📝 Criando docker-compose.yml..."
           echo "$DOCKER_COMPOSE_CONTENT" > docker-compose.yml
 
-          # The manual docker login command is removed, as the dedicated action handles it
-          # echo "🔐 Autenticando no GitHub Container Registry..."
-          # echo "$GHCR_PAT" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          # Adicionando o comando manual de login do Docker com GHCR_PAT
+          echo "🔐 Autenticando no GitHub Container Registry..."
+          echo "$GHCR_PAT" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
           # Pull e subir containers
           echo "🐳 Atualizando containers..."
