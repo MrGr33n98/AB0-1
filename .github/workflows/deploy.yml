@@ -77,8 +77,9 @@ jobs:
           set -e
           echo "🔍 Verificando dependências..."
           if ! command -v docker &> /dev/null; then
-            echo "❌ Erro: Docker não encontrado."
-            exit 1
+            echo "ℹ️ Docker não encontrado. Instalando..."
+            sudo apt-get update
+            sudo apt-get install -y docker.io
           fi
 
           if ! docker info > /dev/null 2>&1; then
@@ -90,12 +91,15 @@ jobs:
               exit 1
             fi
             echo "✅ Docker iniciado com sucesso."
+          else
+            echo "✅ Docker já está rodando."
           fi
 
           if ! docker compose version &> /dev/null; then
             echo "📦 Instalando Docker Compose Plugin..."
             sudo apt-get update && sudo apt-get install -y docker-compose-plugin
           fi
+          echo "✅ Dependências verificadas."
 
       - name: Login to GitHub Container Registry
         run: |
