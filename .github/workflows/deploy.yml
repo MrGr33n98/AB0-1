@@ -43,7 +43,8 @@ jobs:
               RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
               SECRET_KEY_BASE: ${SECRET_KEY_BASE}
               JWT_SECRET: ${JWT_SECRET}
-              CORS_ORIGINS: ${CORS_ORIGINS}
+              # CORS_ORIGINS também pode usar VM_HOST se for o caso
+              CORS_ORIGINS: http://${VM_HOST}:3000 # Exemplo: se o frontend estiver em 3000
             ports:
               - "3001:3001"
 
@@ -53,8 +54,9 @@ jobs:
               - backend
             environment:
               NODE_ENV: production
-              NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-              NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+              # Construindo os URLs a partir de VM_HOST
+              NEXT_PUBLIC_API_URL: http://${VM_HOST}:3001
+              NEXT_PUBLIC_SITE_URL: http://${VM_HOST}:3000
             ports:
               - "3000:3000"
 
@@ -68,8 +70,11 @@ jobs:
       SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
-      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-      NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+      # Remova NEXT_PUBLIC_API_URL e NEXT_PUBLIC_SITE_URL daqui, pois serão construídos
+      # NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+      # NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+      # Adicione o novo segredo VM_HOST
+      VM_HOST: ${{ secrets.VM_HOST }}
 
     steps:
       - name: Check dependencies and start Docker
@@ -115,7 +120,11 @@ jobs:
           cd ~/ab0-app || mkdir -p ~/ab0-app && cd ~/ab0-app
 
           echo "📝 Criando docker-compose.yml..."
+          # Desabilita a expansão de histórico para evitar problemas com '!' na senha
+          set +H
           echo "$DOCKER_COMPOSE_CONTENT" > docker-compose.yml
+          # Reabilita a expansão de histórico (opcional, mas boa prática)
+          set -H
 
           echo "🐳 Atualizando containers..."
           timeout 180s docker compose pull
@@ -123,6 +132,8 @@ jobs:
           timeout 180s docker compose up -d
 
           echo "✨ Rodando migrações..."
+          # PASSO DE DEPURACAO: Verifique as variaveis de ambiente do banco de dados dentro do container backend
+          docker compose run --rm backend bash -c "echo '--- Debugging DB connection in backend container ---' && env | grep -E 'DATABASE_URL|POSTGRES_USER|POSTGRES_PASSWORD|POSTGRES_DB' && echo '---------------------------------------------------'"
           docker compose run --rm backend bundle exec rails db:migrate || {
             echo "❌ Erro ao rodar migrações"
             docker compose logs db backend
