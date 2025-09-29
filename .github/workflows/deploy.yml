@@ -43,6 +43,9 @@ jobs:
             environment:
               RAILS_ENV: production
               # Referencie os secrets diretamente aqui para garantir a interpolação correta
+              POSTGRES_USER: ${{ secrets.POSTGRES_USER }} # Adicionado
+              POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }} # Adicionado
+              POSTGRES_DB: ${{ secrets.POSTGRES_DB }} # Adicionado
               DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@db:5432/${{ secrets.POSTGRES_DB }}
               RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
               SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
