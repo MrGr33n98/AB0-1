@@ -14,7 +14,6 @@ jobs:
     if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
 
     env:
-      # Conteúdo do docker-compose.yml, injetado como variável de ambiente
       DOCKER_COMPOSE_CONTENT: |
         services:
           db:
@@ -28,11 +27,16 @@ jobs:
               - db_data:/var/lib/postgresql/data
             ports:
               - "5432:5432"
+            healthcheck:
+              test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+              interval: 5s
+              retries: 10
 
           backend:
             image: ghcr.io/mrgr33n98/ab0-1-backend:latest
             depends_on:
-              - db
+              db:
+                condition: service_healthy
             environment:
               RAILS_ENV: production
               DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
@@ -57,7 +61,6 @@ jobs:
         volumes:
           db_data: {}
 
-      # Variáveis de ambiente secretas
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
@@ -75,18 +78,7 @@ jobs:
         run: |
           set -e
           echo "🚀 Iniciando deploy na VPS..."
-          cd ~
-
-          # Preparar diretório
-          if [ -d "ab0-app" ]; then
-            cd ab0-app
-            docker compose down --remove-orphans || true
-            cd ..
-            rm -rf ab0-app
-          fi
-
-          mkdir -p ab0-app
-          cd ab0-app
+          cd ~/ab0-app || mkdir -p ~/ab0-app && cd ~/ab0-app
 
           # Verificar dependências
           echo "🔍 Verificando dependências..."
@@ -105,7 +97,7 @@ jobs:
             sudo apt update && sudo apt install -y docker-compose-plugin
           fi
 
-          # Criar docker-compose.yml
+          # Criar/atualizar docker-compose.yml
           echo "📝 Criando docker-compose.yml..."
           echo "$DOCKER_COMPOSE_CONTENT" > docker-compose.yml
 
@@ -114,14 +106,13 @@ jobs:
           echo "$GHCR_PAT" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
           # Pull e subir containers
-          echo "🐳 Iniciando deploy com Docker Compose..."
+          echo "🐳 Atualizando containers..."
           timeout 180s docker compose pull
           timeout 90s docker compose down --remove-orphans
           timeout 180s docker compose up -d
 
           # Migrações Rails
           echo "✨ Rodando migrações..."
-          sleep 15
           docker compose run --rm backend bundle exec rails db:migrate || {
             echo "❌ Erro ao rodar migrações"
             docker compose logs db backend
@@ -129,6 +120,5 @@ jobs:
           }
 
           echo "✅ Deploy finalizado com sucesso!"
-          echo "🌐 Frontend: http://localhost:3000"
-          echo "🌐 Backend: http://localhost:3001"
- 
+          echo "🌐 Frontend: http://<SEU_IP_OU_DOMINIO>:3000"
+          echo "🌐 Backend: http://<SEU_IP_OU_DOMINIO>:3001"
