@@ -104,7 +104,9 @@ jobs:
       - name: Login to GitHub Container Registry
         run: |
           echo "🔐 Autenticando no GitHub Container Registry..."
-          echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          # É crucial que o GHCR_PAT seja gerado pela conta 'mrgr33n98'
+          # e que o username usado no login seja 'mrgr33n98' para acessar os pacotes.
+          echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u mrgr33n98 --password-stdin
 
       - name: Deploy Application
         run: |
