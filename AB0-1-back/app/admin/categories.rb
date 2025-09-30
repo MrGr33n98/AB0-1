@@ -134,12 +134,10 @@ ActiveAdmin.register Category, namespace: :admin do
         status_tag category.featured ? 'Yes' : 'No', category.featured ? 'ok' : 'error'
       end
       row :status do |category|
-        status_tag category.status == 'active' ? 'Active' : 'Inactive', 
-                   category.status == 'active' ? 'ok' : 'error'
+        status_tag (category.status == 'active' ? 'Active' : 'Inactive'), class: (category.status == 'active' ? 'ok' : 'error')
       end
       row :kind do |category|
-        status_tag category.kind == 'main' ? 'Main' : 'Sub', 
-                   category.kind == 'main' ? 'ok' : 'warning'
+        status_tag (category.kind == 'main' ? 'Main' : 'Sub'), class: (category.kind == 'main' ? 'ok' : 'warning')
       end
       row :parent do |category|
         category.parent_id ? link_to(Category.find(category.parent_id).name, admin_category_path(category.parent_id)) : 'None'
@@ -234,13 +232,11 @@ ActiveAdmin.register Category, namespace: :admin do
     end
     
     column :status do |category|
-      status_tag(category.status == 'active' ? 'Active' : 'Inactive', 
-                 class: category.status == 'active' ? 'ok' : 'error')
+      status_tag (category.status == 'active' ? 'Active' : 'Inactive'), class: (category.status == 'active' ? 'ok' : 'error')
     end
     
     column :kind do |category|
-      status_tag(category.kind == 'main' ? 'Main' : 'Sub', 
-                 class: category.kind == 'main' ? 'ok' : 'warning')
+      status_tag (category.kind == 'main' ? 'Main' : 'Sub'), class: (category.kind == 'main' ? 'ok' : 'warning')
     end
     
     column 'Companies' do |category|
