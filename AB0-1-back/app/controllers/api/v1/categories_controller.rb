@@ -100,6 +100,20 @@ module Api
         render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
       end
 
+      # =========================
+      # GET /categories/slug/:slug
+      # =========================
+      def show_by_slug
+        slug = params[:slug] || params[:id] # Support both slug param and id param
+        @category = Category.find_by!(seo_url: slug)
+        render json: @category.as_json
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Categoria não encontrada' }, status: :not_found
+      rescue StandardError => e
+        Rails.logger.error("Categories#show_by_slug error: #{e.message}")
+        render json: { error: 'Erro interno no servidor' }, status: :internal_server_error
+      end
+
       private
 
       def set_category

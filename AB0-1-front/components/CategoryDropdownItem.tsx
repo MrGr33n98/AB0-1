@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Category } from '@/types/category';
+import { Category } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 
 interface CategoryDropdownItemProps {
   category: Category;
-  onLinkClick: () => void;
+  onSelect: () => void;
 }
 
 const CategoryDropdownItem: React.FC<CategoryDropdownItemProps> = ({
   category,
-  onLinkClick,
+  onSelect,
 }) => {
   const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
 
@@ -24,9 +24,9 @@ const CategoryDropdownItem: React.FC<CategoryDropdownItemProps> = ({
       onMouseLeave={() => isSubMenuOpen && setIsSubMenuOpen(false)}
     >
       <Link
-        href={`/categories/${category.slug}`}
+        href={`/categories/${category.seo_url}`}
         className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-        onClick={onLinkClick}
+        onClick={onSelect}
       >
         {category.name}
         {hasSubcategories && (
@@ -47,9 +47,9 @@ const CategoryDropdownItem: React.FC<CategoryDropdownItemProps> = ({
               {category.subcategories?.map((sub: Category) => (
                 <Link
                   key={sub.id}
-                  href={`/categories/${sub.slug}`}
+                  href={`/categories/${sub.seo_url}`}
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  onClick={onLinkClick}
+                  onClick={onSelect}
                 >
                   {sub.name}
                 </Link>

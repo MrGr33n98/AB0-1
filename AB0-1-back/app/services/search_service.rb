@@ -25,7 +25,7 @@ class SearchService
   end
 
   def search_companies
-    scope = Company.where('name ILIKE :q OR description ILIKE :q OR state ILIKE :q OR city ILIKE :q', q: "%#{@query}%")
+    scope = Company.where('name ILIKE :q OR description ILIKE :q OR state ILIKE :q OR city ILIKE :q OR address ILIKE :q', q: "%#{@query}%")
     scope = scope.by_state(@state).by_city(@city)
     scope = scope.joins(:categories).where(categories: { id: @category_id }) if @category_id.present?
     scope

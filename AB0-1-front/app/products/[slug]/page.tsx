@@ -10,9 +10,9 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const productId = parseInt(params.id as string);
+  const slug = params.slug as string;
   
-  const { product, loading, error } = useProduct(productId);
+  const { product, loading, error } = useProduct(slug);
 
   if (loading) {
     return (

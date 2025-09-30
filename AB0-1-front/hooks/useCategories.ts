@@ -15,10 +15,13 @@ export function useCategories(fetchAll: boolean = false) {
       setError(null);
       
       const params = fetchAll 
-        ? { status: 'active', include_subcategories: true } 
-        : { featured: true, status: 'active', limit: 8, include_subcategories: true };
+        ? { status: 'active' } 
+        : { featured: true, status: 'active', limit: 8 };
       
+      console.log('[useCategories] Loading with params:', params);
       const data = await categoriesApiSafe.getAll(params);
+      console.log('[useCategories] Received data:', data);
+      
       if (!data || data.length === 0) {
         console.warn('Nenhuma categoria encontrada');
         setCategories([]);

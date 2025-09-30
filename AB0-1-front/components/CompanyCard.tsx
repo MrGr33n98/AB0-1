@@ -43,9 +43,12 @@ export default function CompanyCard({ company, className = '' }: Props) {
     );
   }
 
-  // Função para garantir que as URLs das imagens sejam absolutas
-  const getFullImageUrl = (url: string | null | undefined): string | null => {
-    if (!url) return null;
+  // Função para garantir que as URLs das imagens sejam absolutas e seguras
+  const getFullImageUrl = (url: unknown): string | null => {
+    // Adicionado verificação explícita de tipo para garantir que 'url' é uma string
+    if (typeof url !== 'string' || !url) {
+      return null;
+    }
     
     // Verifica se a URL já é absoluta
     if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -68,7 +71,8 @@ export default function CompanyCard({ company, className = '' }: Props) {
     categories, website, social_links
   } = company;
 
-  const rating = rating_avg || '0.0';
+  // Updated rating calculation to use a period for decimal separator
+  const rating = (company.average_rating?.toFixed(1) ?? '0.0');
   const totalReviews = rating_count || 0;
   const workingHours = business_hours;
   const payments = Array.isArray(payment_methods) ? payment_methods.join(', ') : payment_methods || '';
@@ -83,9 +87,13 @@ export default function CompanyCard({ company, className = '' }: Props) {
 
   return (
     <Card className={`overflow-hidden h-full hover:shadow-lg transition-shadow ${className}`} suppressHydrationWarning>
-      <Link href={`/companies/${id}`}>
+      {/* Main company link (only wraps clickable area) */}
+      <a 
+        href={`/companies/${company.id}`} 
+        data-testid="company-detail-link"
+      >
         <CardContent className="p-0">
-          {/* Banner with error handling */}
+          {/* Banner section */}
           <div className="h-20 bg-gradient-to-r from-gray-200 to-gray-300 relative">
             {bannerUrl && !bannerError ? (
               <img
@@ -103,7 +111,7 @@ export default function CompanyCard({ company, className = '' }: Props) {
           </div>
 
           <div className="p-4">
-            {/* Header */}
+            {/* Header with logo and name */}
             <div className="flex items-start justify-between">
               <div className="flex items-center">
                 {logoUrl && !logoError ? (
@@ -151,23 +159,27 @@ export default function CompanyCard({ company, className = '' }: Props) {
             {workingHours && <Info icon={Clock} text={workingHours} />}
             {payments && <Info icon={CreditCard} text={payments} />}
             {totalReviews > 0 && <Info icon={MessageCircle} text={`${totalReviews} ${totalReviews === 1 ? 'avaliação' : 'avaliações'}`} />}
-
-            {/* Links sociais */}
-            {social_links && (
-              <div className="flex items-center gap-2 mt-2 text-blue-500">
-                {website && <SocialLink href={website} icon={Globe} />}
-                {social_links.facebook && <SocialLink href={social_links.facebook} icon={Facebook} />}
-                {social_links.instagram && <SocialLink href={social_links.instagram} icon={Instagram} />}
-                {social_links.twitter && <SocialLink href={social_links.twitter} icon={Twitter} />}
-              </div>
-            )}
-
-            {/* Categoria */}
-            {category && <Badge variant="outline" className="mt-3 text-xs">{category}</Badge>}
           </div>
         </CardContent>
-      </Link>
+      </a>
 
+      {/* Social links outside main anchor */}
+      <div className="px-4 pb-2">
+        {social_links && (
+          <div className="flex items-center gap-2 mt-2 text-blue-500">
+            {website && <SocialLink href={website} icon={Globe} label="Globe" />} {/* Changed label to "Globe" */}
+            {social_links.facebook && <SocialLink href={social_links.facebook} icon={Facebook} label="Facebook" />}
+            {social_links.instagram && <SocialLink href={social_links.instagram} icon={Instagram} label="Instagram" />}
+            {social_links.twitter && <SocialLink href={social_links.twitter} icon={Twitter} label="Twitter" />}
+          </div>
+        )}
+      </div>
+
+      {/* Categoria */}
+      {category && <Badge variant="outline" className="px-4 pb-4 text-xs">{category}</Badge>}
+
+
+      {/* Review button */}
       <div className="px-4 pb-4">
         <Button variant="outline" size="sm" className="w-full" asChild>
           <Link href={`/companies/${id}/review`}>
@@ -188,8 +200,14 @@ const Info = ({ icon: Icon, text }: { icon: any; text: string }) => (
   </div>
 );
 
-const SocialLink = ({ href, icon: Icon }: { href: string; icon: any }) => (
-  <a href={href} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">
+const SocialLink = ({ href, icon: Icon, label }: { href: string; icon: any; label: string }) => (
+  <a 
+    href={href} 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    className="hover:text-blue-600"
+    aria-label={label}
+  >
     <Icon size={14} />
   </a>
 );

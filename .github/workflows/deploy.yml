@@ -137,6 +137,27 @@ jobs:
           timeout 180s docker compose pull || { echo "⚠️ Erro ou timeout ao fazer pull das imagens."; exit 1; }
           timeout 90s docker compose up -d || { echo "❌ Erro ou timeout ao subir os containers."; exit 1; }
 
+          # --- NOVAS ETAPAS DE DEBUGGING ---
+          echo "--- Debugging: Verificando variáveis de ambiente do backend container ---"
+          # Obtém o nome completo do contêiner backend
+          BACKEND_CONTAINER_NAME=$(docker compose ps -q backend)
+          if [ -n "$BACKEND_CONTAINER_NAME" ]; then
+            docker inspect "$BACKEND_CONTAINER_NAME" | grep -i "POSTGRES_PASSWORD" || true
+            docker inspect "$BACKEND_CONTAINER_NAME" | grep -i "POSTGRES_USER" || true
+            docker inspect "$BACKEND_CONTAINER_NAME" | grep -i "POSTGRES_DB" || true
+          else
+            echo "Contêiner backend não encontrado para inspeção."
+          fi
+          echo "---------------------------------------------------------------------"
+
+          echo "--- Debugging: Verificando conteúdo do entrypoint.sh no backend container ---"
+          if [ -n "$BACKEND_CONTAINER_NAME" ]; then
+            docker compose exec backend cat /usr/src/app/entrypoint.sh || echo "Não foi possível ler entrypoint.sh no contêiner backend."
+          else
+            echo "Contêiner backend não encontrado para verificar entrypoint.sh."
+          fi
+          echo "---------------------------------------------------------------------------"
+          # --- FIM DAS NOVAS ETAPAS DE DEBUGGING ---
 
           echo "✨ Rodando migrações..."
           # PASSO DE DEPURACAO CRÍTICO:

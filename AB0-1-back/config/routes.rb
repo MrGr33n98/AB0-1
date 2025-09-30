@@ -21,7 +21,10 @@ Rails.application.routes.draw do
       get 'companies/locations', to: 'companies#locations' # Returns combined state/city data
 
       # CRUDs
-      resources :categories   # ✅ Corrigido (antes estava controller: 'categories_api')
+      resources :categories do # ✅ Corrigido (antes estava controller: 'categories_api')
+        get :slug, to: 'categories#show_by_slug', on: :collection
+      end
+      get 'categories/slug/:slug', to: 'categories#show_by_slug'
       resources :companies
       resources :products
       resources :leads

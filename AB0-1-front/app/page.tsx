@@ -1,238 +1,176 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { useCompaniesSafe } from '@/hooks/useCompaniesSafe';
-import { useCategories } from '@/hooks/useCategories';
-import { reviewsApiSafe } from '@/lib/api-client';
-import Script from 'next/script';
-
-// Componentes da UI
 import Hero from '@/components/Hero';
 import CategoryCard from '@/components/CategoryCard';
 import CompanyCard from '@/components/CompanyCard';
+import { categoriesApiSafe, companiesApiSafe, reviewsApiSafe } from '@/lib/api-client';
+import { Category, Company, Review } from '@/lib/api';
+import { useEffect, useState } from 'react';
+import { ArrowRight, Star, MapPin, MessageCircle } from 'lucide-react'; // Adicionado ArrowRight aqui
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Ícones e utilitários
-import { ArrowRight } from 'lucide-react';
-import Link from 'next/link';
-
-interface Review {
-  id: number;
-  title: string;
-  content: string;
-  rating: number;
-  user: { name: string };
-  company: { name: string };
-}
-
 export default function Home() {
-  const { companies, loading: companiesLoading } = useCompaniesSafe({ featured: true, status: 'active' });
-  const { categories, loading: categoriesLoading } = useCategories();
+  const [featuredCategories, setFeaturedCategories] = useState<Category[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [reviewsLoading, setReviewsLoading] = useState(true);
-  
-  // Debug companies
-  console.log('Companies:', companies);
-  console.log('Companies loading:', companiesLoading);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingCompanies, setLoadingCompanies] = useState(true);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+  const [errorCategories, setErrorCategories] = useState<string | null>(null);
+  const [errorCompanies, setErrorCompanies] = useState<string | null>(null);
+  const [errorReviews, setErrorReviews] = useState<string | null>(null);
 
-  // Buscar reviews
   useEffect(() => {
-    const fetchReviews = async () => {
+    const fetchCategories = async () => {
       try {
-        const data = await reviewsApiSafe.getAll({ limit: 6 });
-        const formattedReviews = data.map((review) => ({
-          id: review.id,
-          title: review.comment.split('.')[0] || 'Avaliação',
-          content: review.comment,
-          rating: review.rating,
-          user: { name: review.user?.name || 'Usuário anônimo' },
-          company: { name: review.product?.name || 'Produto/Serviço' },
-        }));
-        setReviews(formattedReviews);
+        console.log('[Home] Fetching categories...');
+        const response = await categoriesApiSafe.getAll({ 
+          featured: true, 
+          status: 'active', 
+          limit: 8 
+        });
+        console.log('[Home] Categories response:', response);
+        setFeaturedCategories(response);
       } catch (error) {
-        console.error('Error fetching reviews:', error);
-        setReviews([]);
+        console.error('Error fetching categories:', error);
+        setErrorCategories('Erro ao carregar categorias.');
       } finally {
-        setReviewsLoading(false);
+        setLoadingCategories(false);
       }
     };
+
+    const fetchCompanies = async () => {
+      try {
+        const response = await companiesApiSafe.getAll();
+        setCompanies(response);
+      } catch (error) {
+        console.error('Error fetching companies:', error);
+        setErrorCompanies('Erro ao carregar empresas.');
+      } finally {
+        setLoadingCompanies(false);
+      }
+    };
+
+    const fetchReviews = async () => {
+      try {
+        const response = await reviewsApiSafe.getAll();
+        setReviews(response);
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+        setErrorReviews('Erro ao carregar avaliações.');
+      } finally {
+        setLoadingReviews(false);
+      }
+    };
+
+    fetchCategories();
+    fetchCompanies();
     fetchReviews();
   }, []);
 
-  const featuredCompanies = useMemo(
-    () => {
-      const filtered = companies.slice(0, 6);
-      console.log('Featured companies:', filtered);
-      return filtered;
-    },
-    [companies]
-  );
-
-  const featuredCategories = useMemo(
-    () =>
-      categories
-        .filter((category) => category.featured && category.status === 'active')
-        .slice(0, 8),
-    [categories]
-  );
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1, delayChildren: 0.2 },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
-  };
-
-  const structuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'Compare Solar',
-    url: 'https://www.comparesolar.com.br',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: 'https://www.comparesolar.com.br/search?q={search_term_string}',
-      'query-input': 'required name=search_term_string',
-    },
-  };
-
   return (
-    <>
-      <Script
-        id="structured-data"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      />
+    <main className="flex-grow">
+      <Hero />
 
-      <div className="min-h-screen bg-background antialiased">
-        {/* Hero Section */}
-        <Hero />
+      {/* Seção de Categorias */}
+        <section className="py-12 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-8">Explore Nossas Categorias</h2>
+            <p className="text-center text-gray-600 mb-10">
+              Encontre o que você precisa, de painéis solares a consultoria especializada.
+            </p>
 
-        {/* Categorias em Destaque */}
-        <section
-          className="py-20 bg-background"
-          id="categorias"
-          aria-labelledby="categorias-heading"
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <motion.h2
-                id="categorias-heading"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="text-4xl md:text-5xl font-extrabold text-foreground mb-4"
-              >
-                Explore Nossas Categorias
-              </motion.h2>
-              <motion.p
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-xl text-muted-foreground max-w-3xl mx-auto"
-              >
-                Encontre o que você precisa, de painéis solares a consultoria
-                especializada.
-              </motion.p>
-            </div>
-
-            {categoriesLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[...Array(8)].map((_, i) => (
-                  <Skeleton key={i} className="h-56 rounded-2xl bg-muted" />
+            {loadingCategories ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton key={i} className="h-48 w-full" />
+                ))}
+              </div>
+            ) : errorCategories ? (
+              <p className="text-center text-red-500">{errorCategories}</p>
+            ) : featuredCategories.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {featuredCategories.map((category) => (
+                  <CategoryCard key={category.id} category={category} />
                 ))}
               </div>
             ) : (
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                whileInView="show"
-                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-              >
-                {featuredCategories.map((category) => (
-                  <motion.div key={category.id} variants={itemVariants}>
-                    <CategoryCard category={category} />
-                  </motion.div>
-                ))}
-              </motion.div>
+              <p className="text-center text-gray-500">
+                Nenhuma categoria encontrada. ({featuredCategories.length} categorias carregadas)
+              </p>
             )}
 
-            <div className="text-center mt-12">
-              <Link href="/categories" passHref>
-                <Button size="lg" variant="ghost">
-                  Ver Todas as Categorias
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+            <div className="text-center mt-10">
+              <Button asChild>
+                <Link href="/categories">
+                  Ver Todas as Categorias <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
             </div>
           </div>
         </section>
 
-        {/* Empresas em Destaque */}
-        <section
-          className="py-20 bg-card"
-          id="empresas"
-          aria-labelledby="empresas-heading"
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <motion.h2
-                id="empresas-heading"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="text-4xl md:text-5xl font-extrabold text-foreground mb-4"
-              >
-                Empresas Parceiras
-              </motion.h2>
-              <motion.p
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-xl text-muted-foreground max-w-3xl mx-auto"
-              >
-                Conheça as empresas mais bem avaliadas e verificadas pelos
-                nossos usuários.
-              </motion.p>
-            </div>
+        {/* Seção de Empresas Parceiras */}
+        <section className="py-12">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-8">Empresas Parceiras</h2>
+            <p className="text-center text-gray-600 mb-10">
+              Conheça as empresas mais bem avaliadas e verificadas pelos nossos usuários.
+            </p>
 
-            {companiesLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {[...Array(6)].map((_, i) => (
-                  <Skeleton key={i} className="h-96 rounded-2xl bg-muted" />
+            {loadingCompanies ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-72 w-full" />
                 ))}
               </div>
+            ) : errorCompanies ? (
+              <p className="text-center text-red-500">{errorCompanies}</p>
             ) : (
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                whileInView="show"
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-              >
-                {featuredCompanies.map((company) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {companies.slice(0, 3).map((company) => (
                   <CompanyCard key={company.id} company={company} />
                 ))}
-              </motion.div>
+              </div>
             )}
 
-            <div className="text-center mt-12">
-              <Link href="/companies" passHref>
-                <Button size="lg" className="bg-primary text-white">
-                  Ver Todas as Empresas
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+            <div className="text-center mt-10">
+              <Button asChild>
+                <Link href="/companies">
+                  Ver Todas as Empresas <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
             </div>
           </div>
         </section>
-      </div>
-    </>
+
+        {/* Seção de Avaliações Recentes (Exemplo) */}
+        {/* Você pode adicionar uma seção de avaliações aqui, similar às categorias e empresas */}
+        {/* {loadingReviews ? (
+          <p>Carregando avaliações...</p>
+        ) : errorReviews ? (
+          <p className="text-center text-red-500">{errorReviews}</p>
+        ) : (
+          <section className="py-12 bg-gray-50">
+            <div className="container mx-auto px-4">
+              <h2 className="text-3xl font-bold text-center mb-8">Avaliações Recentes</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {reviews.slice(0, 3).map((review) => (
+                  <div key={review.id} className="bg-white p-6 rounded-lg shadow">
+                    <p className="text-gray-800 italic">"{review.comment}"</p>
+                    <div className="flex items-center mt-4">
+                      <Star className="h-5 w-5 fill-yellow-400 text-yellow-400 mr-1" />
+                      <span className="font-semibold">{review.rating}.0</span>
+                      <span className="ml-2 text-gray-600">- {review.user_name}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )} */}
+    </main>
   );
 }

@@ -56,7 +56,7 @@ module Api
         limit = (params[:limit] || 5).to_i
 
         companies_scope = Company.where(
-          'name ILIKE :q OR description ILIKE :q OR state ILIKE :q OR city ILIKE :q',
+          'name ILIKE :q OR description ILIKE :q OR state ILIKE :q OR city ILIKE :q OR address ILIKE :q',
           q: "%#{q}%"
         ).by_state(state).by_city(city)
 
@@ -78,7 +78,7 @@ module Api
         state = params[:state].presence
         city = params[:city].presence
 
-        companies = Company.where('name ILIKE :q OR description ILIKE :q', q: "%#{query}%")
+        companies = Company.where('name ILIKE :q OR description ILIKE :q OR address ILIKE :q', q: "%#{query}%")
                            .by_state(state)
                            .by_city(city)
                            .limit(10)

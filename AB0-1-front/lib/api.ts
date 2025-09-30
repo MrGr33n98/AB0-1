@@ -127,6 +127,8 @@ export interface Category {
   parent_id?: number | null;
   companies_count?: number;
   subcategories?: Category[];
+  companies?: Company[];
+  products?: Product[];
   kind: string;
   status: string;
   featured: boolean;
@@ -225,7 +227,21 @@ export const api = {
       // Fix URL construction to prevent double slashes
       const basePath = this.baseUrl.replace(/\/+$/, ''); // Remove trailing slashes
       const endpoint = config.url.replace(/^\/+/, ''); // Remove leading slashes
-      const url = `${basePath}/${endpoint}`;
+      let url = `${basePath}/${endpoint}`;
+      
+      // Handle query parameters
+      if (config.params) {
+        const searchParams = new URLSearchParams();
+        Object.keys(config.params).forEach(key => {
+          if (config.params[key] !== null && config.params[key] !== undefined) {
+            searchParams.append(key, config.params[key]);
+          }
+        });
+        const queryString = searchParams.toString();
+        if (queryString) {
+          url += (url.includes('?') ? '&' : '?') + queryString;
+        }
+      }
       
       console.log('[API] Request ->', config.method, url, config.params || '');
       
@@ -263,7 +279,7 @@ export async function fetchApi<T>(
 ): Promise<T> {
   try {
     const cleanEndpoint = endpoint.replace(/^\/+/, '');
-    console.log('[API] Fetching:', `${API_BASE_URL}/${cleanEndpoint}`);
+    console.log('[API] Fetching:', `${API_BASE_URL}/${cleanEndpoint}`, options.params);
     const response = await api.request<T>({
       url: cleanEndpoint,
       method: options.method || 'GET',
@@ -366,8 +382,8 @@ export const companiesApi = {
   },
   search: (query: string, filters?: any) => {
     try {
-      return fetchApi(`/companies/search?q=${encodeURIComponent(query)}`, {
-        params: filters,
+      return fetchApi('/companies/search', {
+        params: { q: query, ...filters },
       });
     } catch (error) {
       console.error('Error searching companies:', error);
@@ -394,14 +410,15 @@ export const productsApi = {
     }),
   delete: (id: number) => fetchApi(`/products/${id}`, { method: 'DELETE' }),
   search: (query: string, filters?: any) =>
-    fetchApi(`/products/search?q=${encodeURIComponent(query)}`, {
-      params: filters,
+    fetchApi('/products/search', {
+      params: { q: query, ...filters },
     }),
 };
 
 export const categoriesApi = {
   getAll: () => fetchApi('/categories'),
   getById: (id: number) => fetchApi(`/categories/${id}`),
+  getBySlug: (slug: string) => fetchApi(`/categories/slug/${slug}`),
   create: (category: Partial<Category>) =>
     fetchApi('/categories', {
       method: 'POST',
@@ -414,7 +431,9 @@ export const categoriesApi = {
     }),
   delete: (id: number) => fetchApi(`/categories/${id}`, { method: 'DELETE' }),
   search: (query: string) =>
-    fetchApi(`/categories/search?q=${encodeURIComponent(query)}`),
+    fetchApi('/categories/search', {
+      params: { q: query }
+    }),
 };
 
 export const leadsApi = {
@@ -553,10 +572,8 @@ export const citiesApi = {
 export const searchApi = {
   all: async (query: string, filters?: any) => {
     try {
-      return await fetchApi(
-        `/search/all?q=${encodeURIComponent(query)}`,
-        { params: filters }
-      );
+      const params = { q: query, ...filters };
+      return await fetchApi('/search/all', { params });
     } catch (error) {
       console.error('Search error:', error);
       return {
@@ -575,11 +592,11 @@ export const searchApi = {
   },
   suggest: async (query: string) => {
     try {
-      return await fetchApi(
-        `/search/suggest?q=${encodeURIComponent(query)}`
-      );
+      return await fetchApi('/search/suggest', {
+        params: { q: query }
+      });
     } catch (error) {
-      console.error('Suggestion error:', error);
+      console.error('[searchApi.suggest] Error:', error);
       return { companies: [], products: [], categories: [], articles: [] };
     }
   },
@@ -594,3 +611,28 @@ export const adminApi = {
 };
 
 // End of API endpoints
+
+// =======================
+// Convenience Functions
+// =======================
+export const fetchCategories = (): Promise<Category[]> => categoriesApi.getAll();
+
+export const fetchCategoryById = (id: number): Promise<Category> => categoriesApi.getById(id);
+
+export const fetchCategoryBySlug = async (slug: string): Promise<Category> => {
+  try {
+    // First try the API endpoint for slug
+    return await categoriesApi.getBySlug(slug);
+  } catch (error) {
+    console.warn('Slug API not available, trying fallback...');
+    // Fallback: get all categories and find by seo_url
+    const categories = await categoriesApi.getAll();
+    const category = categories.find(c => c.seo_url === slug);
+    if (!category) {
+      throw new Error(`Category with slug "${slug}" not found`);
+    }
+    return category;
+  }
+};
+
+export const fetchCompanies = (params?: any): Promise<Company[]> => companiesApi.getAll(params);
