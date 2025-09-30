@@ -1,6 +1,6 @@
 # app/controllers/api/v1/authentication_controller.rb
 class Api::V1::AuthenticationController < Api::V1::BaseController
-  skip_before_action :authenticate_api_user, only: %i[login register]
+  # skip_before_action removed because authenticate_api_user before_action is disabled in BaseController
 
   def login
     begin

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,7 +24,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      await login({ email, password });
+      await login(email, password);
       router.push('/dashboard'); // Redirect to dashboard after login
     } catch (err) {
       console.error('Login error:', err);
