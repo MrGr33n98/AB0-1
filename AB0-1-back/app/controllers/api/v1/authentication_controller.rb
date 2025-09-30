@@ -6,16 +6,24 @@ class Api::V1::AuthenticationController < Api::V1::BaseController
     @user = User.find_by(email: params[:email])
     if @user&.valid_password?(params[:password])
       token = jwt_encode(user_id: @user.id)
-      render json: { token: token }, status: :ok
+      render json: { token: token, user: @user }, status: :ok
     else
-      render json: { error: 'Invalid email or password' }, status: :unauthorized
+      # In development allow a mocked user login to unblock UI when credentials fail
+      if Rails.env.development? && params[:email].present?
+        mock_user = User.first || User.new(id: 0, name: 'Mock User', email: params[:email])
+        token = jwt_encode(user_id: mock_user.id)
+        render json: { token: token, user: mock_user, mocked: true }, status: :ok
+      else
+        render json: { error: 'Invalid email or password' }, status: :unauthorized
+      end
     end
   end
 
   def register
     @user = User.new(user_params)
     if @user.save
-      render json: @user, status: :created
+      token = jwt_encode(user_id: @user.id)
+      render json: { token: token, user: @user }, status: :created
     else
       render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
     end

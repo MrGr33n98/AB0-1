@@ -33,7 +33,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const response = await authApi.login(email, password);
-    setUser(response.user);
+    // Persist token if present
+    if (typeof window !== 'undefined' && (response as any).token) {
+      localStorage.setItem('auth_token', (response as any).token);
+    }
+    setUser((response as any).user || null);
   };
 
   const logout = async () => {
