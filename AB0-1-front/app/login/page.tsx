@@ -27,7 +27,8 @@ export default function LoginPage() {
     try {
       await login(email, password);
       const redirect = searchParams.get('redirect') || '/dashboard';
-      router.push(redirect); // Redirect after login
+      // Use replace to avoid going back to login on back button
+      router.replace(redirect);
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'Failed to login');

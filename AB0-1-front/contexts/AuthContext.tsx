@@ -6,6 +6,7 @@ import { User, authApi } from '@/lib/api';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -15,6 +16,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const isAuthenticated = !!user;
 
   useEffect(() => {
     checkAuth();
@@ -32,24 +34,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const login = async (email: string, password: string) => {
-    const response = await authApi.login(email, password);
-    // Persist token if present
-    if (typeof window !== 'undefined' && (response as any).token) {
-      localStorage.setItem('auth_token', (response as any).token);
-    }
-    // If API doesn't return user object (mock case), fetch /auth/me
-    if (!(response as any).user) {
+    try {
+      const response: any = await authApi.login(email, password);
+
+      // Persist token (real or mock)
+      if (typeof window !== 'undefined') {
+        const token = response?.token || 'mock-token';
+        localStorage.setItem('auth_token', token);
+      }
+
+      // Normal case: API returns user
+      if (response?.user) {
+        setUser(response.user);
+        return;
+      }
+
+      // Try to fetch current user after login (if login endpoint sets session cookie)
       try {
         const me = await authApi.me();
         setUser(me);
         return;
       } catch (e) {
-        // fallback create minimal user object
-        setUser({ id: 0, name: 'Mock User', email, role: 'user', created_at: '', updated_at: '' });
-        return;
+        // Fallback mock user
+        setUser({ id: 0, name: 'Usuário Demo', email, role: 'user', created_at: '', updated_at: '' });
       }
+    } catch (error) {
+      console.error('[Auth] Login failed', error);
+      throw error;
     }
-    setUser((response as any).user || null);
   };
 
   const logout = async () => {
@@ -58,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
