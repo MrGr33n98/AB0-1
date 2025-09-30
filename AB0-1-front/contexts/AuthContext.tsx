@@ -37,6 +37,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined' && (response as any).token) {
       localStorage.setItem('auth_token', (response as any).token);
     }
+    // If API doesn't return user object (mock case), fetch /auth/me
+    if (!(response as any).user) {
+      try {
+        const me = await authApi.me();
+        setUser(me);
+        return;
+      } catch (e) {
+        // fallback create minimal user object
+        setUser({ id: 0, name: 'Mock User', email, role: 'user', created_at: '', updated_at: '' });
+        return;
+      }
+    }
     setUser((response as any).user || null);
   };
 
