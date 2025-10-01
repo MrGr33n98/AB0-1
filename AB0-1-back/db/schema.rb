@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_09_23_164759) do
+ActiveRecord::Schema[7.0].define(version: 2025_09_30_041826) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -322,6 +322,27 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_23_164759) do
     t.index ["recipient_type", "recipient_id"], name: "index_noticed_notifications_on_recipient"
   end
 
+  create_table "pending_changes", force: :cascade do |t|
+    t.bigint "company_id", null: false
+    t.bigint "user_id"
+    t.bigint "approved_by_id"
+    t.string "change_type", null: false
+    t.jsonb "data", default: {}
+    t.string "status", default: "pending"
+    t.text "rejection_reason"
+    t.datetime "approved_at"
+    t.datetime "rejected_at"
+    t.datetime "applied_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["approved_by_id"], name: "index_pending_changes_on_approved_by_id"
+    t.index ["change_type"], name: "index_pending_changes_on_change_type"
+    t.index ["company_id", "status"], name: "index_pending_changes_on_company_id_and_status"
+    t.index ["company_id"], name: "index_pending_changes_on_company_id"
+    t.index ["status"], name: "index_pending_changes_on_status"
+    t.index ["user_id"], name: "index_pending_changes_on_user_id"
+  end
+
   create_table "plans", force: :cascade do |t|
     t.string "name"
     t.text "description"
@@ -443,6 +464,9 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_23_164759) do
     t.datetime "updated_at", null: false
     t.string "name"
     t.integer "views", default: 0
+    t.string "role"
+    t.bigint "company_id"
+    t.index ["company_id"], name: "index_users_on_company_id"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
@@ -461,6 +485,9 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_23_164759) do
   add_foreign_key "forum_questions", "categories"
   add_foreign_key "forum_questions", "products"
   add_foreign_key "forum_questions", "users"
+  add_foreign_key "pending_changes", "admin_users", column: "approved_by_id"
+  add_foreign_key "pending_changes", "companies"
+  add_foreign_key "pending_changes", "users"
   add_foreign_key "posts", "users"
   add_foreign_key "pricings", "products"
   add_foreign_key "product_accesses", "products"
@@ -474,4 +501,5 @@ ActiveRecord::Schema[7.0].define(version: 2025_09_23_164759) do
   add_foreign_key "subscription_plans", "categories"
   add_foreign_key "subscription_plans", "plans"
   add_foreign_key "subscription_plans", "products"
+  add_foreign_key "users", "companies"
 end

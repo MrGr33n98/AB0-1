@@ -1,63 +1,79 @@
 Rails.application.routes.draw do
-  devise_for :admin_users, ActiveAdmin::Devise.config
+  # ActiveAdmin routes
   ActiveAdmin.routes(self)
+  devise_for :admin_users, ActiveAdmin::Devise.config
 
-  # Mount Active Storage routes
-  mount ActiveStorage::Engine => '/rails/active_storage'
+  # Health check endpoint
+  get '/health', to: proc { [200, {}, ['OK']] }
 
+  # API routes
   namespace :api do
     namespace :v1 do
-      # Banners / Auth / Dashboard
-      resources :banners, only: [:index]
-       resources :banner_globals, only: [:index]
-      post 'auth/login',    to: 'authentication#login'
-      post 'auth/register', to: 'authentication#register'
-      get  'auth/me',       to: 'users#me'
-      get  'dashboard/stats', to: 'dashboard#stats'
-
-      # Location data endpoints
-      get 'companies/states',    to: 'companies#states'
-      get 'companies/cities',    to: 'companies#cities'
-      get 'companies/locations', to: 'companies#locations' # Returns combined state/city data
-
-      # CRUDs
-      resources :categories do # ✅ Corrigido (antes estava controller: 'categories_api')
-        get :slug, to: 'categories#show_by_slug', on: :collection
-      end
-      get 'categories/slug/:slug', to: 'categories#show_by_slug'
-      resources :companies
-      resources :products
-      resources :leads
-      resources :reviews
-      resources :badges
-      resources :articles
-      resources :plans
-      resources :users, only: [:show, :update] do
-        get :me, on: :collection
+      # Companies routes
+      resources :companies do
+        collection do
+          get :states
+          get :cities
+          get :locations
+        end
+        member do
+          get 'analytics/historical', to: 'companies#analytics_historical'
+          get 'analytics/reviews', to: 'companies#analytics_reviews'
+          get 'analytics/competitors', to: 'companies#analytics_competitors'
+          get 'analytics/traffic', to: 'companies#analytics_traffic'
+        end
       end
 
-      # Search endpoints (o front consome estes)
-      get 'search/all',       to: 'search#all'
-      get 'search/suggest',   to: 'search#suggest'
-      get 'search/companies', to: 'search#companies'
-      get 'search/products',  to: 'search#products'
-      get 'search/articles',  to: 'search#articles'
+      # Analytics routes
+      post 'analytics/track', to: 'analytics#track'
+      
+      # Dashboard routes
+      get 'dashboard/stats', to: 'dashboard#stats'
+      
+      # Categories routes
+      resources :categories, only: [:index, :show] do
+        member do
+          get :companies
+          get :products
+        end
+        collection do
+          get :featured
+        end
+      end
+
+      # Products routes
+      resources :products, only: [:index, :show] do
+        member do
+          get :reviews
+        end
+      end
+
+      # Reviews routes
+      resources :reviews, only: [:index, :show, :create, :update, :destroy]
+
+      # Leads routes
+      resources :leads, only: [:create, :index, :show]
+
+      # Users routes
+      resources :users, only: [:show, :update]
+
+      # Search routes
+      get 'search', to: 'search#index'
+      get 'search/all', to: 'search#all'
+      get 'search/suggest', to: 'search#suggest'
+
+      # Authentication routes
+      namespace :auth do
+        post :login
+        post :register
+        post :logout
+        get :me
+        post :forgot_password
+        post :reset_password
+      end
     end
   end
 
-  devise_for :users, controllers: {
-    sessions: 'users/sessions',
-    registrations: 'users/registrations'
-  }
-  get 'users/profile'
-  get 'u/:id', to: 'users#profile', as: 'user'
-
-  # Páginas públicas
-  root 'corporate#index'
-  get 'corporate',        to: 'corporate#index', as: 'corporate'
-  get 'corporate/login',  to: 'corporate#login', as: 'corporate_login'
-  get 'home',             to: 'pages#home'
-  get 'about',            to: 'pages#about'
-
-  resources :posts
+  # Root route
+  root 'rails/welcome#index'
 end

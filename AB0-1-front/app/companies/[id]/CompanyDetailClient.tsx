@@ -245,14 +245,20 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                 <MessageCircle className="mr-2 h-5 w-5" />
                 Solicitar Orçamento
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-border hover:bg-muted transition-colors text-foreground"
-              >
-                <Phone className="mr-2 h-5 w-5 text-primary" />
-                {company.phone}
-              </Button>
+              {(company.featured || company.verified) && company.whatsapp && (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-border hover:bg-muted transition-colors text-foreground"
+                  onClick={() => {
+                    const whatsappNumber = company.whatsapp?.replace(/\D/g, '');
+                    window.open(`https://wa.me/${whatsappNumber}`, '_blank');
+                  }}
+                >
+                  <Phone className="mr-2 h-5 w-5 text-primary" />
+                  WhatsApp
+                </Button>
+              )}
             </div>
           </div>
 

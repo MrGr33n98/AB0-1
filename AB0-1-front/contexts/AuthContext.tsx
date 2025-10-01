@@ -38,9 +38,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response: any = await authApi.login(email, password);
 
       // Persist token (real or mock)
-      if (typeof window !== 'undefined') {
-        const token = response?.token || 'mock-token';
-        localStorage.setItem('auth_token', token);
+      if (typeof window !== 'undefined' && response?.token) {
+        localStorage.setItem('auth_token', response.token);
       }
 
       // Normal case: API returns user
@@ -55,8 +54,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(me);
         return;
       } catch (e) {
-        // Fallback mock user
-        setUser({ id: 0, name: 'Usuário Demo', email, role: 'user', created_at: '', updated_at: '' });
+        // Fallback: use response data or create mock user
+        if (response?.mocked) {
+          // If backend returned mocked data, use it
+          const mockUser = {
+            id: response.user?.id || 1,
+            name: response.user?.name || 'Usuário Demo',
+            email: response.user?.email || email,
+            role: (response.user?.role as 'user' | 'admin' | 'company') || 'user',
+            created_at: response.user?.created_at || new Date().toISOString(),
+            updated_at: response.user?.updated_at || new Date().toISOString()
+          };
+          setUser(mockUser);
+        } else {
+          throw new Error('Failed to get user data');
+        }
       }
     } catch (error) {
       console.error('[Auth] Login failed', error);

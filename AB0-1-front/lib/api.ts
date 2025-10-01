@@ -28,6 +28,7 @@ export interface Company {
   category_id?: number;
   status?: 'active' | 'inactive';
   featured?: boolean;
+  verified?: boolean;
   founded_year?: number;
   employees_count?: number;
   rating_avg?: number;

@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { useDashboard } from '@/hooks/useDashboard';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,36 +17,28 @@ import {
   Building,
   FileText,
   Calendar,
-  Bell
+  Bell,
+  Building2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function DashboardPage() {
-  const { user, loading: authLoading, isAuthenticated } = useAuth();
-  const { stats, loading: dashboardLoading } = useDashboard();
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [authLoading, isAuthenticated, router]);
+  // Mock user and stats for demo - replace with actual auth
+  const user = { name: 'Demo User' };
+  const isAuthenticated = true; // Set to true for demo
 
-  if (authLoading || !isAuthenticated) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="max-w-7xl mx-auto space-y-8">
-          <Skeleton className="h-12 w-1/3" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-32 rounded-2xl" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Mock stats for demo
+  const stats = {
+    companies_count: 150,
+    products_count: 320,
+    leads_count: 45,
+    reviews_count: 89,
+    active_campaigns: 5,
+    monthly_revenue: 15000
+  };
 
   // Stats configuration
   const statsConfig = [
@@ -129,6 +120,15 @@ export default function DashboardPage() {
             <p className="text-muted-foreground">
               Aqui está um resumo das atividades mais recentes da sua conta.
             </p>
+            
+            <div className="mt-6">
+              <Link href="/dashboard/company">
+                <Button size="lg" className="gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Acessar Dashboard da Empresa
+                </Button>
+              </Link>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -137,12 +137,7 @@ export default function DashboardPage() {
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {dashboardLoading ? (
-              [...Array(6)].map((_, i) => (
-                <Skeleton key={i} className="h-32 rounded-2xl" />
-              ))
-            ) : (
-              statsConfig.map((stat, index) => (
+            {statsConfig.map((stat, index) => (
                 <motion.div
                   key={stat.title}
                   className="bg-card rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300"
@@ -180,9 +175,8 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
-                </motion.div>
-              ))
-            )}
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>

@@ -26,13 +26,18 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
+      
+      // Get redirect URL from query params or default to dashboard
       const redirect = searchParams.get('redirect') || '/dashboard';
-      // Use replace to avoid going back to login on back button
-      router.replace(redirect);
+      
+      // Small delay to ensure state is updated
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Use window.location for a hard navigation to ensure middleware doesn't interfere
+      window.location.href = redirect;
     } catch (err) {
       console.error('Login error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to login');
-    } finally {
+      setError(err instanceof Error ? err.message : 'Falha ao fazer login. Verifique suas credenciais.');
       setIsLoading(false);
     }
   };
@@ -52,6 +57,11 @@ export default function LoginPage() {
               {error}
             </div>
           )}
+          
+          {/* Demo credentials hint */}
+          <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
+            <strong>Modo de Demonstração:</strong> Digite qualquer email e senha para acessar o dashboard
+          </div>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

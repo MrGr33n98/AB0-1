@@ -56,3 +56,8 @@ node_modules/.cache/
 # System Files
 .DS_Store
 Thumbs.db
+
+# Documentation files
+*.md
+!README.md
+*.txt

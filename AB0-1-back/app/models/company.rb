@@ -10,6 +10,10 @@ class Company < ApplicationRecord
   # =========================
   has_and_belongs_to_many :categories, join_table: :categories_companies
   has_many :reviews, dependent: :destroy
+  has_many :pending_changes, dependent: :destroy
+  has_many :products, dependent: :destroy
+  has_many :leads, dependent: :destroy
+  has_many :campaigns, dependent: :destroy
 
   # =========================
   # Validations
@@ -87,5 +91,41 @@ class Company < ApplicationRecord
       linkedin: linkedin_url,
       youtube: youtube_url
     }.compact.presence
+  end
+
+  # Helper methods for Active Storage URLs
+  def banner_url
+    banner.attached? ? Rails.application.routes.url_helpers.url_for(banner) : nil
+  end
+
+  def logo_url
+    logo.attached? ? Rails.application.routes.url_helpers.url_for(logo) : nil
+  end
+
+  # Analytics methods
+  def profile_views_on(date)
+    analytics_events
+      .by_type('view')
+      .where(tracked_at: date.beginning_of_day..date.end_of_day)
+      .count
+  end
+
+  def cta_clicks_on(date)
+    analytics_events
+      .by_type('click')
+      .where(tracked_at: date.beginning_of_day..date.end_of_day)
+      .count
+  end
+
+  def historical_stats(days = 30)
+    Rails.cache.fetch("company_#{id}_historical_#{days}_days", expires_in: 1.hour) do
+      calculate_historical_stats(days)
+    end
+  end
+
+  private
+
+  def calculate_historical_stats(days)
+    # Implementation...
   end
 end
