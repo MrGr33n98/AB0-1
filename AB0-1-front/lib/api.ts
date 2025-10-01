@@ -28,6 +28,7 @@ export interface Company {
   category_id?: number;
   status?: 'active' | 'inactive';
   featured?: boolean;
+  verified?: boolean;
   founded_year?: number;
   employees_count?: number;
   rating_avg?: number;
@@ -245,11 +246,14 @@ export const api = {
       
       console.log('[API] Request ->', config.method, url, config.params || '');
       
+      // Attach auth token if present
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
       const response = await fetch(url, {
         method: config.method,
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+            'Accept': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
           ...config.headers,
         },
         body: config.data ? JSON.stringify(config.data) : undefined,
