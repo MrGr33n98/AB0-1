@@ -1,0 +1,103 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║              COMANDOS PARA EXECUTAR NA VM (OPÇÃO A)                        ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+VOCÊ ESCOLHEU: OPÇÃO A - Criar usuário mantendo dados existentes ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASSO 1: Fazer SSH na VM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ssh seu-usuario@seu-servidor
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASSO 2: Executar os comandos (copie e cole TUDO de uma vez)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Criar usuário 'ab0'
+docker exec ab0-postgres psql -U postgres -c "CREATE USER ab0 WITH PASSWORD 'ZAbgbZeVAK!5!' CREATEDB SUPERUSER;"
+
+# Criar banco 'ab0_production'
+docker exec ab0-postgres psql -U postgres -c "CREATE DATABASE ab0_production OWNER ab0;"
+
+# Garantir privilégios
+docker exec ab0-postgres psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE ab0_production TO ab0;"
+
+# Testar conexão
+docker exec ab0-postgres psql -U ab0 -d ab0_production -c "SELECT current_user, current_database(), version();"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RESULTADO ESPERADO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Se tudo funcionar, você verá algo como:
+
+CREATE ROLE
+CREATE DATABASE
+GRANT
+ current_user | current_database |          version
+--------------+------------------+---------------------------
+ ab0          | ab0_production   | PostgreSQL 14.19 on ...
+
+✅ Isso significa que funcionou!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SE DER ERRO "already exists":
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Não tem problema! Significa que já existe. Execute estes comandos para atualizar:
+
+# Atualizar senha do usuário
+docker exec ab0-postgres psql -U postgres -c "ALTER USER ab0 WITH PASSWORD 'ZAbgbZeVAK!5!' CREATEDB SUPERUSER;"
+
+# Atualizar owner do banco
+docker exec ab0-postgres psql -U postgres -c "ALTER DATABASE ab0_production OWNER TO ab0;"
+
+# Garantir privilégios novamente
+docker exec ab0-postgres psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE ab0_production TO ab0;"
+
+# Testar
+docker exec ab0-postgres psql -U ab0 -d ab0_production -c "SELECT version();"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERIFICAÇÕES ADICIONAIS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Listar todos os usuários
+docker exec ab0-postgres psql -U postgres -c "\du"
+
+# Listar todos os bancos
+docker exec ab0-postgres psql -U postgres -c "\l"
+
+# Ver logs do PostgreSQL
+docker logs ab0-postgres --tail 50
+
+# Reiniciar containers se necessário
+cd $HOME/ab0-app
+docker-compose restart
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ALTERNATIVA: Usar o script automático
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Se você clonou o repositório na VM, pode usar o script:
+
+cd $HOME/ab0-app
+./fix-database-user.sh
+
+O script vai fazer tudo automaticamente e mostrar o resultado! 🚀
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DEPOIS DE EXECUTAR OS COMANDOS NA VM:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Vá para o PASSO 3 (configurar GitHub Secrets)
+
+═══════════════════════════════════════════════════════════════════════════

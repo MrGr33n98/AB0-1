@@ -1,0 +1,149 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    SOLUÇÃO URGENTE - PASSO A PASSO                         ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+🔴 PROBLEMA: Role "ab0" does not exist no PostgreSQL
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASSO 1: ESCOLHA UMA OPÇÃO (faça na VM via SSH)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPÇÃO A - Criar usuário no banco existente (RECOMENDADO - mantém dados):
+─────────────────────────────────────────────────────────────────────────
+
+ssh sua-vm
+
+# Criar o usuário 'ab0'
+docker exec ab0-postgres psql -U postgres -c "CREATE USER ab0 WITH PASSWORD 'ZAbgbZeVAK!5!' CREATEDB SUPERUSER;"
+
+# Criar o banco
+docker exec ab0-postgres psql -U postgres -c "CREATE DATABASE ab0_production OWNER ab0;"
+
+# Garantir privilégios
+docker exec ab0-postgres psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE ab0_production TO ab0;"
+
+# ✅ Verificar se funcionou
+docker exec ab0-postgres psql -U ab0 -d ab0_production -c "SELECT version();"
+
+# Se deu certo, você verá a versão do PostgreSQL!
+
+
+OPÇÃO B - Recriar banco do zero (⚠️ APAGA TODOS OS DADOS):
+──────────────────────────────────────────────────────────────
+
+ssh sua-vm
+cd $HOME/ab0-app
+
+# CUIDADO: Isso remove TODOS os dados!
+docker-compose down -v
+
+# Subir novamente
+docker-compose up -d db
+
+# Aguardar inicialização
+sleep 15
+
+# Verificar
+docker exec ab0-postgres psql -U ab0 -d ab0_production -c "SELECT version();"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASSO 2: CONFIGURAR GITHUB SECRETS (obrigatório!)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Acesse: https://github.com/MrGr33n98/AB0-1/settings/secrets/actions
+
+2. Clique em "New repository secret" para cada um abaixo:
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ Secret Name: POSTGRES_USER                                           │
+│ Value: ab0                                                           │
+└──────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ Secret Name: POSTGRES_PASSWORD                                       │
+│ Value: ZAbgbZeVAK!5!                                                │
+└──────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ Secret Name: POSTGRES_DB                                             │
+│ Value: ab0_production                                                │
+└──────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ Secret Name: RAILS_MASTER_KEY                                        │
+│ Value: 926316d3121bac4b8751ada0031657ec                              │
+└──────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ Secret Name: SECRET_KEY_BASE                                         │
+│ Value: b9dc7d3fc96f0a55910270a2cd493dcaf8daf290faed2b820ccf8c1f5   │
+│        6c2c62ffc8231ab3b6514f6a9388b662aab52c357c0889d0dab76fcc8   │
+│        25cf3b3adfb5de                                                │
+└──────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ Secret Name: JWT_SECRET                                              │
+│ Value: 42546c6329b1906d0fdf48104f4a0cc90ec4b9e71969cfba395cdb618   │
+│        a551d0093c4f0c2cb2da9cfb8d41b478aa9547cf139cda8b626b272ed   │
+│        c339af96325fcb                                                │
+└──────────────────────────────────────────────────────────────────────┘
+
+⚠️  IMPORTANTE: Cole cada valor EXATAMENTE como mostrado acima!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASSO 3: TESTAR O DEPLOYMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Opção A - Fazer um commit vazio para testar:
+
+git commit --allow-empty -m "test: trigger workflow after database fix"
+git push origin main
+
+Opção B - O workflow já está rodando! Verifique em:
+https://github.com/MrGr33n98/AB0-1/actions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERIFICAÇÕES (na VM):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Listar usuários do PostgreSQL
+docker exec ab0-postgres psql -U postgres -c "\du"
+
+# Listar bancos de dados
+docker exec ab0-postgres psql -U postgres -c "\l"
+
+# Testar conexão como usuário 'ab0'
+docker exec ab0-postgres psql -U ab0 -d ab0_production -c "SELECT current_user, current_database();"
+
+# Ver logs do backend
+docker logs ab0-backend --tail 50
+
+# Ver logs do banco
+docker logs ab0-postgres --tail 50
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RESUMO DO QUE FAZER:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+☐ 1. SSH na VM
+☐ 2. Executar comandos da OPÇÃO A (criar usuário) ou OPÇÃO B (recriar)
+☐ 3. Configurar os 6 GitHub Secrets (copie e cole os valores acima)
+☐ 4. Aguardar o workflow rodar ou fazer push para testar
+☐ 5. Verificar em https://github.com/MrGr33n98/AB0-1/actions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SE AINDA DER ERRO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Verifique se todos os secrets foram criados corretamente
+2. Verifique os logs: docker logs ab0-postgres
+3. Tente reiniciar: docker-compose restart db
+4. Se persistir, escolha a OPÇÃO B (recriar do zero)
+
+═══════════════════════════════════════════════════════════════════════════
