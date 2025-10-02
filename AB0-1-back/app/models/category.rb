@@ -34,7 +34,7 @@ class Category < ApplicationRecord
     json = super(
       options.merge(
         include: {
-          companies: { only: %i[id name about] }, # <-- inclui about
+          companies: { only: %i[id name description] },
           products: { only: %i[id name price] }
         },
         except: %i[created_at updated_at]

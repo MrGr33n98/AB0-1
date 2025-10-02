@@ -31,12 +31,16 @@ RUN mkdir -p tmp/pids tmp/storage public/assets log
 ENV RAILS_ENV=production \
     PATH="/app/bin:${PATH}"
 
-# Create database.yml
-RUN echo "production:\n\
-  adapter: postgresql\n\
-  encoding: unicode\n\
-  pool: 5\n\
-  url: <%= ENV['DATABASE_URL'] %>" > config/database.yml
+# Remove this block to rely solely on DATABASE_URL from entrypoint.sh
+# RUN echo "production:\n\
+#   adapter: postgresql\n\
+#   encoding: unicode\n\
+#   pool: 5\n\
+#   host: db\n\
+#   port: 5432\n\
+#   database: <%= ENV['POSTGRES_DB'] %>\n\
+#   username: <%= ENV['POSTGRES_USER'] %>\n\
+#   password: <%= ENV['POSTGRES_PASSWORD'] %>" > config/database.yml
 
 EXPOSE 3001
 

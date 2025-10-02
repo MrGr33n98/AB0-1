@@ -17,7 +17,23 @@ echo "✅ Postgres disponível!"
 
 # Cria ou migra o banco de dados
 echo "🔄 Rodando migrations..."
-bundle exec rails db:prepare
+# Explicitly export DATABASE_URL to ensure it's available for Rails commands
+export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
+echo "Backend container sees DATABASE_URL: $DATABASE_URL"
 
-# Executa o processo principal do container (ex.: puma, sidekiq, etc.)
+# Add this for debugging:
+echo "Rails environment: $RAILS_ENV"
+echo "Checking Rails database configuration:"
+bundle exec rails runner "puts ActiveRecord::Base.connection_db_config.configuration_hash.inspect"
+
+# Create the database if it doesn't exist
+echo "Creating database if it doesn't exist..."
+bundle exec rails db:create || true
+
+# Run migrations
+echo "Running database migrations..."
+bundle exec rails db:migrate
+
+# Then exec the container's main process (what's set as CMD in the Dockerfile).
+echo "Starting Rails server..."
 exec "$@"
