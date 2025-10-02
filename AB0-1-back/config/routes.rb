@@ -78,6 +78,9 @@ Rails.application.routes.draw do
         post :forgot_password
         post :reset_password
       end
+
+      # Content Feed
+      get 'content_feed', to: 'content_feed#index'
     end
   end
 
