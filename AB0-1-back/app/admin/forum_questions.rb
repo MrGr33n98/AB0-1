@@ -1,12 +1,21 @@
 ActiveAdmin.register ForumQuestion do
-  # Update the permitted parameters to match your model's fields
-  permit_params :subject, :description, :status, :requested_at, :user_id, :product_id, :category_id
+  permit_params :subject, :description, :status, :requested_at, :user_id, :product_id, :company_id, :category_id
+
+  filter :subject
+  filter :category
+  filter :company
+  filter :product
+  filter :user
+  filter :status
+  filter :requested_at
+  filter :created_at
 
   index do
     selectable_column
     id_column
     column :subject
     column :user
+    column :company
     column :product
     column :category
     column :status
@@ -17,9 +26,10 @@ ActiveAdmin.register ForumQuestion do
 
   form do |f|
     f.inputs do
-      f.input :subject       # Changed from title
-      f.input :description   # Changed from content
+      f.input :subject
+      f.input :description
       f.input :user
+      f.input :company
       f.input :product
       f.input :category
       f.input :status
