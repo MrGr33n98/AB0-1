@@ -2,7 +2,7 @@ class Api::V1::ForumQuestionsController < Api::V1::BaseController
   before_action :set_forum_question, only: %i[show update destroy]
 
   def index
-    scope = ForumQuestion.all.order(created_at: :desc)
+    scope = ForumQuestion.includes(:category, :company, :product, :user).order(created_at: :desc)
     scope = scope.where(company_id: params[:company_id]) if params[:company_id].present?
     scope = scope.where(product_id: params[:product_id]) if params[:product_id].present?
     scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?

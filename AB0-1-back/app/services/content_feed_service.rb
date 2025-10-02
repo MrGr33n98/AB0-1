@@ -29,14 +29,14 @@ class ContentFeedService
   private
 
   def base_articles
-    scope = Article.order(created_at: :desc)
+    scope = Article.includes(:company, :category).order(created_at: :desc)
     scope = scope.where(company_id: @company_id) if @company_id.present?
     scope = scope.where(category_id: @category_id) if @category_id.present?
     scope
   end
 
   def base_campaigns
-    scope = CampaignReview.order(created_at: :desc)
+    scope = CampaignReview.includes(:company, :campaign).order(created_at: :desc)
     scope = scope.where(company_id: @company_id) if @company_id.present?
     scope
   end

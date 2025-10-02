@@ -2,7 +2,7 @@ class Api::V1::CampaignReviewsController < Api::V1::BaseController
   before_action :set_campaign_review, only: %i[show update destroy]
 
   def index
-    scope = CampaignReview.all.order(created_at: :desc)
+    scope = CampaignReview.includes(:company, :product, :campaign).order(created_at: :desc)
     scope = scope.where(company_id: params[:company_id]) if params[:company_id].present?
     scope = scope.where(product_id: params[:product_id]) if params[:product_id].present?
     scope = scope.sponsored if ActiveModel::Type::Boolean.new.cast(params[:sponsored])

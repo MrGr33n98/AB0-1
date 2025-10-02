@@ -2,7 +2,7 @@ class Api::V1::ArticlesController < Api::V1::BaseController
   before_action :set_article, only: %i[show update destroy]
 
   def index
-    scope = Article.order(created_at: :desc)
+    scope = Article.includes(:category, :company, :product).order(created_at: :desc)
     scope = scope.where(company_id: params[:company_id]) if params[:company_id].present?
     scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
     scope = scope.where(product_id: params[:product_id]) if params[:product_id].present?
