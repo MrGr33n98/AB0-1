@@ -52,6 +52,7 @@ class Company < ApplicationRecord
   scope :verified,        ->        { where(verified: true) }
   scope :by_rating,       ->        { order(rating_avg: :desc) }
   scope :by_founded_year, ->        { order(founded_year: :asc) }
+  scope :active_only,     ->        { where(status: statuses[:active]) }
 
   # =========================
   # Ransack configuration

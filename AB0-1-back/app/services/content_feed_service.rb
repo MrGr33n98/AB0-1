@@ -14,6 +14,8 @@ class ContentFeedService
   end
 
   def build
+    started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
     organic_articles = base_articles.where(sponsored: false).limit(@limit * 2) # buffer
     sponsored_articles = base_articles.where(sponsored: true).limit(@limit)
 
@@ -23,7 +25,11 @@ class ContentFeedService
     organic_pool = merge_and_sort(organic_articles, organic_campaigns)
     sponsored_pool = merge_and_sort(sponsored_articles, sponsored_campaigns)
 
-    assemble_feed(organic_pool, sponsored_pool).first(@limit)
+    feed = assemble_feed(organic_pool, sponsored_pool).first(@limit)
+
+    log_metrics(feed, organic_pool.size, sponsored_pool.size, started_at)
+
+    feed
   end
 
   private
@@ -67,5 +73,21 @@ class ContentFeedService
     end
 
     feed
+  end
+
+  def log_metrics(feed, organic_size, sponsored_size, started_at)
+    duration = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000).round(2)
+    sponsored_count = feed.count { |i| i.respond_to?(:sponsored) && i.sponsored }
+    Rails.logger.info(
+      '[ContentFeedService] duration_ms=' + duration.to_s +
+      ' total=' + feed.size.to_s +
+      ' sponsored_in_feed=' + sponsored_count.to_s +
+      ' organic_pool=' + organic_size.to_s +
+      ' sponsored_pool=' + sponsored_size.to_s +
+      ' company_filter=' + (@company_id || 'nil').to_s +
+      ' category_filter=' + (@category_id || 'nil').to_s
+    )
+  rescue StandardError => e
+    Rails.logger.error("[ContentFeedService] metrics_log_failed=#{e.message}")
   end
 end

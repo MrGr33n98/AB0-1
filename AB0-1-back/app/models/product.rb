@@ -15,6 +15,7 @@ class Product < ApplicationRecord
   # Validations
   validates :name, :price, presence: true
   validates :status, inclusion: { in: statuses.keys }, allow_nil: true
+  validate :blocked_transition_guard
 
   # Method to get image URL
   def image_url
@@ -37,6 +38,8 @@ class Product < ApplicationRecord
   end
 
   # Custom JSON
+  scope :visible, -> { active_status.where(featured: [true, nil]) }
+
   def as_json(options = {})
     super(options.merge(
       include: {
@@ -47,4 +50,15 @@ class Product < ApplicationRecord
       except: %i[created_at updated_at]
     ))
   end
+
+  private
+
+  # Impede retorno direto de disabled -> active para forçar ciclo de revisão
+  def blocked_transition_guard
+    return unless status_was.present? && status.present?
+    if status_was == 'disabled' && status == 'active'
+      errors.add(:status, 'não pode voltar de disabled direto para active (use draft -> active)')
+    end
+  end
+
 end
