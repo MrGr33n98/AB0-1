@@ -74,6 +74,13 @@ class Company < ApplicationRecord
     rating_count.presence || reviews.count
   end
 
+  def recalculate_rating_cache!
+    stats = reviews.group(nil).pluck(Arel.sql('COALESCE(AVG(rating),0), COUNT(*)')).first
+    avg = stats[0].to_f.round(2)
+    count = stats[1].to_i
+    update_columns(rating_avg: avg, rating_count: count, updated_at: Time.current)
+  end
+
   def years_in_business
     return nil unless founded_year.present?
 
