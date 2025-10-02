@@ -38,8 +38,15 @@ Rails.application.routes.draw do
         end
         collection do
           get :featured
+          get 'by_slug/:slug', to: 'categories#show_by_slug'
         end
       end
+
+      # Banners routes
+      resources :banners, only: [:index]
+
+      # BannerGlobals routes
+      resources :banner_globals, only: [:index]
 
       # Products routes
       resources :products, only: [:index, :show] do
