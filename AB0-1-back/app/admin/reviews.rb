@@ -2,18 +2,18 @@ ActiveAdmin.register Review do
   # Explicitly define filters to match your model's attributes
   filter :comment
   filter :rating
-  filter :product
+  filter :company
   filter :user
   filter :created_at
   filter :updated_at
 
   # Update the permitted parameters to use comment instead of content
-  permit_params :comment, :rating, :product_id, :user_id
+  permit_params :comment, :rating, :company_id, :user_id
 
   # Fix the filters section - use comment instead of content
   filter :comment
   filter :rating
-  filter :product
+  filter :company
   filter :user
   filter :created_at
   filter :updated_at
@@ -24,7 +24,7 @@ ActiveAdmin.register Review do
   index do
     selectable_column
     id_column
-    column :product
+    column :company
     column :user
     column :rating
     column :comment
@@ -34,7 +34,7 @@ ActiveAdmin.register Review do
 
   form do |f|
     f.inputs do
-      f.input :product
+      f.input :company
       f.input :user
       f.input :rating
       f.input :comment # Changed from content to comment
