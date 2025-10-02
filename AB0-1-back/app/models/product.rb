@@ -5,8 +5,16 @@ class Product < ApplicationRecord
   has_and_belongs_to_many :categories
   has_one_attached :image
 
+  enum status: {
+    draft: 'draft',
+    active: 'active',
+    archived: 'archived',
+    disabled: 'disabled'
+  }, _suffix: true, validate: false
+
   # Validations
   validates :name, :price, presence: true
+  validates :status, inclusion: { in: statuses.keys }, allow_nil: true
 
   # Method to get image URL
   def image_url

@@ -1,4 +1,10 @@
 class Company < ApplicationRecord
+  enum status: {
+    active: 'active',
+    inactive: 'inactive',
+    pending: 'pending',
+    blocked: 'blocked'
+  }, _suffix: true, validate: false
   # =========================
   # Attachments
   # =========================
@@ -19,6 +25,7 @@ class Company < ApplicationRecord
   # Validations
   # =========================
   validates :name, :description, presence: true
+  validates :status, inclusion: { in: statuses.keys }, allow_nil: true
   validates :website,
             format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
                       message: 'must be a valid URL' },
