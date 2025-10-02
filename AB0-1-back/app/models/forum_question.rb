@@ -4,7 +4,15 @@ class ForumQuestion < ApplicationRecord
   belongs_to :company, optional: true
   belongs_to :category
 
+  enum status: {
+    draft: 'draft',
+    published: 'published',
+    archived: 'archived'
+  }, _suffix: true, validate: false
+
   scope :by_company, ->(cid) { where(company_id: cid) if cid.present? }
+
+  validates :status, inclusion: { in: statuses.keys }, allow_nil: true
 
   # Add ransackable attributes for ActiveAdmin
   def self.ransackable_attributes(_auth_object = nil)
