@@ -1,11 +1,19 @@
 class ApplicationController < ActionController::Base
-  before_action :set_notifications, if: :current_user
+  protect_from_forgery with: :exception
+  before_action :set_notifications, if: :user_signed_in?
 
   private
 
   def set_notifications
-    Noticed::Notification.where(recipient: current_user).newest_first.limit(9)
-    @unread = current_user.notifications.unread
-    @read = current_user.notifications.read
+    user = respond_to?(:current_user) ? current_user : current_admin_user
+    return unless user && user.respond_to?(:notifications)
+
+    Noticed::Notification.where(recipient: user).newest_first.limit(9)
+    @unread = user.notifications.unread
+    @read = user.notifications.read
+  end
+
+  def user_signed_in?
+    (respond_to?(:current_user) && current_user) || (respond_to?(:current_admin_user) && current_admin_user)
   end
 end
