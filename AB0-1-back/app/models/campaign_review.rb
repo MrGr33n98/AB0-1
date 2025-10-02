@@ -9,7 +9,7 @@ class CampaignReview < ApplicationRecord
     active: 'active',
     finished: 'finished',
     canceled: 'canceled'
-  }, _suffix: true, validate: false
+  }, _suffix: true
 
   scope :sponsored, -> { where(sponsored: true) }
 
