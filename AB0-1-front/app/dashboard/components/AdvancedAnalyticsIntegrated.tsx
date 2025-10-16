@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -32,12 +32,7 @@ export default function AdvancedAnalyticsIntegrated({ themeMode, companyId }: Ad
 
   const isDark = themeMode === 'dark';
 
-  // Fetch data from API
-  useEffect(() => {
-    fetchAnalyticsData();
-  }, [companyId, timeRange]);
-
-  const fetchAnalyticsData = async () => {
+  const fetchAnalyticsData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -65,7 +60,12 @@ export default function AdvancedAnalyticsIntegrated({ themeMode, companyId }: Ad
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId, timeRange]);
+
+  // Fetch data from API
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [fetchAnalyticsData]);
 
   // Calculate trends
   const calculateTrend = (current: number, previous: number): { value: number; isPositive: boolean } => {

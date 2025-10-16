@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Building2, 
@@ -75,11 +75,7 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
   const [formData, setFormData] = useState<CompanyData | null>(null);
   const [pendingApproval, setPendingApproval] = useState(false);
 
-  useEffect(() => {
-    fetchCompanyData();
-  }, [companyId]);
-
-  const fetchCompanyData = async () => {
+  const fetchCompanyData = useCallback(async () => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/companies/${companyId}`);
       const data = await response.json();
@@ -90,7 +86,11 @@ export default function CompanyInfo({ companyId }: CompanyInfoProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
+
+  useEffect(() => {
+    fetchCompanyData();
+  }, [fetchCompanyData]);
 
   const handleInputChange = (field: keyof CompanyData, value: any) => {
     setFormData((prev) => prev ? { ...prev, [field]: value } : null);

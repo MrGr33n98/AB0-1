@@ -1,3 +1,5 @@
+import type { Company } from '@/lib/api';
+
 export interface Category {
   id: number;
   name: string;
@@ -17,7 +19,7 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  status: string;
+  status?: string;
   created_at: string;
   updated_at: string;
   category: Category;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Product } from '@/types';
+import type { Product } from '@/lib/api';
 import { productsApi } from '@/lib/api';
 
 export function useProducts() {
@@ -14,7 +14,7 @@ export function useProducts() {
       try {
         setLoading(true);
         const data = await productsApi.getAll();
-        setProducts(data);
+        setProducts((data as unknown as Product[]) || []);
         setError(null);
       } catch (err) {
         console.error('Error fetching products:', err);

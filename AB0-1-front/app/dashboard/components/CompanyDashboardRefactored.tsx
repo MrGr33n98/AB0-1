@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Eye,
@@ -65,20 +65,7 @@ export default function CompanyDashboardRefactored({ companyId }: CompanyDashboa
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isDark, setIsDark] = useState(false);
 
-  useEffect(() => {
-    // Check system preference
-    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setIsDark(isDarkMode);
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    }
-
-    fetchCompanyData();
-    fetchDashboardStats();
-    fetchNotifications();
-  }, [companyId]);
-
-  const fetchCompanyData = async () => {
+  const fetchCompanyData = useCallback(async () => {
     try {
       // Mock data - replace with actual API call
       setCompany({
@@ -94,9 +81,9 @@ export default function CompanyDashboardRefactored({ companyId }: CompanyDashboa
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
 
-  const fetchDashboardStats = async () => {
+  const fetchDashboardStats = useCallback(async () => {
     // Mock data - replace with actual API call
     setStats({
       profileViews: 1234,
@@ -109,9 +96,9 @@ export default function CompanyDashboardRefactored({ companyId }: CompanyDashboa
       activeCampaigns: 2,
       conversionRate: 7.2
     });
-  };
+  }, []);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     // Mock notifications - replace with actual API call
     setNotifications([
       {
@@ -139,7 +126,20 @@ export default function CompanyDashboardRefactored({ companyId }: CompanyDashboa
         read: true
       }
     ]);
-  };
+  }, []);
+
+  useEffect(() => {
+    // Check system preference
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setIsDark(isDarkMode);
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    }
+
+    fetchCompanyData();
+    fetchDashboardStats();
+    fetchNotifications();
+  }, [companyId, fetchCompanyData, fetchDashboardStats, fetchNotifications]);
 
   const handleToggleTheme = () => {
     setIsDark(!isDark);
@@ -213,7 +213,7 @@ export default function CompanyDashboardRefactored({ companyId }: CompanyDashboa
       icon: Clock,
       color: 'orange',
       change: '-2',
-      changeType: stats?.pendingApprovals ? 'negative' : 'neutral' as const,
+      changeType: (stats?.pendingApprovals ? 'negative' : 'neutral') as 'positive' | 'negative' | 'neutral',
       trend: [80, 70, 60, 50, 40, 30, 20]
     },
     {
@@ -413,7 +413,7 @@ export default function CompanyDashboardRefactored({ companyId }: CompanyDashboa
             {activeTab === 'analytics' && (
               <div>
                 <AdvancedAnalyticsIntegrated 
-                  themeMode={themeMode}
+                  themeMode={isDark ? 'dark' : 'light'}
                   companyId={parseInt(companyId)}
                 />
               </div>

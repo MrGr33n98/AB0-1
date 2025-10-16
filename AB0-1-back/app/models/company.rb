@@ -1,10 +1,13 @@
 class Company < ApplicationRecord
+  include QueryCacheable # TASK-016: Query Caching
+  
   enum status: {
     active: 'active',
     inactive: 'inactive',
     pending: 'pending',
     blocked: 'blocked'
-  }, _suffix: true, validate: false
+  }, _suffix: true
+  
   # =========================
   # Attachments
   # =========================
@@ -55,6 +58,58 @@ class Company < ApplicationRecord
   scope :active_only,     ->        { where(status: statuses[:active]) }
 
   # =========================
+  # Cacheable Queries - TASK-016
+  # =========================
+
+  # Featured companies with best ratings
+  cacheable_query :featured_top_rated, expires_in: 1.hour do
+    featured
+      .active_only
+      .verified
+      .by_rating
+      .includes(:categories, :products)
+      .limit(10)
+  end
+
+  # Active companies with products
+  cacheable_query :active_with_products, expires_in: 30.minutes do
+    active_only
+      .joins(:products)
+      .distinct
+      .includes(:categories)
+      .order(name: :asc)
+  end
+
+  # Companies by state (cached)
+  def self.cached_by_state(state, expires_in: 30.minutes)
+    return [] if state.blank?
+    
+    cache_key = "company/by_state/#{state}"
+    Rails.cache.fetch(cache_key, expires_in: expires_in) do
+      by_state(state).active_only.to_a
+    end
+  end
+
+  # Companies by city (cached)
+  def self.cached_by_city(city, expires_in: 30.minutes)
+    return [] if city.blank?
+    
+    cache_key = "company/by_city/#{city}"
+    Rails.cache.fetch(cache_key, expires_in: expires_in) do
+      by_city(city).active_only.to_a
+    end
+  end
+
+  # Top rated companies
+  cacheable_query :top_rated, expires_in: 1.hour do
+    where.not(rating_avg: nil)
+      .where('rating_avg >= ?', 4.0)
+      .active_only
+      .by_rating
+      .limit(20)
+  end
+
+  # =========================
   # Ransack configuration
   # =========================
   def self.ransackable_attributes(_auth_object = nil)
@@ -74,12 +129,33 @@ class Company < ApplicationRecord
   # =========================
   # Domain / API helpers
   # =========================
+  
+  # Cached average rating
   def average_rating
-    rating_avg.presence || reviews.average(:rating).to_f.round(1)
+    cache_method(:average_rating, expires_in: 30.minutes) do
+      rating_avg.presence || reviews.average(:rating).to_f.round(1)
+    end
   end
 
+  # Cached reviews count
   def reviews_count
-    rating_count.presence || reviews.count
+    cache_method(:reviews_count, expires_in: 30.minutes) do
+      rating_count.presence || reviews.count
+    end
+  end
+
+  # Cached products count
+  def cached_products_count
+    cache_method(:products_count, expires_in: 1.hour) do
+      products.count
+    end
+  end
+
+  # Cached categories
+  def cached_categories
+    cache_method(:categories, expires_in: 1.hour) do
+      categories.to_a
+    end
   end
 
   def recalculate_rating_cache!
@@ -87,6 +163,9 @@ class Company < ApplicationRecord
     avg = stats[0].to_f.round(2)
     count = stats[1].to_i
     update_columns(rating_avg: avg, rating_count: count, updated_at: Time.current)
+    
+    # Clear cache after recalculation
+    clear_cache!
   end
 
   def years_in_business

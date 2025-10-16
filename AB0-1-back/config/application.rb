@@ -22,5 +22,10 @@ module RailsBlogDemo
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
     config.assets.initialize_on_precompile = false
+
+    # Enable Rack::Attack middleware for rate limiting (TASK-001)
+    config.middleware.use Rack::Attack
+    # TASK-022: Autoload query optimization helpers
+    config.autoload_paths << Rails.root.join('lib')
   end
 end

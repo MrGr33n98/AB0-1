@@ -6,6 +6,7 @@ import { User, authApi } from '@/lib/api';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  error: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const isAuthenticated = !!user;
 
   useEffect(() => {
@@ -82,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, error, isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

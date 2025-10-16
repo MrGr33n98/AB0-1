@@ -2,35 +2,54 @@
 module Api
   module V1
     class CategoriesController < Api::V1::BaseController
+      include Cacheable # TASK-015: Enable caching
+      include Paginatable # TASK-017: Enable pagination
+      
       before_action :set_category, only: %i[show update destroy]
+      after_action :expire_categories_cache, only: %i[create update destroy]
 
       # =========================
       # GET /categories
       # =========================
       def index
-        query = Category.all
+        cache_key = cache_key_for('categories', params.except(:page, :per_page))
+        
+        cached_json(cache_key, expires_in: 1.hour) do
+          query = Category.all
 
-        # Filtrar por status (só se a coluna existir)
-        if Category.column_names.include?('status') && params[:status].present?
-          query = query.where(status: params[:status])
+          # Filtrar por status (só se a coluna existir)
+          if Category.column_names.include?('status') && params[:status].present?
+            query = query.where(status: params[:status])
+          end
+
+          # Filtrar por featured (só se a coluna existir)
+          if Category.column_names.include?('featured') && params[:featured].present?
+            featured = ActiveModel::Type::Boolean.new.cast(params[:featured])
+            query = query.where(featured: featured)
+          end
+
+          # Aplicar limite manual (apenas se não estiver usando paginação)
+          # Se page ou per_page estiverem presentes, usar paginação ao invés do limit
+          if params[:limit].present? && params[:limit].to_i.positive? && !params[:page].present?
+            query = query.limit(params[:limit].to_i)
+          end
+
+          # Inclui companies apenas se associação existir
+          query = query.includes(:companies) if Category.reflect_on_association(:companies)
+
+          # Apply pagination if page parameter is present
+          if params[:page].present?
+            paginated = paginate(query)
+            set_pagination_headers(paginated)
+            {
+              data: paginated.map(&:as_json),
+              meta: { pagination: pagination_metadata(paginated) }
+            }
+          else
+            # Return all results without pagination metadata
+            query.map(&:as_json)
+          end
         end
-
-        # Filtrar por featured (só se a coluna existir)
-        if Category.column_names.include?('featured') && params[:featured].present?
-          featured = ActiveModel::Type::Boolean.new.cast(params[:featured])
-          query = query.where(featured: featured)
-        end
-
-        # Aplicar limite (ignora se for <= 0)
-        query = query.limit(params[:limit].to_i) if params[:limit].present? && params[:limit].to_i.positive?
-
-        # Inclui companies apenas se associação existir
-        query = query.includes(:companies) if Category.reflect_on_association(:companies)
-
-        @categories = query
-
-        # Use the as_json method from the Category model which includes banner_url
-        render json: @categories.map(&:as_json)
       rescue ActiveRecord::RecordNotFound => e
         Rails.logger.error("Categories not found: #{e.message}")
         render json: { error: 'Categorias não encontradas' }, status: :not_found
@@ -43,7 +62,11 @@ module Api
       # GET /categories/:id
       # =========================
       def show
-        render json: @category.as_json
+        cache_key = "categories/show/#{@category.id}/#{@category.updated_at.to_i}"
+        
+        cached_json(cache_key, expires_in: 1.hour) do
+          @category.as_json
+        end
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Categoria não encontrada' }, status: :not_found
       rescue StandardError => e
@@ -106,7 +129,12 @@ module Api
       def show_by_slug
         slug = params[:slug] || params[:id] # Support both slug param and id param
         @category = Category.find_by!(seo_url: slug)
-        render json: @category.as_json
+        
+        cache_key = "categories/slug/#{slug}/#{@category.updated_at.to_i}"
+        
+        cached_json(cache_key, expires_in: 1.hour) do
+          @category.as_json
+        end
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Categoria não encontrada' }, status: :not_found
       rescue StandardError => e
@@ -125,6 +153,12 @@ module Api
           :name, :seo_url, :seo_title, :short_description,
           :description, :parent_id, :kind, :status, :featured
         )
+      end
+
+      # Expire all category caches when data changes
+      def expire_categories_cache
+        expire_cache('categories')
+        Rails.logger.info("🗑️  Expired all category caches")
       end
     end
   end

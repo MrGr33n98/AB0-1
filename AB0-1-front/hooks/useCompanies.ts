@@ -28,7 +28,7 @@ export function useCompanies() {
   const createCompany = async (company: Omit<Company, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const newCompany = await companiesApi.create(company);
-      setCompanies(prev => [...prev, newCompany]);
+      setCompanies((prev: Company[]) => [...prev, newCompany as Company]);
       return newCompany;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create company');
@@ -39,7 +39,7 @@ export function useCompanies() {
   const updateCompany = async (id: number, updates: Partial<Company>) => {
     try {
       const updatedCompany = await companiesApi.update(id, updates);
-      setCompanies(prev => prev.map(c => c.id === id ? updatedCompany : c));
+      setCompanies((prev: Company[]) => prev.map((c: Company) => c.id === id ? (updatedCompany as Company) : c));
       return updatedCompany;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update company');
@@ -50,7 +50,7 @@ export function useCompanies() {
   const deleteCompany = async (id: number) => {
     try {
       await companiesApi.delete(id);
-      setCompanies(prev => prev.filter(c => c.id !== id));
+      setCompanies((prev: Company[]) => prev.filter((c: Company) => c.id !== id));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete company');
       throw err;

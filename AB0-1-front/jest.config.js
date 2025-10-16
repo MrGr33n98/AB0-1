@@ -17,6 +17,41 @@ const customJestConfig = {
     '^@/public/(.*)$': '<rootDir>/public/$1',
     '^@/types$': '<rootDir>/types',
   },
+  
+  // TASK-013: Coverage configuration
+  collectCoverageFrom: [
+    'app/**/*.{js,jsx,ts,tsx}',
+    'components/**/*.{js,jsx,ts,tsx}',
+    'lib/**/*.{js,jsx,ts,tsx}',
+    'hooks/**/*.{js,jsx,ts,tsx}',
+    'utils/**/*.{js,jsx,ts,tsx}',
+    'contexts/**/*.{js,jsx,ts,tsx}',
+    '!**/*.d.ts',
+    '!**/node_modules/**',
+    '!**/.next/**',
+    '!**/coverage/**',
+    '!**/jest.config.js',
+    '!**/next.config.js',
+  ],
+  
+  coverageThreshold: {
+    global: {
+      branches: 50,
+      functions: 50,
+      lines: 50,
+      statements: 50,
+    },
+  },
+  
+  coverageReporters: [
+    'text',
+    'text-summary',
+    'html',
+    'lcov',
+    'json',
+  ],
+  
+  coverageDirectory: 'coverage',
 };
 
 module.exports = createJestConfig(customJestConfig);

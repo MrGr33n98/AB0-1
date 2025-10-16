@@ -7,6 +7,7 @@ export interface SearchResults {
   companies: Company[];
   products: Product[];
   articles: Article[];
+  categories?: any[];
 }
 
 export function useSearch() {
@@ -14,13 +15,14 @@ export function useSearch() {
     companies: [],
     products: [],
     articles: [],
+    categories: [],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const search = async (query: string) => {
     if (!query.trim()) {
-      setResults({ companies: [], products: [], articles: [] });
+      setResults({ companies: [], products: [], articles: [], categories: [] });
       return;
     }
 
@@ -28,13 +30,14 @@ export function useSearch() {
       setLoading(true);
       setError(null);
 
-      const [companies, products, articles] = await Promise.all([
-        searchApi.companies(query),
-        searchApi.products(query),
-        searchApi.articles(query),
-      ]);
-
-      setResults({ companies, products, articles });
+      const response = await searchApi.all(query);
+      
+      setResults({
+        companies: response.companies || [],
+        products: response.products || [],
+        articles: response.articles || [],
+        categories: response.categories || [],
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed');
     } finally {

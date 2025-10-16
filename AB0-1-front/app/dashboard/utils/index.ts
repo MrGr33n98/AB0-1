@@ -63,7 +63,7 @@ export const formatDate = (
 ): string => {
   const d = typeof date === 'string' ? new Date(date) : date;
   
-  const options: Intl.DateTimeFormatOptions = {
+  const optionsMap: Record<string, Intl.DateTimeFormatOptions> = {
     short: { day: '2-digit', month: '2-digit', year: 'numeric' },
     long: { day: '2-digit', month: 'long', year: 'numeric' },
     full: {
@@ -72,7 +72,9 @@ export const formatDate = (
       month: 'long',
       year: 'numeric',
     },
-  }[format];
+  };
+  
+  const options = optionsMap[format];
   
   return d.toLocaleDateString('pt-BR', options);
 };

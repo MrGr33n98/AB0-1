@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -87,13 +87,7 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  useEffect(() => {
-    fetchCompanyData();
-    fetchDashboardStats();
-    fetchNotifications();
-  }, [companyId]);
-
-  const fetchCompanyData = async () => {
+  const fetchCompanyData = useCallback(async () => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/companies/${companyId}`);
       const data = await response.json();
@@ -103,9 +97,9 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
 
-  const fetchDashboardStats = async () => {
+  const fetchDashboardStats = useCallback(async () => {
     // Mock data - replace with actual API call
     setStats({
       profileViews: 1234,
@@ -118,9 +112,9 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
       activeCampaigns: 2,
       conversionRate: 7.2
     });
-  };
+  }, []);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     // Mock notifications - replace with actual API call
     setNotifications([
       {
@@ -148,7 +142,13 @@ export default function CompanyDashboard({ companyId }: CompanyDashboardProps) {
         read: true
       }
     ]);
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchCompanyData();
+    fetchDashboardStats();
+    fetchNotifications();
+  }, [companyId, fetchCompanyData, fetchDashboardStats, fetchNotifications]);
 
   if (loading) {
     return (

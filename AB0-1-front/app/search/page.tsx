@@ -2,7 +2,8 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { searchApi, Company, Product, Category, Article } from '@/lib/api';
+import { searchApi } from '@/lib/api';
+import type { SearchAllResponse } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -17,12 +18,12 @@ function SearchPage() {
   const query = searchParams.get('q') || '';
 
   const [searchTerm, setSearchTerm] = useState(query);
-  const [results, setResults] = useState<{
-    companies: Company[];
-    products: Product[];
-    categories: Category[];
-    articles: Article[];
-  }>({
+  type SearchResultsState = Pick<
+    SearchAllResponse,
+    'companies' | 'products' | 'categories' | 'articles'
+  >;
+
+  const [results, setResults] = useState<SearchResultsState>({
     companies: [],
     products: [],
     categories: [],
@@ -154,7 +155,7 @@ function SearchPage() {
           </div>
           <h2 className="text-2xl font-semibold mb-2">Nenhum resultado encontrado</h2>
           <p className="text-gray-600">
-            Não encontramos nenhum resultado para "{query}". Tente buscar por outros termos.
+            Não encontramos nenhum resultado para &quot;{query}&quot;. Tente buscar por outros termos.
           </p>
           <Button variant="outline" onClick={clearSearch} className="mt-4">
             Limpar Busca

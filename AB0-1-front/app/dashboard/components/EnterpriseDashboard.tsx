@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Eye,
@@ -71,23 +71,6 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>('dark');
 
-  useEffect(() => {
-    // Load theme from localStorage or default to dark
-    const savedTheme = localStorage.getItem('dashboard-theme') as 'light' | 'dark' | null;
-    const initialTheme = savedTheme || 'dark';
-    setThemeMode(initialTheme);
-    
-    if (initialTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-
-    fetchCompanyData();
-    fetchDashboardStats();
-    fetchNotifications();
-  }, [companyId]);
-
   const handleThemeChange = (theme: 'light' | 'dark') => {
     setThemeMode(theme);
     if (theme === 'dark') {
@@ -97,7 +80,7 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     }
   };
 
-  const fetchCompanyData = async () => {
+  const fetchCompanyData = useCallback(async () => {
     try {
       // Mock data - replace with actual API call
       setCompany({
@@ -114,9 +97,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
 
-  const fetchDashboardStats = async () => {
+  const fetchDashboardStats = useCallback(async () => {
     // Mock data - replace with actual API call
     setStats({
       profileViews: 3847,
@@ -129,9 +112,9 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
       activeCampaigns: 2,
       conversionRate: 12.7
     });
-  };
+  }, []);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     // Mock notifications - replace with actual API call
     setNotifications([
       {
@@ -159,7 +142,24 @@ export default function EnterpriseDashboard({ companyId }: CompanyDashboardProps
         read: true
       }
     ]);
-  };
+  }, []);
+
+  useEffect(() => {
+    // Load theme from localStorage or default to dark
+    const savedTheme = localStorage.getItem('dashboard-theme') as 'light' | 'dark' | null;
+    const initialTheme = savedTheme || 'dark';
+    setThemeMode(initialTheme);
+    
+    if (initialTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
+    fetchCompanyData();
+    fetchDashboardStats();
+    fetchNotifications();
+  }, [companyId, fetchCompanyData, fetchDashboardStats, fetchNotifications]);
 
   const handleNotificationClick = (id: string) => {
     setNotifications(prev =>

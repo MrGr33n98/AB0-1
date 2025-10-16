@@ -3,8 +3,14 @@ Rails.application.routes.draw do
   ActiveAdmin.routes(self)
   devise_for :admin_users, ActiveAdmin::Devise.config
 
-  # Health check endpoint
-  get '/health', to: proc { [200, {}, ['OK']] }
+  # Health check endpoints
+  get '/health', to: 'health#show'
+  get '/health/readiness', to: 'health#readiness'
+  get '/health/liveness', to: 'health#liveness'
+  get '/health/details', to: 'health#details'
+
+  # TASK-009: Metrics endpoint
+  mount Yabeda::Prometheus::Exporter, at: '/metrics'
 
   # API routes
   namespace :api do

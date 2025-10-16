@@ -10,7 +10,7 @@ class Product < ApplicationRecord
     active: 'active',
     archived: 'archived',
     disabled: 'disabled'
-  }, _suffix: true, validate: false
+  }, _suffix: true
 
   # Validations
   validates :name, :price, presence: true

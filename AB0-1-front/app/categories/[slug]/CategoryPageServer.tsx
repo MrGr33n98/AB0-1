@@ -42,7 +42,7 @@ async function CategoryPageServer({ params }: CategorySlugPageProps) {
               Categoria não encontrada
             </h1>
             <p className="text-gray-600 mb-6">
-              A categoria "{params.slug}" não existe ou foi removida.
+              A categoria &quot;{params.slug}&quot; não existe ou foi removida.
             </p>
             <div className="space-x-4">
               <Button 

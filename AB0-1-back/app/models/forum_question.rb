@@ -8,7 +8,7 @@ class ForumQuestion < ApplicationRecord
     draft: 'draft',
     published: 'published',
     archived: 'archived'
-  }, _suffix: true, validate: false
+  }, _suffix: true
 
   scope :by_company, ->(cid) { where(company_id: cid) if cid.present? }
 

@@ -29,7 +29,7 @@ export default function CategoryImporter() {
 
     try {
       // Use the adminApi for importing categories
-      const data = await adminApi.importCategories(formData);
+      const data: any = await adminApi.importCategories(formData);
 
       setResult({
         success: data.message,

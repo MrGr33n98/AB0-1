@@ -67,7 +67,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 
@@ -593,9 +593,10 @@ export default function ProductsManagement({ companyId }: ProductsManagementProp
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir o produto "{selectedProduct?.name}"?
+              Tem certeza que deseja excluir o produto &quot;{selectedProduct?.name}&quot;?
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>
+
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>

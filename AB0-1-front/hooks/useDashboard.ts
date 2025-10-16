@@ -3,13 +3,15 @@
 import { useState, useEffect } from 'react';
 import { dashboardApi, DashboardStats } from '@/lib/api';
 
-export interface ExtendedDashboardStats extends DashboardStats {
-  active_campaigns?: number;
-  monthly_revenue?: number;
-  leads_count?: number;
-  reviews_count?: number;
-  products_count?: number;
-  companies_count?: number;
+export interface ExtendedDashboardStats {
+  companies_count: number;
+  products_count: number;
+  leads_count: number;
+  reviews_count: number;
+  active_campaigns: number;
+  monthly_revenue: number;
+  average_rating?: number;
+  projects_count?: number;
 }
 
 export function useDashboard() {

@@ -53,8 +53,9 @@ export async function checkApiEndpoints() {
             console.log(`    Working configuration: ${fullUrl}`);
             return { baseUrl, prefix, resource, data };
           }
-        } catch (error) {
-          console.log(`    ❌ Failed: ${error.message}`);
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : 'Unknown error';
+          console.log(`    ❌ Failed: ${message}`);
         }
       }
     }
@@ -65,7 +66,7 @@ export async function checkApiEndpoints() {
 }
 
 // Function to test a specific endpoint with detailed logging
-export async function testEndpoint(baseUrl, endpoint) {
+export async function testEndpoint(baseUrl: string, endpoint: string) {
   const fullUrl = `${baseUrl}${endpoint}`;
   console.log(`Testing specific endpoint: ${fullUrl}`);
   
@@ -92,8 +93,9 @@ export async function testEndpoint(baseUrl, endpoint) {
         Array.isArray(data) ? data.slice(0, 2) : data);
       return data;
     }
-  } catch (error) {
-    console.error(`Exception: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Exception: ${message}`);
     return null;
   }
 }
@@ -121,15 +123,9 @@ export async function findWorkingApiConfig() {
   return null;
 }
 
-// Export a function to run the check from browser console
-export function runApiCheck() {
-  console.log('Running API endpoint check...');
-  findWorkingApiConfig();
-}
-
 // Function to provide mock data for development
-export function getMockData(type) {
-  const mockData = {
+export function getMockData(type: string) {
+  const mockData: Record<string, any[]> = {
     products: [
       {
         id: 1,
@@ -210,5 +206,5 @@ export function getMockData(type) {
 // Export a function to run the check from browser console
 export function runApiCheck() {
   console.log('Running API endpoint check...');
-  checkApiEndpoints();
+  findWorkingApiConfig();
 }

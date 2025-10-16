@@ -91,7 +91,7 @@ export default function DashboardStats() {
     },
     {
       title: 'Receita Mensal',
-      value: `R$ ${stats.monthly_revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      value: `R$ ${(stats.monthly_revenue ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
       icon: DollarSign,
       color: 'bg-orange-500',
       bgColor: 'bg-orange-50',

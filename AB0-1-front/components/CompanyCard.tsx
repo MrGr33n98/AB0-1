@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Star, MapPin, MessageCircle, Phone, Globe,
   Clock, CreditCard, Facebook, Instagram, Twitter
@@ -96,12 +97,13 @@ export default function CompanyCard({ company, className = '' }: Props) {
           {/* Banner section */}
           <div className="h-20 bg-gradient-to-r from-gray-200 to-gray-300 relative">
             {bannerUrl && !bannerError ? (
-              <img
+              <Image
                 src={bannerUrl}
-                alt={`${company.name} banner`}
-                className="w-full h-full object-cover"
+                alt={`Banner ${company.name}`}
+                fill
+                className="object-cover"
                 onError={() => setBannerError(true)}
-                suppressHydrationWarning
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
@@ -115,22 +117,24 @@ export default function CompanyCard({ company, className = '' }: Props) {
             <div className="flex items-start justify-between">
               <div className="flex items-center">
                 {logoUrl && !logoError ? (
-                  <div className="mr-3 relative">
-                    <img
+                  <div className="mr-3 relative w-12 h-12">
+                    <Image
                       src={logoUrl}
-                      alt={name}
-                      className="w-12 h-12 rounded-full border object-cover bg-gray-100"
+                      alt={`Logo ${name}`}
+                      width={48}
+                      height={48}
+                      className="rounded-full border object-cover bg-gray-100"
                       onError={() => setLogoError(true)}
-                      suppressHydrationWarning
                     />
                   </div>
                 ) : (
-                  <div className="w-12 h-12 rounded-full mr-3 bg-gray-200 flex items-center justify-center border">
-                    <img
+                  <div className="w-12 h-12 rounded-full mr-3 bg-gray-200 flex items-center justify-center border relative">
+                    <Image
                       src="/images/logo-placeholder.svg"
                       alt="Logo placeholder"
-                      className="w-6 h-6 rounded-full"
-                      suppressHydrationWarning
+                      width={24}
+                      height={24}
+                      className="rounded-full"
                     />
                   </div>
                 )}

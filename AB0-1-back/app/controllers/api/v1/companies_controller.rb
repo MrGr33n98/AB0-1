@@ -2,6 +2,8 @@
 module Api
   module V1
     class CompaniesController < BaseController
+      include Paginatable # TASK-017: Enable pagination
+      
       before_action :set_company, only: %i[show update destroy analytics_historical analytics_reviews analytics_competitors analytics_traffic]
 
       # GET /api/v1/companies
@@ -20,40 +22,32 @@ module Api
         if params[:category_id].present?
           @companies = @companies.joins(:categories).where(categories: { id: params[:category_id] })
         end
-        @companies = @companies.limit(params[:limit].to_i) if params[:limit].present?
-
-        companies_json = @companies.map do |company|
-          {
-            id: company.id,
-            name: company.name,
-            description: company.description,
-            website: company.website,
-            phone: company.phone,
-            address: company.address,
-            state: company.state,
-            city: company.city,
-            created_at: company.created_at,
-            updated_at: company.updated_at,
-            banner_url: company.banner_url,
-            logo_url: company.logo_url,
-            rating_avg: company.rating_avg,
-            rating_count: company.rating_count,
-            status: company.status,
-            featured: company.featured,
-            verified: company.verified,
-            founded_year: company.founded_year,
-            employees_count: company.employees_count,
-            certifications: company.certifications,
-            email_public: company.email_public,
-            instagram: company.instagram,
-            facebook: company.facebook,
-            linkedin: company.linkedin,
-            working_hours: company.working_hours,
-            payment_methods: company.payment_methods
-          }
+        
+        # Apply manual limit only if not using pagination
+        if params[:limit].present? && !params[:page].present?
+          @companies = @companies.limit(params[:limit].to_i)
         end
 
-        render json: companies_json, status: :ok
+        # Apply pagination if page parameter is present
+        if params[:page].present?
+          paginated = paginate(@companies)
+          set_pagination_headers(paginated)
+          
+          companies_json = paginated.map do |company|
+            company_json_attributes(company)
+          end
+
+          render json: { 
+            data: companies_json,
+            meta: { pagination: pagination_metadata(paginated) }
+          }, status: :ok
+        else
+          companies_json = @companies.map do |company|
+            company_json_attributes(company)
+          end
+
+          render json: companies_json, status: :ok
+        end
       end
 
       # GET /api/v1/companies/:id
@@ -172,6 +166,37 @@ module Api
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Company not found' }, status: :not_found
         nil
+      end
+
+      def company_json_attributes(company)
+        {
+          id: company.id,
+          name: company.name,
+          description: company.description,
+          website: company.website,
+          phone: company.phone,
+          address: company.address,
+          state: company.state,
+          city: company.city,
+          created_at: company.created_at,
+          updated_at: company.updated_at,
+          banner_url: company.banner_url,
+          logo_url: company.logo_url,
+          rating_avg: company.rating_avg,
+          rating_count: company.rating_count,
+          status: company.status,
+          featured: company.featured,
+          verified: company.verified,
+          founded_year: company.founded_year,
+          employees_count: company.employees_count,
+          certifications: company.certifications,
+          email_public: company.email_public,
+          instagram: company.instagram,
+          facebook: company.facebook,
+          linkedin: company.linkedin,
+          working_hours: company.working_hours,
+          payment_methods: company.payment_methods
+        }
       end
 
       def company_params

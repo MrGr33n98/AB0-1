@@ -13,5 +13,6 @@ export const extractLocations = (companies: any[]) => {
     return acc;
   }, {} as Record<string, Set<string>>);
 
-  return Object.fromEntries(Object.entries(locations).map(([s, c]) => [s, [...c]]));
+  const entries = Object.entries(locations) as Array<[string, Set<string>]>;
+  return Object.fromEntries(entries.map(([state, cities]) => [state, Array.from(cities)]));
 };

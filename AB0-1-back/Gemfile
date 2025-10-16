@@ -24,8 +24,22 @@ gem 'stimulus-rails'
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem 'jbuilder'
 
+# TASK-021: Pagination
+gem 'kaminari'
+
+# TASK-008: Structured logging
+gem 'lograge'
+gem 'amazing_print' # Better console output
+
 # Use Redis adapter to run Action Cable in production
-# gem "redis", "~> 4.0"
+# TASK-014: Redis for caching, sessions, and background jobs
+gem 'redis', '~> 5.0'
+gem 'redis-namespace'
+gem 'hiredis' # C-based Redis client for better performance
+
+# TASK-017: Background job processing
+gem 'sidekiq', '~> 7.0'
+gem 'sidekiq-scheduler' # Cron-like job scheduler
 
 # Use Kredis to get higher-level data types in Redis [https://github.com/rails/kredis]
 # gem "kredis"
@@ -67,6 +81,13 @@ group :development do
 
   # Ruby static code analyzer and formatter
   gem 'rubocop', require: false
+  
+  # TASK-002: Security scanning tools
+  gem 'brakeman', require: false
+  gem 'bundler-audit', require: false
+  
+  # TASK-020: N+1 query detection
+  gem 'bullet'
 end
 
 group :test do
@@ -74,6 +95,10 @@ group :test do
   gem 'capybara'
   gem 'selenium-webdriver'
   gem 'webdrivers'
+  
+  # TASK-012: Test coverage reporting
+  gem 'simplecov', require: false
+  gem 'simplecov-console', require: false
 end
 
 gem 'activeadmin', '~> 3.2.0'
@@ -87,3 +112,20 @@ gem 'sassc'
 
 # Add this line to your Gemfile
 gem 'rack-cors', require: 'rack/cors'
+
+# Rate limiting protection
+gem 'rack-attack'
+
+# TASK-009: Metrics and Observability
+gem 'yabeda-rails'
+gem 'yabeda-prometheus'
+gem 'yabeda-puma-plugin'
+gem 'yabeda-sidekiq'
+
+# TASK-006: Error tracking with Sentry
+gem 'sentry-ruby'
+gem 'sentry-rails'
+gem 'sentry-sidekiq'
+
+# TASK-007: APM with Scout
+gem 'scout_apm'

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { searchApi } from '@/lib/api';
+import type { SearchAllResponse } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
@@ -74,10 +75,16 @@ export default function SearchBar({
       try {
         setLoading(true);
         setError(null);
-        const data = await searchApi.suggest(searchTerm);
+        const data = (await searchApi.suggest(searchTerm)) as unknown as SearchAllResponse;
         if (currentSeq === requestSeqRef.current) {
-          setResults(data);
-          const hasAny = Object.values(data).some((arr: any[]) => arr?.length > 0);
+          setResults({
+            companies: data.companies ?? [],
+            products: data.products ?? [],
+            categories: data.categories ?? [],
+            articles: data.articles ?? [],
+          });
+          const hasAny = (['companies','products','categories','articles'] as const)
+            .some((k) => (data[k] ?? []).length > 0);
           setActiveIndex(hasAny ? 0 : -1);
         }
       } catch (err) {
@@ -295,7 +302,7 @@ export default function SearchBar({
             {!query && !showResults && (
               <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
                 <div className="text-xs text-gray-400 hidden sm:block">
-                  Tente: "painéis solares"
+                  Tente: &quot;painéis solares&quot;
                 </div>
                 <Zap className="h-4 w-4 text-gray-300" />
               </div>
@@ -363,7 +370,7 @@ export default function SearchBar({
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">Nenhum resultado encontrado</h3>
               <p className="text-gray-500 text-sm mb-4">
-                Não encontramos resultados para <span className="font-medium">"{query}"</span>
+                Não encontramos resultados para <span className="font-medium">&quot;{query}&quot;</span>
               </p>
               <p className="text-gray-400 text-xs">
                 Tente usar termos diferentes ou verifique a ortografia

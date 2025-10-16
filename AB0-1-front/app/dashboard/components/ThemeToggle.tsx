@@ -25,6 +25,7 @@ export default function ThemeToggle({ onThemeChange }: ThemeToggleProps) {
       setTheme(systemTheme);
       onThemeChange?.(systemTheme);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleTheme = () => {

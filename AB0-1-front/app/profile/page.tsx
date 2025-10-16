@@ -27,15 +27,15 @@ import {
   Building, 
   CreditCard 
 } from 'lucide-react';
-import { companiesApi, reviewsApi } from '@/lib/api';
+import { companiesApi, reviewsApi, Company, Review } from '@/lib/api';
 import CompanyCard from '@/components/CompanyCard';
 import ReviewCard from '@/components/ReviewCard';
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState({ name: '', email: '', phone: '' });
-  const [userCompanies, setUserCompanies] = useState([]);
-  const [userReviews, setUserReviews] = useState([]);
+  const [userCompanies, setUserCompanies] = useState<Company[]>([]);
+  const [userReviews, setUserReviews] = useState<Review[]>([]);
   const [loadingCompanies, setLoadingCompanies] = useState(true);
   const [loadingReviews, setLoadingReviews] = useState(true);
   

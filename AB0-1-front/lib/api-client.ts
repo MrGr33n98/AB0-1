@@ -5,6 +5,9 @@
 import axios from 'axios';
 import { Category, Company, Review, Product } from './api';
 
+// Re-export types so they can be imported from api-client
+export type { Category, Company, Review, Product };
+
 // ------------------
 // Configuração
 // ------------------

@@ -24,10 +24,10 @@ interface SidebarFilterProps {
     rating: number;
     verified: boolean;
   };
-  onFiltersChange: (filters: any) => void;
-  totalCompanies: number;
-  filteredCompanies: number;
+  onFilterChange: (filterType: string, value: any) => void;
   locationsData?: Record<string, string[]>;
+  categories?: any[];
+  categoriesLoading?: boolean;
 }
 
 const FilterSection = ({ 
@@ -175,7 +175,7 @@ const RatingButton = ({
   </motion.button>
 );
 
-const SidebarFilter = ({ filters, onFiltersChange, totalCompanies, filteredCompanies, locationsData = {} }: SidebarFilterProps) => {
+const SidebarFilter = ({ filters, onFilterChange, locationsData = {}, categories, categoriesLoading }: SidebarFilterProps) => {
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(['search']));
 
   const toggleSection = (section: string) => {
@@ -192,14 +192,14 @@ const SidebarFilter = ({ filters, onFiltersChange, totalCompanies, filteredCompa
   
   const handleFilterClick = (filterType: string, value: any) => {
     if (filters[filterType as keyof typeof filters] === value) {
-      onFiltersChange({ ...filters, [filterType]: filterType === 'verified' ? false : '' });
+      onFilterChange(filterType, filterType === 'verified' ? false : null);
     } else {
-      onFiltersChange({ ...filters, [filterType]: value });
+      onFilterChange(filterType, value);
     }
   };
 
   const clearAllFilters = () => {
-    onFiltersChange({ state: '', city: '', rating: 0, verified: false });
+    onFilterChange('clearAll', null);
   };
 
   const ratings = [
@@ -210,7 +210,7 @@ const SidebarFilter = ({ filters, onFiltersChange, totalCompanies, filteredCompa
 
   const activeFiltersCount = Object.entries(filters).filter(([key, value]) => {
     if (key === 'verified') return value === true;
-    if (key === 'rating') return value > 0;
+    if (key === 'rating') return Number(value) > 0;
     return value && value !== '';
   }).length;
 
@@ -248,9 +248,6 @@ const SidebarFilter = ({ filters, onFiltersChange, totalCompanies, filteredCompa
           </div>
           <div>
             <h3 className="font-bold text-lg text-gray-900">Filtros</h3>
-            <p className="text-xs text-gray-600">
-              {filteredCompanies} de {totalCompanies} empresas
-            </p>
           </div>
         </div>
         
@@ -371,7 +368,7 @@ const SidebarFilter = ({ filters, onFiltersChange, totalCompanies, filteredCompa
           </h4>
           <div className="flex flex-wrap gap-1.5">
             {Object.entries(filters).map(([key, val]) =>
-              (key === 'verified' && val) || (key === 'rating' && val > 0) || (val && val !== '') ? (
+              (key === 'verified' && Boolean(val)) || (key === 'rating' && Number(val) > 0) || (val && val !== '') ? (
                 <Badge
                   key={key}
                   className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer 

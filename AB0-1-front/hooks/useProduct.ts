@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Product } from '@/types';
+import type { Product } from '@/lib/api';
 import { productsApi } from '@/lib/api';
 
-export function useProduct(id: number) {
+export function useProduct(id: number | string) {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
-      if (!id || isNaN(id)) {
+      const productId = typeof id === 'string' ? parseInt(id, 10) : id;
+      
+      if (!productId || isNaN(productId)) {
         setError('Invalid product ID');
         setLoading(false);
         return;
@@ -17,8 +19,8 @@ export function useProduct(id: number) {
 
       try {
         setLoading(true);
-        const data = await productsApi.getById(id);
-        setProduct(data);
+        const data = await productsApi.getById(productId);
+        setProduct(data as Product);
         setError(null);
       } catch (err) {
         console.error('Error fetching product:', err);

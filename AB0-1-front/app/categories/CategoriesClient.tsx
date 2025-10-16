@@ -23,6 +23,7 @@ type Filters = {
   state: string | null;
   city: string | null;
   rating: number | null;
+  verified: boolean;
 };
 
 const parseAddress = (address?: string) => {
@@ -92,6 +93,7 @@ export default function CategoriesClient() {
     state: searchParams.get('state') || null,
     city: searchParams.get('city') || null,
     rating: searchParams.get('rating') ? Number(searchParams.get('rating')) : null,
+    verified: searchParams.get('verified') === 'true',
   });
 
   const { categories, loading: categoriesLoading } = useCategories(true);
@@ -160,6 +162,7 @@ export default function CategoriesClient() {
         state: null,
         city: null,
         rating: null,
+        verified: false,
       });
       return;
     }
@@ -218,6 +221,9 @@ export default function CategoriesClient() {
           const rating = Number(company.rating) || 0;
           if (isNaN(rating) || rating < filters.rating) return false;
         }
+        if (filters.verified && !company.verified) {
+          return false;
+        }
         return true;
       });
     } catch (error) {
@@ -266,7 +272,12 @@ export default function CategoriesClient() {
         <div className="flex flex-col lg:flex-row gap-6">
           <SidebarFilter
             onFilterChange={handleFilterChange}
-            filters={filters}
+            filters={{
+              state: filters.state || '',
+              city: filters.city || '',
+              rating: filters.rating || 0,
+              verified: filters.verified
+            }}
             locationsData={locationsData}
             categories={categories}
             categoriesLoading={categoriesLoading}

@@ -1,4 +1,6 @@
 class Category < ApplicationRecord
+  include QueryCacheable # TASK-016: Query Caching
+  
   # =========================
   # Associations
   # =========================
@@ -14,6 +16,38 @@ class Category < ApplicationRecord
   validates :description, presence: true
 
   # =========================
+  # Cacheable Queries - TASK-016
+  # =========================
+  
+  # Featured categories with products
+  cacheable_query :featured, expires_in: 1.hour do
+    where(featured: true)
+      .includes(:products, :companies)
+      .order(name: :asc)
+  end
+
+  # Active categories
+  cacheable_query :active, expires_in: 1.hour do
+    where(status: 'active')
+      .order(name: :asc)
+  end
+
+  # Categories with companies
+  cacheable_query :with_companies, expires_in: 30.minutes do
+    joins(:companies)
+      .distinct
+      .order(name: :asc)
+  end
+
+  # Top categories by product count
+  cacheable_query :top_by_products, expires_in: 1.hour do
+    left_joins(:products)
+      .group(:id)
+      .order('COUNT(products.id) DESC')
+      .limit(10)
+  end
+
+  # =========================
   # Ransack configuration
   # =========================
   def self.ransackable_attributes(_auth_object = nil)
@@ -25,6 +59,31 @@ class Category < ApplicationRecord
 
   def self.ransackable_associations(_auth_object = nil)
     %w[companies products banner_attachment banner_blob]
+  end
+
+  # =========================
+  # Instance Methods with Caching
+  # =========================
+
+  # Get companies for this category (cached)
+  def cached_companies
+    cache_method(:companies, expires_in: 30.minutes) do
+      companies.to_a
+    end
+  end
+
+  # Get products for this category (cached)
+  def cached_products
+    cache_method(:products, expires_in: 30.minutes) do
+      products.to_a
+    end
+  end
+
+  # Count products (cached)
+  def cached_products_count
+    cache_method(:products_count, expires_in: 1.hour) do
+      products.count
+    end
   end
 
   # =========================
@@ -53,6 +112,10 @@ class Category < ApplicationRecord
       json[:banner_url] = nil
     end
 
+    # Add cached counts
+    json[:products_count] = cached_products_count
+    json[:companies_count] = companies.count
+
     json
   end
 
@@ -66,5 +129,16 @@ class Category < ApplicationRecord
   rescue StandardError => e
     Rails.logger.error("Error generating category banner URL: #{e.message}")
     nil
+  end
+
+  # =========================
+  # Cache Management
+  # =========================
+  
+  private
+
+  def should_clear_cache?
+    # Clear cache on all changes
+    true
   end
 end

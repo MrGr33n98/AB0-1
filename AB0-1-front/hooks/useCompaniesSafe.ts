@@ -63,14 +63,14 @@ export function usePartnerLogos() {
         setError(null);
 
         const data = await companiesApiSafe.getAll({
-          verified: true,
           featured: true,
           status: 'active',
-          limit: 5,
+          limit: 10, // Get more to filter verified ones
         });
 
         const partnerLogos = data
-          .filter(c => c.status === 'active' && c.logo_url)
+          .filter(c => c.status === 'active' && c.verified && c.logo_url)
+          .slice(0, 5) // Take only 5 after filtering
           .map(({ id, name, logo_url }) => ({ id, name, logo_url }));
 
         setPartners(partnerLogos);

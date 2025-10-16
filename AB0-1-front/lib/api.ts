@@ -10,6 +10,7 @@ export interface Company {
   id: number;
   name: string;
   description: string;         // Corrigido de 'about' para 'description'
+  about?: string;              // Legacy field - some APIs might still use this
   highlights?: string;
   website: string;
   phone: string;
@@ -22,16 +23,20 @@ export interface Company {
   logo_url?: string | null;
   rating?: number;
   total_reviews?: number;
+  reviews_count?: number;      // Alternative name for total_reviews
   business_hours?: string;
+  working_hours?: string;      // Alternative name for business_hours
   payment_methods?: string[];
   category_name?: string;
   category_id?: number;
+  categories?: string;         // Some APIs return this as a string
   status?: 'active' | 'inactive';
   featured?: boolean;
   verified?: boolean;
   founded_year?: number;
   employees_count?: number;
   rating_avg?: number;
+  average_rating?: number;     // Alternative name for rating_avg
   rating_count?: number;
   certifications?: string;
   awards?: string;
@@ -87,11 +92,17 @@ export interface Product {
   id: number;
   name: string;
   description: string;
+  short_description?: string;  // Short version of description
   price: number;
-  company_id: number;
+  company_id?: number;
+  category_id?: number;
+  status?: string;
+  featured?: boolean;
   created_at: string;
   updated_at: string;
   image_url?: string;
+  company?: any;  // Associated company data
+  category?: any; // Associated category data
 }
 
 export interface Lead {
@@ -161,6 +172,19 @@ export interface Article {
   updated_at: string;
 }
 
+export interface SearchAllResponse {
+  companies: Company[];
+  products: Product[];
+  categories: Category[];
+  articles: Article[];
+  meta?: {
+    total_count?: number;
+    page?: number;
+    per_page?: number;
+    total_pages?: number;
+  };
+}
+
 export interface Badge {
   id: number;
   name: string;
@@ -188,6 +212,8 @@ export interface User {
   id: number;
   name: string;
   email: string;
+  phone?: string;
+  avatar_url?: string;
   role: 'user' | 'admin' | 'company';
   created_at: string;
   updated_at: string;
@@ -277,7 +303,7 @@ export const api = {
 // =======================
 // Generic fetch wrapper
 // =======================
-export async function fetchApi<T>(
+export async function fetchApi<T = any>(
   endpoint: string,
   options: any = {}
 ): Promise<T> {
@@ -420,9 +446,9 @@ export const productsApi = {
 };
 
 export const categoriesApi = {
-  getAll: () => fetchApi('/categories'),
-  getById: (id: number) => fetchApi(`/categories/${id}`),
-  getBySlug: (slug: string) => fetchApi(`/categories/slug/${slug}`),
+  getAll: () => fetchApi<Category[]>('/categories'),
+  getById: (id: number) => fetchApi<Category>(`/categories/${id}`),
+  getBySlug: (slug: string) => fetchApi<Category>(`/categories/slug/${slug}`),
   create: (category: Partial<Category>) =>
     fetchApi('/categories', {
       method: 'POST',
@@ -574,10 +600,10 @@ export const citiesApi = {
 };
 
 export const searchApi = {
-  all: async (query: string, filters?: any) => {
+  all: async (query: string, filters?: any): Promise<SearchAllResponse> => {
     try {
       const params = { q: query, ...filters };
-      return await fetchApi('/search/all', { params });
+      return await fetchApi<SearchAllResponse>('/search/all', { params });
     } catch (error) {
       console.error('Search error:', error);
       return {

@@ -40,3 +40,11 @@
 .env.production
 .env.secrets
 /node_modules
+
+# TASK-002: Security scan reports
+/tmp/brakeman-report.html
+/tmp/brakeman-report.json
+/tmp/brakeman-report.txt
+
+# TASK-020: Bullet N+1 detection logs
+/log/bullet.log

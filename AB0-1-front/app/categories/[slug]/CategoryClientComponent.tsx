@@ -60,6 +60,24 @@ export default function CategoryClientComponent({ initialCategory, initialCompan
     setFilteredCompanies(filtered);
   }, [filters, companies]);
 
+  // Handle filter changes from SidebarFilter
+  const handleFilterChange = (filterType: string, value: any) => {
+    if (filterType === 'clearAll') {
+      setFilters({
+        state: '',
+        city: '',
+        rating: 0,
+        verified: false
+      });
+      return;
+    }
+    setFilters((prev) => ({
+      ...prev,
+      [filterType]: value,
+      ...(filterType === 'state' && { city: '' })
+    }));
+  };
+
   // Error state - this would be handled on the server side now
   if (error) {
     return (
@@ -131,9 +149,7 @@ export default function CategoryClientComponent({ initialCategory, initialCompan
             <div className={`lg:block ${showFilters ? 'block' : 'hidden'}`}>
               <SidebarFilter
                 filters={filters}
-                onFiltersChange={setFilters}
-                totalCompanies={companies.length}
-                filteredCompanies={filteredCompanies.length}
+                onFilterChange={handleFilterChange}
               />
             </div>
           </div>

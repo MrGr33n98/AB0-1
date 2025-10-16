@@ -79,7 +79,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
         // Busca os dados mais recentes em paralelo
         const [productsResponse, reviewsResponse] = await Promise.allSettled([
           productsApiSafe.getAll({ company_id: company.id }),
-          reviewsApiSafe.getAll({ company_id: company.id }),
+          reviewsApiSafe.getAll(),
         ]);
 
         if (productsResponse.status === 'fulfilled') {
@@ -329,7 +329,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
                         ) : products.length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {products.map((product) => (
-                              <ProductCard key={product.id} product={product} />
+                              <ProductCard key={product.id} product={product as any} />
                             ))}
                           </div>
                         ) : (
