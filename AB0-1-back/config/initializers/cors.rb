@@ -76,7 +76,5 @@ end
 
 # Log configuração em desenvolvimento
 if Rails.env.development?
-  Rails.logger.info "[CORS] Allowed origins: #{
-    Rack::Cors::Middleware.new(nil, Rack::Cors::Resources.new)
-  }"
+  Rails.logger.info "[CORS] Allowed origins configurados para desenvolvimento"
 end
