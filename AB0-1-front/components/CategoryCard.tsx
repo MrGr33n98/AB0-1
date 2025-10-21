@@ -35,8 +35,8 @@ export default function CategoryCard({ category, className = "" }: CategoryCardP
     seo_url: category?.seo_url ? `categories/${category.seo_url}` : `categories/${category.id}`,
     featured: category?.featured || false,
     status: category?.status || 'active',
-    companies_count: category?.companies?.length || 0,
-    products_count: category?.products?.length || 0
+    companies_count: category?.companies_count ?? category?.companies?.length ?? 0,
+    products_count: (category as any)?.products_count ?? category?.products?.length ?? 0
   };
 
   return (

@@ -138,6 +138,7 @@ export interface Category {
   description?: string;
   parent_id?: number | null;
   companies_count?: number;
+  products_count?: number;
   subcategories?: Category[];
   companies?: Company[];
   products?: Product[];
@@ -243,7 +244,33 @@ export interface City {
 // =======================
 // Axios Config
 // =======================
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1`;
+// Use internal Docker network URL for server-side requests, browser URL for client-side
+const getApiBaseUrl = () => {
+  // Server-side (Next.js SSR in Docker)
+  if (typeof window === 'undefined') {
+    // Use internal Docker network or fallback to localhost
+    const internalUrl = process.env.API_URL_INTERNAL;
+    if (internalUrl) {
+      console.log('[API] Using internal URL:', internalUrl);
+      return internalUrl;
+    }
+    // Fallback: Try to use backend service name if in Docker
+    const publicUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    // If publicUrl is localhost, try backend service name
+    if (publicUrl.includes('localhost') || publicUrl.includes('127.0.0.1')) {
+      console.log('[API] Server-side: Using backend service name');
+      return 'http://backend:3001/api/v1';
+    }
+    console.log('[API] Server-side: Using public URL:', publicUrl);
+    return `${publicUrl}/api/v1`;
+  }
+  // Client-side (browser)
+  const clientUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1`;
+  console.log('[API] Client-side: Using URL:', clientUrl);
+  return clientUrl;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Update the api configuration
 export const api = {

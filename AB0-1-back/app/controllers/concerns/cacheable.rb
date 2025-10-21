@@ -57,10 +57,16 @@ module Cacheable
     action = action_name
 
     # Extract relevant params
-    cache_params = params_hash.slice(:company_id, :category_id, :product_id, :status, :featured, :limit, :page)
-                               .compact
-                               .sort
-                               .to_h
+    raw_params = if params_hash.respond_to?(:to_unsafe_h)
+                   params_hash.to_unsafe_h
+                 else
+                   params_hash.to_h
+                 end
+
+    cache_params = raw_params.symbolize_keys.slice(:company_id, :category_id, :product_id, :status, :featured, :limit, :page)
+                          .compact
+                          .sort
+                          .to_h
 
     # Generate key
     key_parts = [controller_name, action, resource]

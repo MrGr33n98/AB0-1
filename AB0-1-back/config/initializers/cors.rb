@@ -8,13 +8,14 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
     # Origins permitidas por ambiente
     origins_list = case Rails.env
     when 'production'
-      [
+      production_origins = [
         'https://www.avaliasolar.com.br',
         'https://avaliasolar.com.br',
-        'https://api.avaliasolar.com.br',
-        # Permitir origins adicionais via ENV (comma-separated)
-        ENV['ADDITIONAL_ALLOWED_ORIGINS']&.split(',')&.map(&:strip) || []
-      ].flatten.compact
+        'https://api.avaliasolar.com.br'
+      ]
+      # Permitir origins adicionais via ENV (comma-separated)
+      additional_origins = ENV['ADDITIONAL_ALLOWED_ORIGINS']&.split(',')&.map(&:strip) || []
+      (production_origins + additional_origins).flatten.compact
     when 'staging'
       [
         'https://staging.avaliasolar.com.br',
