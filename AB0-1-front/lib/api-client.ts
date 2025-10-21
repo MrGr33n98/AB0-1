@@ -11,7 +11,31 @@ export type { Category, Company, Review, Product };
 // ------------------
 // Configuração
 // ------------------
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1`;
+// Use internal Docker network URL for server-side requests, browser URL for client-side
+const getApiBaseUrl = () => {
+  // Server-side (Next.js SSR in Docker)
+  if (typeof window === 'undefined') {
+    const internalUrl = process.env.API_URL_INTERNAL;
+    if (internalUrl) {
+      console.log('[API Client] Using internal URL:', internalUrl);
+      return internalUrl;
+    }
+    const publicUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    // If publicUrl is localhost, try backend service name
+    if (publicUrl.includes('localhost') || publicUrl.includes('127.0.0.1')) {
+      console.log('[API Client] Server-side: Using backend service name');
+      return 'http://backend:3001/api/v1';
+    }
+    console.log('[API Client] Server-side: Using public URL:', publicUrl);
+    return `${publicUrl}/api/v1`;
+  }
+  // Client-side (browser)
+  const clientUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1`;
+  console.log('[API Client] Client-side: Using URL:', clientUrl);
+  return clientUrl;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Função auxiliar para montar query params
 const buildQueryParams = (params: Record<string, any>) => {
@@ -118,7 +142,12 @@ export const companiesApiSafe = {
   // 🔥 Corrigido para desembrulhar o objeto { company: { ... } }
   getById: async (id: number): Promise<Company | null> => {
     try {
-      const response = await fetchApiSafe<Company>(`companies/${id}`);
+      const response = await fetchApiSafe<any>(`companies/${id}`);
+      // Backend retorna: { company: { ... } }
+      // Precisamos desembrulhar para pegar apenas o objeto company
+      if (response && response.company) {
+        return response.company;
+      }
       return response || null;
     } catch (error) {
       console.error(`Error fetching company with ID ${id}:`, error);

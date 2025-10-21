@@ -20,8 +20,10 @@ COPY . .
 
 # Build app
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_DISABLE_WEBPACK_CACHE=1
 ENV NODE_ENV=production
-RUN npm run build
+ENV NODE_OPTIONS="--max-old-space-size=1536"
+RUN npm run build && rm -rf .next/cache
 
 # Production stage
 FROM node:18-alpine
