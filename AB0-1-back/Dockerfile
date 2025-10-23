@@ -29,7 +29,11 @@ RUN mkdir -p tmp/pids tmp/storage public/assets log
 
 # Set environment variables
 ENV RAILS_ENV=production \
-    PATH="/app/bin:${PATH}"
+    PATH="/app/bin:${PATH}" \
+    SECRET_KEY_BASE=placeholder_for_asset_compilation
+
+# Precompile assets (including ActiveAdmin assets)
+RUN bundle exec rake assets:precompile RAILS_ENV=production
 
 # Remove this block to rely solely on DATABASE_URL from entrypoint.sh
 # RUN echo "production:\n\

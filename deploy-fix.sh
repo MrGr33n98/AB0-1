@@ -95,6 +95,21 @@ echo "Backend:"
 docker exec ab0-backend curl -f http://localhost:3001/health -o /dev/null -s -w "Status: %{http_code}\n" 2>/dev/null || echo "Erro"
 echo ""
 
+echo -e "${BLUE}Passo 12: Compilando assets do ActiveAdmin...${NC}"
+echo "Limpando assets antigos..."
+docker exec ab0-backend rm -rf public/assets/* 2>/dev/null || true
+echo "Compilando assets..."
+docker exec ab0-backend bundle exec rails assets:precompile RAILS_ENV=production
+ASSET_COUNT=$(docker exec ab0-backend ls -1 public/assets/ 2>/dev/null | wc -l)
+echo -e "${GREEN}✓ $ASSET_COUNT assets compilados${NC}"
+echo ""
+
+echo -e "${BLUE}Passo 13: Reiniciando backend para aplicar assets...${NC}"
+docker-compose restart backend
+echo "Aguardando 10 segundos..."
+sleep 10
+echo ""
+
 echo "==========================================="
 echo -e "${GREEN}✅ Deploy concluído!${NC}"
 echo ""
