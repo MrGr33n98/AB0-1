@@ -59,7 +59,8 @@ jobs:
             echo "ℹ️ Docker não está rodando. Tentando iniciar..."
             sudo systemctl start docker
             sleep 5
-            if ! docker info > /dev/null 2>&1; then
+            if ! docker info > 
+              /dev/null 2>&1; then
               echo "❌ Erro: Falha ao iniciar o Docker."
               exit 1
             fi
@@ -162,6 +163,10 @@ jobs:
                 SECRET_KEY_BASE: ${SECRET_KEY_BASE}
                 JWT_SECRET: ${JWT_SECRET}
                 CORS_ORIGINS: https://avaliasolar.com.br,https://www.avaliasolar.com.br,https://api.avaliasolar.com.br
+                HOST: 0.0.0.0
+                PORT: 3001
+                REDIS_ENABLED: "true"
+                REDIS_URL: redis://redis:6379/0
               ports:
                 - "3001:3001"
               networks:
@@ -181,7 +186,9 @@ jobs:
                   condition: service_healthy
               environment:
                 NODE_ENV: production
-                NEXT_PUBLIC_API_URL: https://api.avaliasolar.com.br
+                NEXT_PUBLIC_API_URL: https://api.avaliasolar.com.br/api/v1
+                NEXT_PUBLIC_API_BASE_URL: https://api.avaliasolar.com.br
+                NEXT_PUBLIC_ENV: production
                 NEXT_PUBLIC_SITE_URL: https://www.avaliasolar.com.br
               ports:
                 - "3000:3000"
